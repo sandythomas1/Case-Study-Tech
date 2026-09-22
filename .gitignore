@@ -1,0 +1,20 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Word lock files
+~$*.docx
+~$*.doc
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Scratch working files (scripts, style-evidence JSON, page renders)
+tmp/
