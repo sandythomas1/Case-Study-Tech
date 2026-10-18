@@ -1,0 +1,4 @@
+# AI agents treat CLAUDE.md as instructions, so changes to it (and to repo
+# automation config under .github/) require review by the human owner.
+/CLAUDE.md  @sandythomas1
+/.github/   @sandythomas1
