@@ -61,3 +61,11 @@ The pending billing-link question has no affirmative answer recorded. New projec
 The user authorized committing and pushing this feature branch on 2026-10-21. The handoff includes the account implementation, configuration templates, regression tests and setup documentation above. Generated dependencies, build outputs, local credentials and scaffold-specific tool preferences are excluded. Verification remains the 47 passing tests and checks recorded at checkpoint 3; no application behavior changed during this handoff.
 
 The branch is intended for remote review preparation only. No pull request, protected-branch merge or application deployment is authorized by this handoff. All related issues remain In Progress, including the unresolved student dependency findings in #61. The resulting commit and push evidence will be recorded in the GitHub issues and shared memory.
+
+## Checkpoint 5: paid upgrade authorized, blocked by Google quota
+
+The user authorized the paid upgrade and another commit/push if needed. Attempted to link `casestudy-tech-dev-2e03d0` to the existing open Firebase Payment billing account. Google rejected the link with `FAILED_PRECONDITION`, `QuotaFailure`, and `Cloud billing quota exceeded`, pointing to its billing project quota request form. Read-only checks found one open billing account and five already linked projects. These facts do not identify the exact quota or authorize changing existing projects.
+
+Verified that the target project's billing remains disabled. Retried Identity Platform initialization with the project quota header and received HTTP 400, `BILLING_NOT_ENABLED`. No live authentication success, paid upgrade, support submission, application deployment or issue completion is claimed. Added a support request draft and precise retry/readback steps to `docs/accounts-setup.md`, without account IDs, contact information or credentials.
+
+This checkpoint changes documentation only. The 47 previously passing tests are not rerun because application code and configuration are unchanged. Issue #4 remains In Progress: billing is externally blocked, and its live OAuth, gateway, deletion scheduling and native installation acceptance evidence is still outstanding. Existing project billing and original draft documents remain untouched.

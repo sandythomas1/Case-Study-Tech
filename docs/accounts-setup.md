@@ -11,9 +11,23 @@
 
 ## Pending live setup
 
-Identity Platform initialization returned `BILLING_NOT_ENABLED`. Linking the existing billing account is pending the owner's response; no billing link is assumed. The initial SDK REST request also required `x-goog-user-project: casestudy-tech-dev-2e03d0` for quota attribution; setting that request header resolved the quota-project error without changing global ADC settings.
+The owner authorized upgrading this project to paid billing on 2026-10-21. Linking it to the existing open `Firebase Payment` account failed with `FAILED_PRECONDITION`, `QuotaFailure`, and `Cloud billing quota exceeded`. Live readback still reports `billingEnabled: false`; a subsequent Identity Platform initialization returned HTTP 400, `BILLING_NOT_ENABLED`. Authorization is recorded, but the paid upgrade has not succeeded. One open billing account was visible, with five projects already linked; this observation does not establish its exact quota or whether unlinking an existing project would resolve the failure.
 
-After authorized billing linkage, initialize Identity Platform, configure Google as the only provider, disable password/anonymous/other providers, and register the actual web/iOS/Android OAuth clients. Web origins must match the real served application. Native client registration must match the iOS bundle ID and Android package/signing certificate. Supply the web client ID as the native server audience and the iOS client ID/URL scheme where required. Do not use placeholder OAuth IDs in a release build.
+Google's error directs the billing owner to the [billing project quota request form](https://support.google.com/code/contact/billing_quota_increase). Request enough capacity to link this one additional development project. The owner must supply the billing account ID and their contact information privately in the form. No support request has been submitted, no existing project's billing has been removed, and no alternative billing account has been created.
+
+Suggested request explanation:
+
+> Please allow one additional project to be linked to my existing Firebase Payment billing account. The new development project is casestudy-tech-dev-2e03d0 (project number 613104664964), for Case-Study-Tech, a counseling practice application. Linking billing failed with FAILED_PRECONDITION / QuotaFailure: Cloud billing quota exceeded. The account currently shows five linked projects. This project needs Identity Platform, Firestore, Cloud Run, API Gateway and Secret Manager for development. Please increase the billing project quota sufficiently to link this project, or advise what account action is required.
+
+After Google resolves the quota restriction, retry the already authorized link using the account ID obtained privately from Cloud Billing:
+
+```powershell
+$billingAccountId = '<BILLING_ACCOUNT_ID>'
+gcloud billing projects link casestudy-tech-dev-2e03d0 --billing-account=$billingAccountId --quiet
+gcloud billing projects describe casestudy-tech-dev-2e03d0 --format='value(billingEnabled)'
+```
+
+Only after the readback is `True`, initialize Identity Platform, configure Google as the only provider, disable password/anonymous/other providers, and register the actual web/iOS/Android OAuth clients. The SDK REST request requires `x-goog-user-project: casestudy-tech-dev-2e03d0` for quota attribution; setting that header resolved the earlier quota-project error without changing global ADC settings. Web origins must match the real served application. Native client registration must match the iOS bundle ID and Android package/signing certificate. Supply the web client ID as the native server audience and the iOS client ID/URL scheme where required. Do not use placeholder OAuth IDs in a release build.
 
 Keep the Identity Platform API key restricted to Identity Toolkit/Secure Token APIs and provide it to Cloud Run through Secret Manager. The student bundle receives only public client IDs and its HTTPS API address. No service-account JSON keys are needed. Provision service identities with only required Firebase Auth/Firestore access, and a separate gateway invoker identity. Confirm actual IAM with deployment evidence under #18.
 
