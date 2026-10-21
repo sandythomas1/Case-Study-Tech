@@ -69,3 +69,11 @@ The user authorized the paid upgrade and another commit/push if needed. Attempte
 Verified that the target project's billing remains disabled. Retried Identity Platform initialization with the project quota header and received HTTP 400, `BILLING_NOT_ENABLED`. No live authentication success, paid upgrade, support submission, application deployment or issue completion is claimed. Added a support request draft and precise retry/readback steps to `docs/accounts-setup.md`, without account IDs, contact information or credentials.
 
 This checkpoint changes documentation only. The 47 previously passing tests are not rerun because application code and configuration are unchanged. Issue #4 remains In Progress: billing is externally blocked, and its live OAuth, gateway, deletion scheduling and native installation acceptance evidence is still outstanding. Existing project billing and original draft documents remain untouched.
+
+## Checkpoint 6: authorized billing replacement and Identity Platform initialization
+
+The owner explicitly authorized removing Auto-Cloud-Deploy from Firebase Payment and replacing it with CaseStudy Tech. Verified the source account association, unlinked `auto-cloud-deploy-500705`, then linked `casestudy-tech-dev-2e03d0` to the existing billing account. Live readback confirms Auto-Cloud-Deploy billing is disabled and CaseStudy Tech billing is enabled. The source project itself was not deleted. Account membership now includes CaseStudy Tech and excludes Auto-Cloud-Deploy, with the other four associations preserved.
+
+Identity Platform initialization then succeeded with HTTP 200. Configuration readback returned `projects/613104664964/config`, with anonymous, email and phone sign-in disabled. The billing and initialization blocker is resolved; actual Google OAuth client/provider registration and successful student sign-in are not yet verified.
+
+Updated the setup document to reflect current paid billing and remove the obsolete quota-request instructions. Repository changes are documentation only; no application tests were rerun, and the previously recorded 47 passing tests remain local evidence. Issue #4 remains In Progress pending its live OAuth, gateway/service, scheduled deletion and native installation checks. No application deployment, PR or merge was performed.

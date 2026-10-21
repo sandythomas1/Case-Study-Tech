@@ -6,28 +6,27 @@
 - Firebase web app: `1:613104664964:web:4d551431bea457c6baddd1`.
 - Firestore Native `(default)` database: `us-central1`, standard/free-tier at creation.
 - Identity Toolkit, Firestore and Firebase Rules APIs enabled. Existing gcloud defaults were not changed.
+- Paid billing enabled on the existing `Firebase Payment` account (verified 2026-10-21); the Firebase project is on the Blaze plan.
+- Identity Platform initialized successfully (HTTP 200); configuration readback is `projects/613104664964/config`. Anonymous, email and phone sign-in are disabled.
 
 [Firebase console](https://console.firebase.google.com/project/casestudy-tech-dev-2e03d0/overview) · [Google Auth Platform clients](https://console.cloud.google.com/auth/clients?project=casestudy-tech-dev-2e03d0)
 
-## Pending live setup
+## Billing verification and history
 
-The owner authorized upgrading this project to paid billing on 2026-10-21. Linking it to the existing open `Firebase Payment` account failed with `FAILED_PRECONDITION`, `QuotaFailure`, and `Cloud billing quota exceeded`. Live readback still reports `billingEnabled: false`; a subsequent Identity Platform initialization returned HTTP 400, `BILLING_NOT_ENABLED`. Authorization is recorded, but the paid upgrade has not succeeded. One open billing account was visible, with five projects already linked; this observation does not establish its exact quota or whether unlinking an existing project would resolve the failure.
+The initial paid upgrade failed with `FAILED_PRECONDITION` / `QuotaFailure`: `Cloud billing quota exceeded`. The owner then explicitly authorized removing Auto-Cloud-Deploy from the billing account and replacing it with CaseStudy Tech. Unlinked `auto-cloud-deploy-500705`, linked `casestudy-tech-dev-2e03d0`, and verified the former has billing disabled and the latter has billing enabled. Auto-Cloud-Deploy's project was not deleted; paid services there may stop because its billing is disabled. No other project's billing association was changed.
 
-Google's error directs the billing owner to the [billing project quota request form](https://support.google.com/code/contact/billing_quota_increase). Request enough capacity to link this one additional development project. The owner must supply the billing account ID and their contact information privately in the form. No support request has been submitted, no existing project's billing has been removed, and no alternative billing account has been created.
-
-Suggested request explanation:
-
-> Please allow one additional project to be linked to my existing Firebase Payment billing account. The new development project is casestudy-tech-dev-2e03d0 (project number 613104664964), for Case-Study-Tech, a counseling practice application. Linking billing failed with FAILED_PRECONDITION / QuotaFailure: Cloud billing quota exceeded. The account currently shows five linked projects. This project needs Identity Platform, Firestore, Cloud Run, API Gateway and Secret Manager for development. Please increase the billing project quota sufficiently to link this project, or advise what account action is required.
-
-After Google resolves the quota restriction, retry the already authorized link using the account ID obtained privately from Cloud Billing:
+The account's five linked projects are now System Design Course, YMAN-Storage-App, resimax, CaseStudy Tech and NBA Predictions. The billing quota blocker is resolved for this setup; no support request was submitted. Recheck the two explicit project IDs without changing global gcloud defaults:
 
 ```powershell
-$billingAccountId = '<BILLING_ACCOUNT_ID>'
-gcloud billing projects link casestudy-tech-dev-2e03d0 --billing-account=$billingAccountId --quiet
+gcloud billing projects describe auto-cloud-deploy-500705 --format='value(billingEnabled)'
 gcloud billing projects describe casestudy-tech-dev-2e03d0 --format='value(billingEnabled)'
 ```
 
-Only after the readback is `True`, initialize Identity Platform, configure Google as the only provider, disable password/anonymous/other providers, and register the actual web/iOS/Android OAuth clients. The SDK REST request requires `x-goog-user-project: casestudy-tech-dev-2e03d0` for quota attribution; setting that header resolved the earlier quota-project error without changing global ADC settings. Web origins must match the real served application. Native client registration must match the iOS bundle ID and Android package/signing certificate. Supply the web client ID as the native server audience and the iOS client ID/URL scheme where required. Do not use placeholder OAuth IDs in a release build.
+Expected readback: `False` for Auto-Cloud-Deploy, `True` for CaseStudy Tech.
+
+## Pending live setup
+
+Identity Platform initialization is complete. Configure Google as the only provider, keep password/anonymous/other providers disabled, and register the actual web/iOS/Android OAuth clients. The SDK REST request requires `x-goog-user-project: casestudy-tech-dev-2e03d0` for quota attribution; setting that header resolved the earlier quota-project error without changing global ADC settings. Web origins must match the real served application. Native client registration must match the iOS bundle ID and Android package/signing certificate. Supply the web client ID as the native server audience and the iOS client ID/URL scheme where required. Do not use placeholder OAuth IDs in a release build.
 
 Keep the Identity Platform API key restricted to Identity Toolkit/Secure Token APIs and provide it to Cloud Run through Secret Manager. The student bundle receives only public client IDs and its HTTPS API address. No service-account JSON keys are needed. Provision service identities with only required Firebase Auth/Firestore access, and a separate gateway invoker identity. Confirm actual IAM with deployment evidence under #18.
 
