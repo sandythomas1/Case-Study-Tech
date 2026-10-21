@@ -1,0 +1,10 @@
+{
+  "projectId": "casestudy-tech-dev-2e03d0",
+  "projectNumber": "613104664964",
+  "displayName": "CaseStudy Tech Development",
+  "region": "us-central1",
+  "database": "(default)",
+  "firebaseWebAppId": "1:613104664964:web:4d551431bea457c6baddd1",
+  "iosBundleIdentifier": "com.casestudytech.student",
+  "androidPackage": "com.casestudytech.student"
+}

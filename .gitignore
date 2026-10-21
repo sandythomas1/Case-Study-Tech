@@ -18,3 +18,18 @@ venv/
 
 # Scratch working files (scripts, style-evidence JSON, page renders)
 tmp/
+
+# Local credentials, dependencies, build outputs and runtime state
+.env
+.env.*
+!.env.example
+node_modules/
+.expo/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*-debug.log
