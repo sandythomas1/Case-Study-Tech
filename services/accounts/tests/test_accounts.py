@@ -110,6 +110,42 @@ def setup():
         yield client, auth, store
 
 
+@pytest.mark.parametrize("path", ["/v1/me", "/v1/scores", "/v1/account/deletion"])
+def test_allowlisted_browser_preflight_does_not_require_a_student_token(path):
+    auth, store = FakeAuth(), FakeStore()
+    with TestClient(create_app(auth, store, ("https://student.example",))) as client:
+        response = client.options(
+            path,
+            headers={
+                "Origin": "https://student.example",
+                "Access-Control-Request-Method": "POST"
+                if path.endswith("deletion")
+                else "GET",
+                "Access-Control-Request-Headers": "authorization,content-type",
+            },
+        )
+        assert response.status_code == 200
+        assert (
+            response.headers["access-control-allow-origin"] == "https://student.example"
+        )
+        assert "access-control-allow-credentials" not in response.headers
+
+
+def test_other_browser_origins_do_not_receive_cors_permission():
+    with TestClient(
+        create_app(FakeAuth(), FakeStore(), ("https://student.example",))
+    ) as client:
+        response = client.options(
+            "/v1/scores",
+            headers={
+                "Origin": "https://untrusted.example",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        assert response.status_code == 400
+        assert "access-control-allow-origin" not in response.headers
+
+
 @pytest.mark.parametrize(
     "header", [None, "", "Bearer", "Basic student-a", "Bearer forged", "Bearer a b"]
 )
