@@ -1,5 +1,5 @@
 # Cross-platform student scaffold â€” issue #17
-Branch: feature/17-cross-platform-scaffold Â· Lead run: 2026-10-30 Â· Status: ready
+Branch: feature/17-cross-platform-scaffold Â· Lead run: 2026-10-30 Â· Status: verifying
 Intent: One strict TypeScript project; seven preview destinations; mobile bottom tabs; local checks and platform startup evidence.
 Change surfaces: Expo Router architecture, navigation, placeholder copy, public-only config.
 Likely touch points: apps/student, scaffold README, specs/017-cross-platform-scaffold.

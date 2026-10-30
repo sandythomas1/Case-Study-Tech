@@ -76,3 +76,9 @@ Independent checks will detect route/browser semantics and bundle/config failure
 - Supplementary software-rendered cold-start Android flow: PASS,11checkpoints in42.96s. Restored adb reverse8087 after emulator restart and cold-started ExpoGo to clear its cached failed-download screen; no production-source workaround.
 - Final screenshots regenerated; shared lesson captured: Router asChild can discard Pressable style callbacks.
 - Lead closes local review with no blocking findings; AC1 remains partial only for Mac/iOS. Final roster5dispatches as above. User authorization covers commit/push/draftPR into dev, no merge/deployment.
+
+
+## Hosted CI correction — PR71
+- Commit d71d903 pushed; draftPR71 into dev opened and board moved AgentReview. First hosted run41125043406 failed at npmci beforetests; moved board back InProgress before lock changes and posted honest failure progress.
+- CI Node24.22.1/npm11.19.1 differs from local Node24.11.1/npm11.6.2. Isolated npm11.6.2 metadata regeneration did not fix omissions; npm11.19.1 on the existing lock added exactly @emnapi/core1.11.3 and @emnapi/runtime1.11.3 with normalized peer flags. Existing versions unchanged, no nodes removed; no broad dependency update or CI bypass.
+- Clean install using npm11.19.1 with scripts disabled validates metadata locally; normal script-enabled Linux npmci and full checks remain enforced by CI. Lint/types/tests rerun; audit remains16affected entries/2advisories.

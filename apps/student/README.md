@@ -17,6 +17,8 @@ npx expo-doctor
 
 `package-lock.json` is the installation contract. Use `npx expo install` for SDK-aware dependency changes and rerun checks. Jest Expo and React Native Testing Library 14 exercise the actual route tree; test files live outside `src/app`.
 
+Validate lockfile changes in Linux CI as well as locally. The initial npm 11.6.2 lockfile omitted two optional WASM peers required by npm 11.19.1 in CI; regenerating metadata with that npm version in an isolated directory repaired it without changing existing package versions.
+
 ## Run locally
 
 ```sh

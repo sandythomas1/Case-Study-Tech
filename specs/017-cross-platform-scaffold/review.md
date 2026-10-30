@@ -11,6 +11,7 @@ Date: 2026-10-30. Base: dev aa6ea60. Scope: apps/student, local verification har
 | deepmerge LOW advisory in repository-controlled Expo/Jest configuration. | LOW | No untrusted application merge path found. Track #61; no unsupported major override or forced downgrade. |
 | iOS simulator runtime evidence is unavailable on Windows. | Acceptance gap | Leave issue's cross-platform-start criterion unchecked; Mac instructions supplied. An iOS Hermes export is not simulator acceptance. Open a draft PR for concrete review. |
 | App directory overlaps unmerged account PR #62. | Integration follow-up | Preserve existing account work; document explicit path/guard/lockfile reconciliation on its later rebase. No account service access or auth bypass introduced. |
+| Initial Windows-generated lockfile omitted optional WASM peer entries required by CI's newer npm, blocking Linux npm ci. | Blocking verification | Regenerated metadata with CI's npm11.19.1 in isolation; adds exactly two nodes without changing or removing existing package versions. Clean install/lint/types/tests rerun; hosted CI confirms Linux installation and exports. |
 
 ## Review evidence and limits
 - Architecture and UX design reviews completed independently before implementation. Security review independently inspected source, lockfile, CI, and toolchain reachability; no blocking security finding.
