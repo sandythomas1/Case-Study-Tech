@@ -53,7 +53,8 @@ the `services/accounts` layout and tooling.
 - Flow: `feature/<issue#>-<slug>` from `dev` → `dev` → `staging` → `main`. All three are protected,
   so every change lands through a PR.
 - Feature PRs target `dev` and say `Refs #<n>`. Commit only that Issue's files.
-- AiDev may merge its own PR into `dev` once QA passes and no blocking finding remains.
+- AiDev may merge its own Standard review PR into `dev` once QA passes and no blocking finding
+  remains. Deep review and Owner decision PRs wait for the owner's review before merging.
 - Changes to `CLAUDE.md`, `.claude/` or `.github/` always wait for the owner's review. AiDev never
   merges a change to its own instructions.
 - Only the owner may merge into `staging` or `main`, deploy, change Rulesets, touch production,
@@ -63,10 +64,12 @@ the `services/accounts` layout and tooling.
 
 ## Definition of done
 
-- Every acceptance criterion has evidence: a test, command output or screenshot.
+- Every acceptance criterion has evidence: a test, command output or screenshot. Put it in the PR
+  body and in the Issue's progress comment. This project has no `specs/` folder.
 - New logic has tests for behavior, edge cases and failure modes.
 - Tests, lint and type checks pass. Report any failure with its output.
-- Review matches the Issue's Review Depth field.
+- Review matches the Issue's Review Depth field. The levels are defined in
+  `docs/lab3/implementation-plan.md` under "Review depth".
 - User-visible changes include screenshots of the running app.
 - Docs are updated when behavior, commands or a decision changed.
 - The PR is open, the Issue has a progress comment, and the board matches reality.
