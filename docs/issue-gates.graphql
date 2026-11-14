@@ -1,0 +1,27 @@
+# An Issue's start gates: state, blocked-by Issues and Project #1 fields.
+# Usage: gh api graphql -F query=@docs/issue-gates.graphql -F n=<issue number>
+query ($n: Int!) {
+  repository(owner: "sandythomas1", name: "Case-Study-Tech") {
+    issue(number: $n) {
+      number
+      state
+      title
+      blockedBy(first: 20) {
+        nodes { number state title }
+      }
+      projectItems(first: 5) {
+        nodes {
+          id
+          fieldValues(first: 20) {
+            nodes {
+              ... on ProjectV2ItemFieldSingleSelectValue {
+                name
+                field { ... on ProjectV2SingleSelectField { name } }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
