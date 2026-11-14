@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.tfstate*)",
+      "Read(**/*.tfvars)",
+      "Read(**/*service-account*.json)",
+      "Read(**/application_default_credentials.json)",
+      "Bash(gcloud run deploy *)",
+      "Bash(gcloud builds submit *)",
+      "Bash(gcloud secrets versions access *)",
+      "Bash(gcloud * add-iam-policy-binding *)",
+      "Bash(terraform apply *)",
+      "Bash(terraform destroy *)",
+      "Bash(firebase deploy *)",
+      "PowerShell(gcloud run deploy *)",
+      "PowerShell(gcloud builds submit *)",
+      "PowerShell(gcloud secrets versions access *)",
+      "PowerShell(gcloud * add-iam-policy-binding *)",
+      "PowerShell(terraform apply *)",
+      "PowerShell(terraform destroy *)",
+      "PowerShell(firebase deploy *)"
+    ]
+  }
+}
