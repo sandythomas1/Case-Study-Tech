@@ -30,9 +30,9 @@ conflict, stop and ask. Never pick one quietly.
 
 - A reviewed GitHub Issue defines the task, and its acceptance criteria define the scope.
 - `docs/ROADMAP.md` is direction only. It is never a substitute for an Issue.
-- Start an Issue only when Status is Ready and Human Review is Reviewed.
-- Only the owner sets Reviewed. An agent that changes an Issue's scope or acceptance criteria resets
-  it to Pending.
+- Start or ship an Issue only through the `issue-workflow` Skill. It never starts one unless Status
+  is Ready and Human Review is Reviewed, and only the owner sets Reviewed.
+- An agent that changes an Issue's scope or acceptance criteria resets Human Review to Pending.
 - Search before creating an Issue. Work on one Issue per branch.
 - Exception: course lab configuration and documents need no Issue when the owner says so. They use a
   `chore/` or `docs/` branch.
@@ -96,11 +96,10 @@ AiDev lacks permission for a needed step, give the owner the exact steps and con
 
 ## Board workflow
 
-The board is the shared record. Full rules are in `docs/PROJECT_BOARD.md`.
+The board is the shared record. The `issue-workflow` Skill moves it, and `docs/PROJECT_BOARD.md` has
+the full rules, IDs and commands.
 
-- Set In Progress before the first code change, and Agent Review when the PR opens.
-- Set Done in Dev only after the merge into `dev`. Never set a status ahead of reality.
-- Post a progress comment for each push. Tick a criterion only after verifying it.
+- Never set a status ahead of reality, and post a progress comment for each push.
 - If the board cannot be updated, stop and tell the owner.
 
 ## Agents and capabilities

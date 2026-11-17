@@ -116,6 +116,10 @@ gh project item-add 1 --owner sandythomas1 --url <issue-url> --format json
 # Find the project item ID for an existing issue
 gh project item-list 1 --owner sandythomas1 --format json
 
+# Check an Issue's gates: state, blocked-by Issues (with their state), and every single-select field
+# including Status and Human Review. Also prints the project item ID.
+gh api graphql -F query=@docs/issue-gates.graphql -F n=<n>
+
 # Set a single-select field (Status, Plan Phase, Stage, Priority, Area, Human Review, Review Depth)
 gh project item-edit --project-id PVT_kwHOCK80dM4BnqMQ --id <item-id> --field-id <field-id> --single-select-option-id <option-id>
 
