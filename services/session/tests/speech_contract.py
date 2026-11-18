@@ -157,7 +157,8 @@ class SpeechProviderContract:
         with pytest.raises(ValueError):
             _synthesize(self.make_provider(ProviderCondition.HEALTHY), text="  ")
 
-    # Typed failures: no final transcript and no audio is delivered
+    # Typed failures: no final transcript is delivered. Synthesis may already
+    # have sent audio chunks before its error, so only the error type is checked.
 
     @pytest.mark.parametrize(
         ("condition", "error_type"),

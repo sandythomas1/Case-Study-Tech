@@ -90,6 +90,10 @@ class SpeechProvider(Protocol):
         Raises ``ValueError`` for empty text, or ``UnsupportedAudioError``,
         ``ProviderUnavailableError`` or ``ProviderTimeoutError``, all from the
         returned iterator.
+
+        A streaming provider may already have yielded audio chunks when it
+        raises a typed error, because buffering all audio would break the PA-2
+        latency target. Callers must handle a cut-off stream (#44).
         """
         ...
 
