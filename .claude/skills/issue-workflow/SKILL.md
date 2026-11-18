@@ -10,10 +10,15 @@ and `gh` commands live in `docs/PROJECT_BOARD.md`. This Skill sets the order and
 
 ## Start
 
-Run checks 1–5 before you branch, edit a file or change the board, and run all of them even after
+Run checks 0–5 before you branch, edit a file or change the board, and run all of them even after
 one fails. If any fail, stop. Change nothing, and tell the owner every check that failed, with its
 evidence: the field value or the blocker's number and state. Never fix a failed gate yourself.
 
+0. **The session's configuration is current.** Run `git fetch origin`. If `CLAUDE.md` or `.claude/`
+   on `HEAD` differs from `origin/dev` (`git diff --quiet HEAD origin/dev -- CLAUDE.md .claude`
+   fails), or a checkout, pull or merge in this session changed them, stop. Tell the owner to update
+   the checkout and restart Claude Code in it, because a running session may not pick up changed
+   instructions, Skills or agents.
 1. Read the Issue body, then its gates with "Check an Issue's gates" in `docs/PROJECT_BOARD.md`.
 2. **Human Review is Reviewed.** If it is Pending, refuse. Only the owner sets Reviewed.
 3. **Status is Ready.** Backlog means it is not refined. In Progress or later means someone else may
