@@ -49,3 +49,6 @@ Base: origin/dev (3b8a6f6). Worktrees: C:/cst-fb (docs/class-feedback-2026-11-17
 - 3: implementer #61 → PARTIAL (high findings 0 in both trees via `expo install --fix` + in-range eslint
   update; moderate residuals are build/test-only). Left uncommitted. AC4 re-checks + AC5 linking remain.
 - Board: progress comments posted on #61 and #18 (2026-11-18). Statuses unchanged: In Progress.
+
+## Close (2026-11-18)
+Ship choice (owner, verbatim): "Push all, PRs as drafts (Recommended)". #61 commits pushed to feature/4 (#62) and feature/17 (#71). #18 → draft PR #99 (base feature/4). Notes → draft PR #100 (base dev). Roster: research, security-reviewer (threat-model + audit), implementer, devops (3 rounds). Dispatches: 4 spawns + 4 SendMessage continuations. Lessons: 3 appended.
