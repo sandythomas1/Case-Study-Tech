@@ -658,7 +658,10 @@ Priority, Area, Sequence, Human Review, Review Depth) live on the Project, not i
 
 ### Review depth
 
-Every implementation PR is merged by a human (AG-9). Two Project fields carry review (§7).
+AiDev may merge a Standard review PR into `dev` once QA passes and no blocking finding remains. A
+Deep review or Owner decision PR waits for the owner's review before it merges. Every merge past
+`dev` and every deploy is done by a human (AG-9; owner decision 2026-11-12). Two Project fields carry
+review (§7).
 **Human Review** records whether the owner has checked the Issue itself (Pending → Reviewed).
 **Review Depth** tells the owner how deep to look:
 
