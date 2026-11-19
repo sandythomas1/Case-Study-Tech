@@ -74,3 +74,69 @@ paths:
     post:
       operationId: requestDeletion
       responses: { '202': { description: Accepted }, '401': { description: Rejected } }
+%{ if SESSION_SERVICE_URL != "" ~}
+  # Session routes (AD-4 per-route backend). Placeholders until #31 fixes the
+  # contract. The grading service has no route here (AD-3).
+  /v1/sessions/health:
+    get:
+      operationId: sessionHealth
+      security: []
+      x-google-backend:
+        address: ${SESSION_SERVICE_URL}/health
+        jwt_audience: ${SESSION_SERVICE_URL}
+        path_translation: CONSTANT_ADDRESS
+      responses: { '200': { description: Healthy } }
+  /v1/sessions:
+    options:
+      operationId: sessionStartPreflight
+      security: []
+      x-google-backend:
+        address: ${SESSION_SERVICE_URL}
+        jwt_audience: ${SESSION_SERVICE_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+      responses: { '200': { description: CORS preflight } }
+    post:
+      operationId: startSession
+      x-google-backend:
+        address: ${SESSION_SERVICE_URL}
+        jwt_audience: ${SESSION_SERVICE_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+      responses: { '200': { description: Session started }, '401': { description: Rejected } }
+  /v1/sessions/turns:
+    options:
+      operationId: sessionTurnPreflight
+      security: []
+      x-google-backend:
+        address: ${SESSION_SERVICE_URL}
+        jwt_audience: ${SESSION_SERVICE_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+      responses: { '200': { description: CORS preflight } }
+    post:
+      operationId: sessionTurn
+      # Transcription + persona inference + synthesis can exceed the 15s default.
+      x-google-backend:
+        address: ${SESSION_SERVICE_URL}
+        jwt_audience: ${SESSION_SERVICE_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 30.0
+      responses: { '200': { description: Persona reply and new signed state }, '401': { description: Rejected } }
+  /v1/sessions/end:
+    options:
+      operationId: sessionEndPreflight
+      security: []
+      x-google-backend:
+        address: ${SESSION_SERVICE_URL}
+        jwt_audience: ${SESSION_SERVICE_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+      responses: { '200': { description: CORS preflight } }
+    post:
+      operationId: endSession
+      # AD-3: waits for grading. Must exceed the session Cloud Run timeout (180s),
+      # which exceeds grading (120s). See infra/session-grading/main.tf locals.
+      x-google-backend:
+        address: ${SESSION_SERVICE_URL}
+        jwt_audience: ${SESSION_SERVICE_URL}
+        path_translation: APPEND_PATH_TO_ADDRESS
+        deadline: 190.0
+      responses: { '200': { description: Report }, '401': { description: Rejected } }
+%{ endif ~}
