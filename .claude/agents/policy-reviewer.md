@@ -22,9 +22,13 @@ The lead's brief names the Issue number and the branch. If either is missing, re
 3. `docs/ARCHITECTURE.md` §5 boundaries, §6 technology decisions, §7 trust and data boundaries,
    §8 invariants, §10 open questions.
 4. `docs/POLICY.md` §3–§10. Cite rules by ID (SES-, SAF-, REC-, SCO-, REP-, DAT-, ACC-, ETH-, AGT-).
+   **Always open this file in this run.** Read the text of every rule you cite or mark as met.
+   Never cite a rule from memory or from the lead's brief.
 5. `docs/lab3/implementation-plan.md`, only for the AG, PA, CD or OD items the Issue cites.
 
-Read only the sections the diff touches. Do not load whole documents you do not need.
+From ARCHITECTURE and the plan, read only the sections the diff touches. Do not load whole
+documents you do not need. POLICY is the exception above: open it, then read the sections that
+govern the diff.
 
 ## What to check
 
@@ -83,3 +87,7 @@ ESCALATIONS:
 
 Use `CLEAR` only when no rule applies or every rule that applies is met. List the rules you checked
 either way, so the lead can see what was and was not covered.
+
+`CLEAR` also requires that you opened `docs/POLICY.md` in this run and that `CHECKED` names the
+POLICY sections you read. If you could not read it (missing, unreadable, or out of turns), return
+`STATUS: ESCALATE` and say why. Never return `CLEAR` on an unread policy.
