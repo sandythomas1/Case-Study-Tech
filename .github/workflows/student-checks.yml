@@ -1,0 +1,45 @@
+name: Student application checks
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - apps/student/**
+      - .github/workflows/student-checks.yml
+  push:
+    branches: [dev]
+    paths:
+      - apps/student/**
+      - .github/workflows/student-checks.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: student-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/student
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/student/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx expo install --check
+      - run: npm run export:web
+      - run: npm run export:android
+      - run: npm run export:ios
