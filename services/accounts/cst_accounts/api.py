@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .domain import (
     AccountStore,
+    DeletionPending,
     IdentityProvider,
     Rejected,
     Score,
@@ -70,6 +71,16 @@ def create_app(
     async def rejected(request: Request, error: Rejected) -> JSONResponse:
         return JSONResponse(status_code=401, content={"detail": "Sign in again."})
 
+    @app.exception_handler(DeletionPending)
+    async def deletion_pending(
+        request: Request, error: DeletionPending
+    ) -> JSONResponse:
+        # A stable code the client can map to its own wording. Never carries
+        # provider error bodies.
+        return JSONResponse(
+            status_code=403, content={"detail": "account_deletion_pending"}
+        )
+
     @app.exception_handler(Unavailable)
     async def unavailable(request: Request, error: Unavailable) -> JSONResponse:
         return JSONResponse(
@@ -78,10 +89,10 @@ def create_app(
 
     def eligible(student: Student) -> Student:
         if store.pending(student.uid):
-            raise HTTPException(403, "Account deletion is pending.")
+            raise DeletionPending()
         return student
 
-    def signed_in(request: Request) -> Student:
+    def token_owner(request: Request) -> Student:
         # Gateway replaces Authorization. Independently verify the forwarded
         # original token; never trust decoded gateway Userinfo alone.
         header = request.headers.get(
@@ -90,7 +101,10 @@ def create_app(
         parts = header.split()
         if len(parts) != 2 or parts[0].lower() != "bearer":
             raise Rejected()
-        return eligible(auth.verify(parts[1]))
+        return auth.verify(parts[1])
+
+    def signed_in(request: Request) -> Student:
+        return eligible(token_owner(request))
 
     def validated_tokens(tokens: Tokens) -> Tokens:
         eligible(auth.verify(tokens.id_token))
@@ -126,8 +140,10 @@ def create_app(
 
     @app.post("/v1/account/deletion", status_code=202)
     def request_deletion(
-        body: DeleteConfirmation, student: Annotated[Student, Depends(signed_in)]
+        body: DeleteConfirmation, student: Annotated[Student, Depends(token_owner)]
     ) -> dict[str, object]:
+        # Not gated by a pending deletion: a retry after a lost 202 gets the
+        # owner's existing request back. The store only touches the token's uid.
         deletion = store.request_deletion(student.uid, datetime.now(UTC))
         # Persist denial before revocation. The worker retries provider outages.
         with contextlib.suppress(Unavailable):

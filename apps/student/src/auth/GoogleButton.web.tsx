@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Text } from "react-native";
+import { AlertText } from "../components/Page";
 type GoogleId = {
   initialize(options: {
     client_id: string;
@@ -64,9 +64,9 @@ export function GoogleButton({ onCredential, onError, disabled }: Props) {
   }, [configured, onCredential, onError]);
   if (!configured)
     return (
-      <Text accessibilityRole="alert">
-        Google sign-in is not available yet. Please try again later.
-      </Text>
+      <AlertText>
+        Google sign-in isn&apos;t available right now. Please try again later.
+      </AlertText>
     );
   return (
     <div

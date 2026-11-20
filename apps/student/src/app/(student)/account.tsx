@@ -1,11 +1,20 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import { signOutGoogle } from '../../auth/GoogleButton';
 import { session } from '../../auth/runtime';
-import { ActionButton, AlertText, BodyText, colors, styles as pageStyles } from '../../components/Page';
+import {
+  ActionButton,
+  AlertText,
+  BodyText,
+  colors,
+  moveFocus,
+  styles as pageStyles,
+  type FocusTarget,
+} from '../../components/Page';
 import { PreviewScreen } from '../../components/PreviewScreen';
 
-const deletionFailed = 'The deletion request could not be confirmed. Please try again.';
+const dialogTitle = 'Delete your account?';
+const deletionFailed = "We couldn't confirm your deletion request. Check your connection and try again.";
 
 async function forgetGoogleChoice() {
   try {
@@ -21,10 +30,22 @@ export default function Account() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const signedIn = state.status === 'authenticated';
+  const cancelButton = useRef<FocusTarget>(null);
+  const deleteButton = useRef<FocusTarget>(null);
+  const wasConfirming = useRef(false);
 
   useEffect(() => {
     if (!signedIn) setConfirming(false);
   }, [signedIn]);
+
+  // Returns focus to the control that opened the dialog, unless the session ended.
+  useEffect(() => {
+    if (wasConfirming.current && !confirming && signedIn) moveFocus(deleteButton.current);
+    wasConfirming.current = confirming;
+  }, [confirming, signedIn]);
+
+  // Stable, because the web Modal re-runs onShow whenever the callback changes.
+  const focusCancel = useCallback(() => moveFocus(cancelButton.current), []);
 
   async function signOut() {
     setError('');
@@ -39,7 +60,9 @@ export default function Account() {
       await session.deleteAccount(true);
       await forgetGoogleChoice();
     } catch {
-      setError(deletionFailed);
+      // The session explains itself on Sign in when it ended; otherwise the student can retry here.
+      if (session.state.status === 'authenticated') setError(deletionFailed);
+      else await forgetGoogleChoice();
     } finally {
       setBusy(false);
     }
@@ -50,25 +73,28 @@ export default function Account() {
       visible={confirming && signedIn}
       transparent
       animationType="fade"
+      onShow={focusCancel}
       onRequestClose={() => {
         if (!busy) setConfirming(false);
       }}
     >
       <View style={styles.backdrop}>
-        <View accessibilityViewIsModal style={styles.dialog}>
-          {error ? <AlertText>{error}</AlertText> : null}
-          <Text accessibilityRole="header" style={styles.dialogTitle}>Delete your account?</Text>
+        <View role="dialog" aria-modal aria-label={dialogTitle} accessibilityViewIsModal style={styles.dialog}>
+          <Text accessibilityRole="header" style={styles.dialogTitle}>{dialogTitle}</Text>
           <BodyText>
-            Your account and saved scores will be permanently deleted within 30 days. You will be signed out as soon as the request is accepted.
+            Your account and saved scores will be permanently deleted within 30 days. This can&apos;t be undone.
+            You&apos;ll be signed out right away.
           </BodyText>
+          {error ? <AlertText>{error}</AlertText> : null}
           <View style={pageStyles.actions}>
             <ActionButton
-              label={busy ? 'Requesting deletion…' : 'Confirm deletion'}
+              label={busy ? 'Requesting deletion…' : 'Delete my account'}
               tone="danger"
               disabled={busy}
+              announceLabel
               onPress={() => void requestDeletion()}
             />
-            <ActionButton label="Cancel" tone="quiet" disabled={busy} onPress={() => setConfirming(false)} />
+            <ActionButton ref={cancelButton} label="Cancel" tone="quiet" disabled={busy} onPress={() => setConfirming(false)} />
           </View>
         </View>
       </View>
@@ -79,7 +105,7 @@ export default function Account() {
     <PreviewScreen title="Account" actions={<>
       {error && !confirming ? <AlertText>{error}</AlertText> : null}
       <ActionButton label="Sign out" tone="quiet" onPress={() => void signOut()} />
-      <ActionButton label="Delete account" tone="danger" onPress={() => setConfirming(true)} />
+      <ActionButton ref={deleteButton} label="Delete account" tone="danger" onPress={() => setConfirming(true)} />
       {confirmation}
     </>}>
       You are signed in with your Google account. You can sign out on this device or ask to delete your account and saved scores.

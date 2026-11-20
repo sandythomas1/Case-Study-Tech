@@ -1,3 +1,5 @@
+import { isDeletionPending, isUnauthorized } from "./errors";
+
 export type TokenStore = {
   read(): Promise<string | null>;
   write(value: string): Promise<void>;
@@ -16,6 +18,32 @@ export type SessionState =
       notice?: string;
     }
   | { status: "authenticated"; uid: string };
+const messages = {
+  signInFailed: "We couldn't sign you in. Please try again in a moment.",
+  beingDeleted: "This account is being deleted, so you can't sign in to it.",
+  expired: "Your sign-in expired. Please sign in again.",
+  notDeleted:
+    "Your sign-in expired, so your account was not deleted. Sign in again to request deletion.",
+  unconfirmed:
+    "We couldn't confirm your deletion request because your sign-in ended. If you can still sign in, please request deletion again.",
+  deletionReceived:
+    "We received your request to delete your account. Your account and saved scores will be permanently deleted within 30 days.",
+};
+
+// What the student sees after a session ends without them signing out.
+function endedBy(error: unknown, notice: string): SessionState {
+  return isDeletionPending(error)
+    ? { status: "error", error: messages.beingDeleted }
+    : { status: "anonymous", notice };
+}
+
+// A refresh failure that signed the student out; `generation` is the signed-out one.
+class SessionExpired extends Error {
+  constructor(readonly generation: number) {
+    super("Sign in again.");
+  }
+}
+
 export class Session {
   private snapshot: SessionState = { status: "anonymous" };
   private generation = 0;
@@ -43,6 +71,13 @@ export class Session {
   private persist(action: () => Promise<void>) {
     this.persistence = this.persistence.catch(() => undefined).then(action);
     return this.persistence;
+  }
+  // Signs out, then explains why, unless a newer sign-in started meanwhile.
+  private async end(reason: SessionState) {
+    const ended = this.generation + 1;
+    await this.signOut();
+    if (ended === this.generation) this.update(reason);
+    return ended;
   }
   private async accept(value: unknown, generation: number) {
     if (generation !== this.generation) return;
@@ -89,13 +124,15 @@ export class Session {
         await this.api("/v1/auth/google", "POST", { credential }),
         generation,
       );
-    } catch {
+    } catch (error) {
       if (generation === this.generation) {
         await this.persist(() => this.store.clear());
         if (generation === this.generation)
           this.update({
             status: "error",
-            error: "Sign-in failed. Please try again.",
+            error: isDeletionPending(error)
+              ? messages.beingDeleted
+              : messages.signInFailed,
           });
       }
     }
@@ -125,9 +162,12 @@ export class Session {
           if (generation !== this.generation || !this.bundle)
             throw new Error("Session ended");
           return this.bundle.id;
-        } catch {
-          if (generation === this.generation) await this.signOut();
-          throw new Error("Sign in again.");
+        } catch (error) {
+          if (generation === this.generation) {
+            const ended = await this.end(endedBy(error, messages.expired));
+            if (!isDeletionPending(error)) throw new SessionExpired(ended);
+          }
+          throw new Error("Sign in again.", { cause: error });
         } finally {
           if (generation === this.generation) this.refreshing = undefined;
         }
@@ -138,14 +178,34 @@ export class Session {
   async deleteAccount(confirmed: boolean) {
     if (!confirmed) throw new Error("Confirmation required");
     const generation = this.generation;
-    const token = await this.accessToken();
+    let token: string;
+    try {
+      token = await this.accessToken();
+    } catch (error) {
+      // The request was never sent, so nothing was deleted.
+      if (
+        error instanceof SessionExpired &&
+        error.generation === this.generation
+      )
+        this.update({ status: "anonymous", notice: messages.notDeleted });
+      throw error;
+    }
     if (generation !== this.generation) throw new Error("Session ended");
-    const result = await this.api(
-      "/v1/account/deletion",
-      "POST",
-      { confirmation: "DELETE" },
-      token,
-    );
+    let result: unknown;
+    try {
+      result = await this.api(
+        "/v1/account/deletion",
+        "POST",
+        { confirmation: "DELETE" },
+        token,
+      );
+    } catch (error) {
+      // An accepted request disables and revokes the account, so a 401 here
+      // can follow a request whose 202 was lost. Say only what is known.
+      if (isUnauthorized(error) && generation === this.generation)
+        await this.end({ status: "anonymous", notice: messages.unconfirmed });
+      throw error;
+    }
     if (
       !result ||
       typeof result !== "object" ||
@@ -154,27 +214,24 @@ export class Session {
     )
       throw new Error("Deletion was not accepted");
     if (generation !== this.generation) return;
-    const signedOutGeneration = this.generation + 1;
-    await this.signOut();
-    if (signedOutGeneration !== this.generation) return;
-    this.update({
-      status: "anonymous",
-      notice:
-        "Deletion requested. Your account and scores will be removed within 30 days.",
-    });
+    await this.end({ status: "anonymous", notice: messages.deletionReceived });
   }
   async restore() {
     const generation = ++this.generation;
+    let saved = false;
     try {
       const refresh = await this.store.read();
       if (!refresh || generation !== this.generation) return;
+      saved = true;
       this.update({ status: "loading" });
       await this.accept(
         await this.api("/v1/auth/refresh", "POST", { refresh_token: refresh }),
         generation,
       );
-    } catch {
-      if (generation === this.generation) await this.signOut();
+    } catch (error) {
+      if (generation !== this.generation) return;
+      if (saved) await this.end(endedBy(error, messages.expired));
+      else await this.signOut();
     }
   }
 }

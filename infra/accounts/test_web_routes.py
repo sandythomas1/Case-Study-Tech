@@ -28,9 +28,9 @@ class StudentHandler(SimpleHTTPRequestHandler):
 
 @pytest.fixture(scope="module")
 def web_app():
-    distribution = ROOT / "apps" / "student" / "dist"
+    distribution = ROOT / "apps" / "student" / "dist" / "web"
     if not (distribution / "index.html").is_file():
-        pytest.fail("Export the student web application before running this check.")
+        pytest.fail("Run `npm run export:web` in apps/student before this check.")
     server = ThreadingHTTPServer(
         ("127.0.0.1", 0), partial(StudentHandler, directory=str(distribution))
     )
@@ -49,11 +49,23 @@ def web_app():
         thread.join(timeout=5)
 
 
+PUBLIC = [("/", "Welcome"), ("/sign-in", "Sign in")]
+PROTECTED = [
+    "/library",
+    "/library/preparation",
+    "/library/session",
+    "/library/report",
+    "/history",
+    "/account",
+]
+
+
 @pytest.mark.parametrize(
-    "route",
-    ["/", "/sign-in", "/history", "/account", "/preparation", "/session", "/report"],
+    ("route", "path", "heading"),
+    [(route, route, heading) for route, heading in PUBLIC]
+    + [(route, "/sign-in", "Sign in") for route in PROTECTED],
 )
-def test_anonymous_deep_links_show_only_welcome(web_app, route):
+def test_anonymous_deep_links_reach_only_public_screens(web_app, route, path, heading):
     browser, base = web_app
     context = browser.new_context()
     try:
@@ -61,9 +73,11 @@ def test_anonymous_deep_links_show_only_welcome(web_app, route):
         errors = []
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(base + route)
-        expect(
-            page.get_by_role("heading", name="A space to practice counseling")
-        ).to_be_visible()
+        expect(page.get_by_role("heading", name=heading, exact=True)).to_be_visible()
+        expect(page).to_have_url(base + path)
+        expect(page.get_by_text("Preview", exact=True)).to_have_count(
+            1 if route == "/" else 0
+        )
         expect(page.get_by_text("Delete account", exact=True)).to_have_count(0)
         expect(page.locator('input[type="password"]')).to_have_count(0)
         assert not errors, "The exported app raised a browser error."

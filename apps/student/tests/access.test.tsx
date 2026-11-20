@@ -1,14 +1,19 @@
 import { router } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
+import { ApiError } from '../src/auth/transport';
 import {
+  copy,
+  focusedLabels,
   googleSignInMock,
   resetSession,
   respond,
   savedRefreshToken,
   signInForTest,
+  spyOnAccessibility,
   testApi,
   testSession,
   testStore,
+  textsIn,
 } from './support/auth';
 
 jest.mock('../src/auth/runtime', () => ({ session: jest.requireActual('./support/auth').testSession }));
@@ -37,12 +42,16 @@ beforeEach(async () => {
   await resetSession();
 });
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('protected routes when signed out', () => {
   it.each(protectedRoutes)('sends a deep link to %s to Sign in', async (path, title) => {
     await renderRouter('./src/app', { initialUrl: path });
     await expectSignInShown();
     expect(screen.queryByRole('header', { name: title })).toBeNull();
-    expect(screen.queryByText('Navigation preview')).toBeNull();
+    expect(screen.queryByText('Preview')).toBeNull();
   });
 
   it('keeps Welcome public', async () => {
@@ -86,6 +95,14 @@ describe('saved sign-in', () => {
     await renderRouter('./src/app', { initialUrl: '/library' });
     await expectSignInShown();
     expect(savedRefreshToken()).toBeNull();
+    expect(screen.getByRole('status')).toHaveTextContent(copy.expired);
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('opens Sign in without a notice when there is no saved sign-in', async () => {
+    await renderRouter('./src/app', { initialUrl: '/library' });
+    await expectSignInShown();
+    expect(screen.queryByRole('status')).toBeNull();
   });
 });
 
@@ -103,7 +120,7 @@ describe('Sign in', () => {
     googleSignInMock.GoogleSignin.signIn.mockRejectedValueOnce(new Error('cancelled'));
     await renderRouter('./src/app', { initialUrl: '/sign-in' });
     await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
-    expect(await screen.findByText('Google sign-in did not complete. Please try again.')).toBeVisible();
+    expect(await screen.findByRole('alert')).toHaveTextContent(copy.googleUnreachable);
     expect(screen).toHavePathname('/sign-in');
   });
 
@@ -111,9 +128,18 @@ describe('Sign in', () => {
     testApi.mockRejectedValueOnce(new Error('private-provider-detail'));
     await renderRouter('./src/app', { initialUrl: '/sign-in' });
     await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
-    expect(await screen.findByText('Sign-in failed. Please try again.')).toBeVisible();
+    expect(await screen.findByRole('alert')).toHaveTextContent(copy.signInFailed);
     expect(screen.queryByText(/private-provider-detail/)).toBeNull();
     expect(screen).toHavePathname('/sign-in');
+  });
+
+  it('explains that an account being deleted cannot sign in', async () => {
+    testApi.mockRejectedValueOnce(new ApiError(403, 'account_deletion_pending'));
+    await renderRouter('./src/app', { initialUrl: '/sign-in' });
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(copy.beingDeleted);
+    expect(screen).toHavePathname('/sign-in');
+    expect(savedRefreshToken()).toBeNull();
   });
 
   it('never writes credentials or tokens to the console', async () => {
@@ -150,6 +176,12 @@ describe('Account', () => {
     await renderRouter('./src/app', { initialUrl: '/account' });
     await fireEvent.press(screen.getByRole('button', { name: 'Delete account' }));
     expect(screen.getByRole('header', { name: 'Delete your account?' })).toBeVisible();
+    expect(
+      screen.getByText(
+        "Your account and saved scores will be permanently deleted within 30 days. This can't be undone. You'll be signed out right away.",
+      ),
+    ).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Delete my account' })).toBeEnabled();
     expect(deletionCalls()).toHaveLength(0);
     await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('header', { name: 'Delete your account?' })).toBeNull();
@@ -157,13 +189,36 @@ describe('Account', () => {
     expect(testSession.state.status).toBe('authenticated');
   });
 
-  it('requests deletion after confirmation, then signs the student out', async () => {
+  it('names the dialog, focuses Cancel when it opens, and returns focus to Delete account when it closes', async () => {
+    const { focus } = spyOnAccessibility();
     await renderRouter('./src/app', { initialUrl: '/account' });
     await fireEvent.press(screen.getByRole('button', { name: 'Delete account' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Confirm deletion' }));
+    const dialog = screen.getByLabelText('Delete your account?');
+    expect(dialog).toHaveProp('role', 'dialog');
+    expect(dialog).toHaveProp('aria-modal', true);
+    let modal = dialog.parent;
+    while (modal && typeof modal.props.onShow !== 'function') modal = modal.parent;
+    if (!modal) throw new Error('The dialog is not inside a Modal.');
+    await fireEvent(modal, 'show');
+    expect(focusedLabels(focus)).toEqual(['Cancel']);
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    expect(focusedLabels(focus)).toEqual(['Cancel', 'Delete account']);
+  });
+
+  it('requests deletion after confirmation, then signs the student out', async () => {
+    await renderRouter('./src/app', { initialUrl: '/account' });
+    const { announce } = spyOnAccessibility();
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete account' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete my account' }));
     await expectSignInShown();
     expect(deletionCalls()).toEqual([['/v1/account/deletion', 'POST', { confirmation: 'DELETE' }, 'test-id-token']]);
-    expect(screen.getByText('Deletion requested. Your account and scores will be removed within 30 days.')).toBeVisible();
+    const notice = screen.getByRole('status');
+    expect(notice).toHaveTextContent(copy.deletionReceived);
+    expect(notice).toHaveProp('accessibilityLiveRegion', 'polite');
+    expect(notice).toHaveStyle({ color: '#17263c', fontSize: 18, lineHeight: 28 });
+    expect(notice.parent).toHaveStyle({ backgroundColor: '#e7effa', borderLeftWidth: 4, borderLeftColor: '#245691' });
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(announce.mock.calls).toEqual([[copy.deletionReceived]]);
     expect(savedRefreshToken()).toBeNull();
     await act(async () => router.push('/account'));
     await expectSignInShown();
@@ -176,10 +231,16 @@ describe('Account', () => {
     });
     await renderRouter('./src/app', { initialUrl: '/account' });
     await fireEvent.press(screen.getByRole('button', { name: 'Delete account' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Confirm deletion' }));
-    const message = 'The deletion request could not be confirmed. Please try again.';
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete my account' }));
+    const message = copy.deletionFailed;
     expect(await screen.findByText(message)).toBeVisible();
     expect(screen.getByRole('header', { name: 'Delete your account?' })).toBeVisible();
+    const order = textsIn(screen.getByLabelText('Delete your account?'));
+    const body = order.findIndex((text) => text.startsWith('Your account and saved scores'));
+    expect(body).toBeGreaterThan(order.indexOf('Delete your account?'));
+    expect(order.indexOf(message)).toBe(body + 1);
+    expect(order.indexOf('Delete my account')).toBe(body + 2);
+    expect(within(screen.getByLabelText('Delete your account?')).getByRole('alert')).toHaveTextContent(message);
     expect(screen).toHavePathname('/account');
     expect(testSession.state.status).toBe('authenticated');
     await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));

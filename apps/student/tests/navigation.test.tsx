@@ -1,11 +1,11 @@
 import { fireEvent } from '@testing-library/react-native';
 import { renderRouter, screen, testRouter, waitFor } from 'expo-router/testing-library';
-import { resetSession, signInForTest } from './support/auth';
+import { copy, resetSession, signInForTest } from './support/auth';
 
 jest.mock('../src/auth/runtime', () => ({ session: jest.requireActual('./support/auth').testSession }));
 jest.mock('@react-native-google-signin/google-signin', () => jest.requireActual('./support/auth').googleSignInMock);
 
-const previewNotice = 'Explore the planned screens. Practice and scores are not available in this preview.';
+const previewNotice = copy.previewNotice;
 
 beforeEach(async () => {
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = 'test-web-client-id';
@@ -41,7 +41,7 @@ describe('student navigation preview before sign-in', () => {
     ]) {
       await fireEvent.press(screen.getByRole('link', { name: label }));
       expect(screen).toHavePathname(path);
-      expect(screen.getByText('Navigation preview')).toBeVisible();
+      expect(screen.getByText('Preview')).toBeVisible();
       expect(screen.getByRole('button', { name: 'Library', selected: true })).toBeVisible();
     }
   });
@@ -49,7 +49,9 @@ describe('student navigation preview before sign-in', () => {
   it('discloses preview limitations when Welcome opens directly', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
     expect(screen.getByRole('header', { name: 'Welcome' })).toBeVisible();
+    expect(screen.getByText('Preview')).toBeVisible();
     expect(screen.getByText(previewNotice)).toBeVisible();
+    expect(screen.getByText('Explore the planned counseling practice screens.')).toBeVisible();
     expect(screen.queryByRole('textbox')).toBeNull();
   });
 });

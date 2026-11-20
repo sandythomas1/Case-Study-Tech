@@ -26,9 +26,9 @@ export function PreviewLink({ href, children, replace = false }: { href: Href; c
 export function PreviewScreen({ title, children, actions }: { title: string; children: string; actions?: ReactNode }) {
   return (
     <PageFrame title={title}>
-      <View style={styles.notice}>
-        <Text style={styles.noticeTitle}>Navigation preview</Text>
-        <BodyText>Explore the planned screens. Practice and scores are not available in this preview.</BodyText>
+      <View style={pageStyles.notice}>
+        <Text style={pageStyles.noticeTitle}>Preview</Text>
+        <BodyText>Practice sessions and scores aren&apos;t available yet. Signing in, signing out, and deleting your account work now.</BodyText>
       </View>
       <BodyText>{children}</BodyText>
       {actions && <View style={pageStyles.actions}>{actions}</View>}
@@ -37,8 +37,6 @@ export function PreviewScreen({ title, children, actions }: { title: string; chi
 }
 
 const styles = StyleSheet.create({
-  notice: { backgroundColor: '#e7effa', borderLeftWidth: 4, borderLeftColor: '#245691', padding: 20, gap: 10 },
-  noticeTitle: { color: '#17263c', fontSize: 18, fontWeight: '700' },
   link: { minHeight: 48, maxWidth: '100%', justifyContent: 'center', borderWidth: 3, borderColor: 'transparent', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#214f88' },
   focused: { borderColor: '#ffffff', outlineColor: '#17263c', outlineWidth: 3, outlineStyle: 'solid' },
   pressed: { backgroundColor: '#17375e' },
