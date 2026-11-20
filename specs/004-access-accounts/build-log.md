@@ -39,3 +39,6 @@ Routing: user-visible copy, accessibility and the session error mapping across t
 Routing: the copy and focus behavior changed after the first screenshots; QA reduces the risk that verification.md and the screenshots describe the old UI.
 ### Dispatch 8: security-reviewer (continued). Scoped re-check of rounds 1–2
 Routing: the error mapping now reads provider error codes and response bodies on 403. The reviewer reduces the risk of leaking provider detail or opening an account-enumeration signal.
+- Outcome, dispatch 8 (security re-check): CLEAR. S11 LOW accepted and noted on #104.
+- Outcome, dispatch 7 (QA re-verify): PASS. Jest 97/97; accounts 45/45 with the emulator; browser checks 9/9; web routes 8/8; 9 screenshots re-captured. Keyboard check passes: opening the dialog focuses Cancel, and a stray Enter or Escape does not delete. 4/5 acceptance criteria are proven; #25's real Google sign-in is still PENDING-MANUAL (it needs the owner's OAuth clients). The Firestore emulator (PID 38988) is still running; QA was denied permission to stop it, so the owner has been told.
+- Phase 5 closed except the merge gate. Committing locally; the push and the ready-for-review PR wait for the real sign-in proof (standing rule: only a complete feature is PR'd without asking).

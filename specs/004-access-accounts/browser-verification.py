@@ -37,7 +37,11 @@ GSI_URL = 'https://accounts.google.com/gsi/client'
 PROTECTED = [('/library', 'Library'), ('/library/preparation', 'Preparation'),
              ('/library/session', 'Session'), ('/library/report', 'Report'),
              ('/history', 'Score history'), ('/account', 'Account')]
-DELETION_NOTICE = 'Deletion requested. Your account and scores will be removed within 30 days.'
+DELETION_NOTICE = ('We received your request to delete your account. Your account and saved scores '
+                   'will be permanently deleted within 30 days.')
+EXPIRED_NOT_DELETED = ('Your sign-in expired, so your account was not deleted. '
+                       'Sign in again to request deletion.')
+BEING_DELETED = "This account is being deleted, so you can't sign in to it."
 
 # Stand-in for Google Identity Services: renders one button that hands back a fake credential.
 GSI_STUB = """
@@ -69,6 +73,9 @@ class FakeAccountsApi(BaseHTTPRequestHandler):
     """Answers the four account routes the student app calls. Records paths only, never tokens."""
     calls: list[tuple[str, str, bool]] = []
     origin = ''
+    # Per-test failure modes: a 403 pending-deletion exchange, or a refresh the server rejects.
+    exchange_pending_deletion = False
+    refresh_rejected = False
 
     def cors(self):
         self.send_header('Access-Control-Allow-Origin', self.origin)
@@ -96,9 +103,10 @@ class FakeAccountsApi(BaseHTTPRequestHandler):
         authorized = self.headers.get('Authorization') == 'Bearer qa-id-token'
         FakeAccountsApi.calls.append((method, self.path, authorized))
         tokens = {'id_token': 'qa-id-token', 'refresh_token': 'qa-refresh-token', 'expires_in': 3600}
+        pending = (403, {'detail': 'account_deletion_pending'})
         routes = {
-            ('POST', '/v1/auth/google'): (200, tokens),
-            ('POST', '/v1/auth/refresh'): (200, tokens),
+            ('POST', '/v1/auth/google'): pending if FakeAccountsApi.exchange_pending_deletion else (200, tokens),
+            ('POST', '/v1/auth/refresh'): (401, {}) if FakeAccountsApi.refresh_rejected else (200, tokens),
             ('GET', '/v1/me'): (200, {'uid': 'qa-student'}) if authorized else (401, {}),
             ('POST', '/v1/account/deletion'): (200, {'accepted': True}) if authorized else (401, {}),
         }
@@ -186,7 +194,7 @@ class SignedOutProductionExport(BrowserCase):
     def test_sign_in_without_client_id_offers_no_other_method(self):
         self.page.goto(self.origin + '/sign-in', wait_until='networkidle')
         self.expect_sign_in()
-        expect(self.page.get_by_text('Google sign-in is not available yet. Please try again later.', exact=True)).to_be_visible()
+        expect(self.page.get_by_text("Google sign-in isn't available right now. Please try again later.", exact=True)).to_be_visible()
         expect(self.page.get_by_role('textbox')).to_have_count(0)
         expect(self.page.get_by_role('button')).to_have_count(0)
         expect(self.page.get_by_text('password', exact=False)).to_have_count(0)
@@ -199,7 +207,7 @@ class SignedOutProductionExport(BrowserCase):
                 self.page.goto(self.origin + path, wait_until='networkidle')
                 self.expect_sign_in()
                 expect(self.heading(title)).to_have_count(0)
-                expect(self.page.get_by_text('Navigation preview', exact=True)).to_have_count(0)
+                expect(self.page.get_by_text('Preview', exact=True)).to_have_count(0)
                 if path == '/library/session':
                     self.page.screenshot(path=str(SHOTS / 'web-deep-link-session-redirects-to-sign-in.png'))
 
@@ -227,6 +235,8 @@ class StubbedSignIn(BrowserCase):
     def setUp(self):
         super().setUp()
         FakeAccountsApi.calls = []
+        FakeAccountsApi.exchange_pending_deletion = False
+        FakeAccountsApi.refresh_rejected = False
         self.page.route(GSI_URL, lambda route: route.fulfill(
             status=200, content_type='text/javascript', body=GSI_STUB))
 
@@ -246,6 +256,15 @@ class StubbedSignIn(BrowserCase):
         self.page.get_by_role('tab', name='Account', exact=True).click()
         expect(self.page).to_have_url(self.origin + '/account')
         expect(self.heading('Account')).to_be_visible()
+
+    def deletion_calls(self):
+        return [call for call in FakeAccountsApi.calls if call[1] == '/v1/account/deletion']
+
+    def wait_for_dialog(self):
+        # The modal fades in; wait until no ancestor is still transparent before capturing it.
+        self.heading('Delete your account?').evaluate(
+            "e => new Promise(done => { const check = () => { for (let n = e; n; n = n.parentElement)"
+            " if (getComputedStyle(n).opacity !== '1') return requestAnimationFrame(check); done(); }; check(); })")
 
     def test_signed_in_library_and_account(self):
         self.sign_in()
@@ -271,19 +290,60 @@ class StubbedSignIn(BrowserCase):
         self.open_account()
         self.page.get_by_role('button', name='Delete account', exact=True).click()
         expect(self.heading('Delete your account?')).to_be_visible()
-        expect(self.page.get_by_role('button', name='Confirm deletion', exact=True)).to_be_visible()
+        expect(self.page.get_by_role('button', name='Delete my account', exact=True)).to_be_visible()
         expect(self.page.get_by_role('button', name='Cancel', exact=True)).to_be_visible()
         self.assertNotIn(('POST', '/v1/account/deletion', True), FakeAccountsApi.calls)
         # The modal fades in; wait until no ancestor is still transparent before capturing it.
-        self.heading('Delete your account?').evaluate(
-            "e => new Promise(done => { const check = () => { for (let n = e; n; n = n.parentElement)"
-            " if (getComputedStyle(n).opacity !== '1') return requestAnimationFrame(check); done(); }; check(); })")
+        self.wait_for_dialog()
         self.page.screenshot(path=str(SHOTS / 'web-delete-confirmation-stub.png'))
-        self.page.get_by_role('button', name='Confirm deletion', exact=True).click()
+        self.page.get_by_role('button', name='Delete my account', exact=True).click()
         self.expect_sign_in()
         expect(self.page.get_by_text(DELETION_NOTICE, exact=True)).to_be_visible()
         self.assertEqual(FakeAccountsApi.calls.count(('POST', '/v1/account/deletion', True)), 1)
         self.page.screenshot(path=str(SHOTS / 'web-sign-in-after-deletion-stub.png'))
+
+
+    def test_keyboard_deletion_dialog_focus(self):
+        self.sign_in()
+        self.open_account()
+        open_button = self.page.get_by_role('button', name='Delete account', exact=True)
+        cancel = self.page.get_by_role('button', name='Cancel', exact=True)
+        for close_key in ('Enter', 'Escape'):
+            with self.subTest(close_key=close_key):
+                open_button.focus()
+                self.page.keyboard.press('Enter')
+                expect(self.page.get_by_role('dialog', name='Delete your account?')).to_be_visible()
+                expect(cancel).to_be_focused()
+                # A stray Enter lands on Cancel, so it closes the dialog without deleting anything.
+                self.page.keyboard.press(close_key)
+                expect(self.heading('Delete your account?')).to_have_count(0)
+                expect(open_button).to_be_focused()
+                self.assertEqual(self.deletion_calls(), [])
+        expect(self.page).to_have_url(self.origin + '/account')
+
+    def test_expired_sign_in_during_deletion_explains_nothing_was_deleted(self):
+        self.page.clock.install()
+        self.sign_in()
+        self.open_account()
+        FakeAccountsApi.refresh_rejected = True
+        self.page.clock.fast_forward('01:00:00')
+        self.page.get_by_role('button', name='Delete account', exact=True).click()
+        self.wait_for_dialog()
+        self.page.get_by_role('button', name='Delete my account', exact=True).click()
+        self.expect_sign_in()
+        expect(self.page.get_by_text(EXPIRED_NOT_DELETED, exact=True)).to_be_visible()
+        self.assertIn(('POST', '/v1/auth/refresh', False), FakeAccountsApi.calls)
+        self.assertEqual(self.deletion_calls(), [])
+        self.page.screenshot(path=str(SHOTS / 'web-sign-in-expired-notice-stub.png'))
+
+    def test_sign_in_to_account_being_deleted_is_refused_with_reason(self):
+        FakeAccountsApi.exchange_pending_deletion = True
+        self.page.goto(self.origin + '/sign-in', wait_until='networkidle')
+        self.page.get_by_role('button', name='Continue with Google (QA stand-in)').click()
+        expect(self.page.get_by_role('alert').filter(has_text=BEING_DELETED)).to_be_visible()
+        self.expect_sign_in()
+        self.assertNotIn('/v1/me', [call[1] for call in FakeAccountsApi.calls])
+        self.page.screenshot(path=str(SHOTS / 'web-sign-in-deletion-pending-stub.png'))
 
 
 if __name__ == '__main__':

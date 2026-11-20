@@ -35,3 +35,10 @@ Answer to the domain question, from the code: while deletion is pending, sign-in
 | U14 | NIT | The GIS button is 40px and Google-controlled | Accepted deviation: Google's branded control, meets WCAG 2.1 AA |
 | U16 (Lead) | SHOULD-FIX | A sign-in attempt on an account with pending deletion shows the generic failure | **Fixed** (round 2). Fix: map the 403 pending to "This account is being deleted, so you can't sign in to it." |
 | U17 | NIT | There is no domain glossary (docs/domain.md) | Deferred; outside this feature |
+
+## Security re-check — 2026-11-20 (d3991e2..401a1c9)
+CLEAR. No blocking findings. `token_owner` is used only on the deletion route; provider text can't leak; the 403 adds no enumeration signal beyond what a held credential already grants; pip-audit is clean.
+
+| # | Sev | Finding | Disposition |
+|---|---|---|---|
+| S11 | LOW | Every USER_DISABLED maps to "deletion pending" (firebase.py:15-29), which assumes deletion is the only path that disables users | **Accepted, documented.** Recorded on #104: any future admin-disable path must check `store.pending(uid)` before using this code. |
