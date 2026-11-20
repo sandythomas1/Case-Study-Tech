@@ -1,5 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
-import { Session, type Transport, type TokenStore } from "./session";
+import { Session, type Transport, type TokenStore } from "../src/auth/session";
 
 function setup() {
   let saved: string | null = null;
@@ -12,7 +11,7 @@ function setup() {
       saved = null;
     },
   };
-  const api = vi.fn<Transport>(async (path) => {
+  const api = jest.fn<Promise<unknown>, Parameters<Transport>>(async (path) => {
     if (path.endsWith("/me")) return { uid: "student-a" };
     if (path.endsWith("/deletion")) return { accepted: true };
     return {
@@ -137,7 +136,7 @@ describe("student session", () => {
     const { session, api } = setup();
     await session.signIn("credential");
     const realNow = Date.now();
-    vi.spyOn(Date, "now").mockReturnValue(realNow + 3600000);
+    jest.spyOn(Date, "now").mockReturnValue(realNow + 3600000);
     try {
       const tokens = await Promise.all([
         session.accessToken(),
@@ -147,12 +146,12 @@ describe("student session", () => {
       expect(
         api.mock.calls.filter(([path]) => path === "/v1/auth/refresh"),
       ).toHaveLength(1);
-      vi.spyOn(Date, "now").mockReturnValue(realNow + 7200000);
+      jest.spyOn(Date, "now").mockReturnValue(realNow + 7200000);
       api.mockRejectedValueOnce(new Error("revoked"));
       await expect(session.accessToken()).rejects.toThrow("Sign in again");
       expect(session.state.status).toBe("anonymous");
     } finally {
-      vi.restoreAllMocks();
+      jest.restoreAllMocks();
     }
   });
   it("retains the deletion confirmation after the protected screen unmounts", async () => {

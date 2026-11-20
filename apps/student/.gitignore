@@ -9,14 +9,22 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Test output
+coverage/
+
+# Generated native projects
+android/
+ios/
 .kotlin/
+
+# Native signing material
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.pem
 
 # Metro
 .metro-health-check*
@@ -28,14 +36,11 @@ yarn-error.*
 
 # macOS
 .DS_Store
-*.pem
 
-# local env files
-.env*.local
+# Local environment files. Only the public template is tracked.
+.env
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
-
-# generated native folders
-/ios
-/android

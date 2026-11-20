@@ -1,7 +1,23 @@
 {
   "name": "student",
   "version": "1.0.0",
+  "private": true,
   "main": "expo-router/entry",
+  "engines": {
+    "node": "^22.13.0 || ^24.3.0 || ^26.0.0 || >=27.0.0"
+  },
+  "scripts": {
+    "start": "expo start",
+    "web": "expo start --web",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --runInBand",
+    "export:web": "expo export --platform web --output-dir dist/web",
+    "export:android": "expo export --platform android --output-dir dist/android",
+    "export:ios": "expo export --platform ios --output-dir dist/ios"
+  },
   "dependencies": {
     "@react-native-google-signin/google-signin": "^16.1.5",
     "expo": "~58.0.26",
@@ -20,20 +36,14 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@testing-library/react-native": "^14.1.0",
+    "@types/jest": "30.0.0",
+    "@types/node": "^24.19.2",
     "@types/react": "~19.3.0",
     "eslint": "^10.13.0",
+    "jest": "~30.5.2",
+    "jest-expo": "~58.0.15",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.72.0",
-    "vitest": "^5.0.5"
-  },
-  "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
-  },
-  "private": true
+    "typescript-eslint": "^8.72.0"
+  }
 }

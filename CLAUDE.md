@@ -1,130 +1,118 @@
 # Case-Study-Tech — Project Instructions
 
 AI-powered counseling practice app: students counsel simulated client personas and get rubric-based
-feedback. Discovery notes and architecture live in `docs/`. This file extends the workspace
-`CLAUDE.md`; it does not repeat it.
+feedback. This file holds what every session needs. It points to the details and does not copy them.
 
+- **Stage:** Planning docs are on `dev`. No application code is merged yet. `services/accounts` and
+  `apps/student` exist only in draft PRs #62 and #71.
+- **Stack:** Expo client; Python 3.12 + FastAPI on Cloud Run; Firestore; Vertex AI; GCP `us-central1`.
 - **Repo:** https://github.com/sandythomas1/Case-Study-Tech
-- **Project board:** https://github.com/users/sandythomas1/projects/1 (Project #1, owner `sandythomas1`)
-- **Branch flow:** `feature/<issue#>-<slug>` → `dev` → `staging` → `main` (default branch).
-  `dev`, `staging`, and `main` are protected — all changes land through PRs.
-- **Identities:** `sandythomas1` is the human; `sandytdev` is the AI dev identity (repo Write,
-  Project Writer).
+- **Board:** https://github.com/users/sandythomas1/projects/1 (Project #1)
+- **Identities:** `sandythomas1` is the human owner. `sandytdev` (AiDev) is the AI development
+  identity, with repo Write and Project Writer access.
 
----
+## Sources of truth
 
-## GitHub Project Workflow (mandatory for every feature)
+| You need | Read | When |
+|---|---|---|
+| What to build now | The GitHub Issue | Before any work |
+| Components, boundaries, invariants | `docs/ARCHITECTURE.md` | Before changing a service, contract, data flow or dependency |
+| Product, privacy, scoring and agent rules | `docs/POLICY.md` | Before touching session data, scores, access or user-visible text |
+| Direction and phase order | `docs/ROADMAP.md` | To understand why; it never authorizes work |
+| Guardrails and decisions (AG, PA, CD, OD) | `docs/lab3/implementation-plan.md` | When an Issue cites them |
+| Requirements (RC, US, DD) | `output/CSCI_5520_CaseStudy_Tech_Software_Design_Document_Final.pdf` | When an Issue cites them |
+| Board rules, field IDs, `gh` commands | `docs/PROJECT_BOARD.md` | Before any Issue or board update |
 
-No code is written, changed, or reviewed without a GitHub Issue on Project #1 that reflects the
-real state of the work. The board is the shared source of truth between humans and agents.
+A requirement, a recorded owner decision or a policy rule beats an Issue (POLICY AGT-1). When sources
+conflict, stop and ask. Never pick one quietly.
 
-### 1. Before writing any code — find or create the ticket
+## Starting work
 
-1. Search for an existing issue first; never create duplicates:
-   `gh issue list -R sandythomas1/Case-Study-Tech --state all --search "<keywords>"`
-2. If none exists, create one with this body structure:
-   - `## Description` — what and why, in user terms.
-   - `## Implementation Requirements` — concrete, checkable bullets.
-   - `## Acceptance Criteria` — `- [ ]` checkboxes that can be verified by a test or demo.
-3. Add it to the Project and set **every** field (IDs in the reference section below):
-   Status, Phase, Priority, Area, Sequence. Field values live on the Project — do not duplicate
-   them in the issue body.
-4. Large features: split into sub-issues under a parent issue so **Sub-issues progress** tracks
-   completion.
-5. Create the branch from `dev` as `feature/<issue#>-<short-slug>`.
+- A reviewed GitHub Issue defines the task, and its acceptance criteria define the scope.
+- `docs/ROADMAP.md` is direction only. It is never a substitute for an Issue.
+- Start or ship an Issue only through the `issue-workflow` Skill. It never starts one unless Status
+  is Ready and Human Review is Reviewed, and only the owner sets Reviewed.
+- An agent that changes an Issue's scope or acceptance criteria resets Human Review to Pending.
+- Search before creating an Issue. Work on one Issue per branch.
+- Exception: course lab configuration and documents need no Issue when the owner says so. They use a
+  `chore/` or `docs/` branch.
 
-### 2. Move Status as the work actually moves
+## Commands
 
-| Status | Set it when… |
-|---|---|
-| Backlog | Issue is captured but not yet refined. |
-| Ready | Requirements and acceptance criteria are clear; nothing blocks starting. |
-| In Progress | **Before the first code change** on the issue. |
-| Agent Review | A PR into `dev` is open and awaiting review/verification. |
-| Done in Dev | The PR is merged into `dev`. |
-| Staging Candidate | The change is merged into `staging` via a promotion PR. |
-| Released | The change is merged into `main`. |
+Nothing runs on `dev` yet. These are the standards from PRs #62 and #71. A new Python service copies
+the `services/accounts` layout and tooling.
 
-Rules:
-- Never set a status ahead of reality. Unverified work is never Done in Dev or later.
-- If review sends work back, move it from Agent Review to In Progress.
-- If work is blocked, keep its status and post a comment explaining the blocker.
+| Component | Install | Check |
+|---|---|---|
+| Python service, `services/<name>` | `uv sync --python 3.12` | `uv run pytest`, `uv run ruff check .`, `uv run mypy .` |
+| Student app, `apps/student` | `npm ci` | `npm test`, `npm run lint`, `npm run typecheck` |
+| Firestore rules, `infra` | `npm ci` | `npm test` |
 
-### 3. Post progress every time code is changed
+## Git and PRs
 
-After each working session or logical change that touches code (each commit/push at minimum),
-post a comment on the issue:
+- Flow: `feature/<issue#>-<slug>` from `dev` → `dev` → `staging` → `main`. All three are protected,
+  so every change lands through a PR.
+- Feature PRs target `dev` and say `Refs #<n>`. Commit only that Issue's files.
+- AiDev may merge its own Standard review PR into `dev` once QA passes and no blocking finding
+  remains. Deep review and Owner decision PRs wait for the owner's review before merging.
+- Changes to `CLAUDE.md`, `.claude/` or `.github/` always wait for the owner's review. AiDev never
+  merges a change to its own instructions.
+- Only the owner may merge into `staging` or `main`, deploy, change Rulesets, touch production,
+  approve access or enable real students (POLICY AGT-6).
+- These instructions are guidance. Rulesets and the separate AiDev account are the real boundary.
+  Never ask to weaken them to get unblocked.
 
-```markdown
-**Progress update — YYYY-MM-DD**
-- **Changed:** <what was done, 1–3 bullets>
-- **Files:** <key files touched>
-- **Tests:** <added/updated; pass/fail with counts>
-- **Status:** <old> → <new> (or "unchanged: In Progress")
-- **Next:** <next step or blocker>
-```
+## Definition of done
 
-- Tick an acceptance-criteria checkbox in the issue body only once it is verified (test or demo).
-- Report failures honestly — a failing test goes in the comment, not under the rug.
+- Every acceptance criterion has evidence: a test, command output or screenshot. Put it in the PR
+  body and in the Issue's progress comment. This project has no `specs/` folder.
+- New logic has tests for behavior, edge cases and failure modes.
+- Tests, lint and type checks pass. Report any failure with its output.
+- Review matches the Issue's Review Depth field. The levels are defined in
+  `docs/lab3/implementation-plan.md` under "Review depth".
+- User-visible changes include screenshots of the running app.
+- Docs are updated when behavior, commands or a decision changed.
+- The PR is open, the Issue has a progress comment, and the board matches reality.
 
-### 4. Pull requests
+## Proceed or stop
 
-- Feature PRs target `dev` and reference the issue with `Refs #<n>` (closing keywords only fire
-  on the default branch, so they do nothing in `dev`).
-- Promotion PRs (`dev → staging`, `staging → main`) list every issue they carry. Use
-  `Closes #<n>` only on the `staging → main` PR.
-- After the `main` merge closes an issue, **confirm its Status is Released** and set it if not —
-  the Project's built-in "Item closed" automation may move it elsewhere.
+**Proceed without asking:** routine fixes, refactors inside the Issue, test repairs, formatting, and
+implementation details the Issue and docs leave open. Mention anything noteworthy in the PR.
 
-### 5. If the board can't be updated
+**Stop and ask** when a decision affects:
 
-If `gh` lacks the `project` scope or a board update fails, **stop and tell the user** — do not
-continue coding with a stale board. Fix with `gh auth refresh -s project`.
+- **Architecture:** a new service, dependency, data store or contract, or anything in ARCHITECTURE §5–§8.
+- **Security or privacy:** auth, access rules, secrets, logging of user data or any third party.
+- **Policy:** an owner decision (POLICY §1), an accepted risk (§10) or an open question (ARCHITECTURE §10).
+- **Scope:** a missing requirement, a criterion that cannot be met as written, or conflicting sources.
+- **UX:** user-visible wording or flow that the Issue and its figures do not settle.
 
----
+**Stop the line:** do nothing further until the owner resolves it. This covers possible persistence of
+session content, real student data outside production, an exposed secret, destructive operations on
+data or history, production access and any irreversible action.
 
-## Project #1 Reference
+Ask as multiple choice: 2–4 concrete options, recommended option first, one-line trade-off each. If
+AiDev lacks permission for a needed step, give the owner the exact steps and continue other work.
 
-| Item | ID |
-|---|---|
-| Project | `PVT_kwHOCK80dM4BnqMQ` |
-| Status field | `PVTSSF_lAHOCK80dM4BnqMQzhmNu0Y` |
-| Phase field | `PVTSSF_lAHOCK80dM4BnqMQzhmNu-s` |
-| Priority field | `PVTSSF_lAHOCK80dM4BnqMQzhmNu-4` |
-| Area field | `PVTSSF_lAHOCK80dM4BnqMQzhmNu-8` |
-| Sequence field (number) | `PVTF_lAHOCK80dM4BnqMQzhmNu_A` |
+## Board workflow
 
-| Field | Option IDs |
-|---|---|
-| Status | Backlog `f75ad846` · Ready `5daf57af` · In Progress `47fc9ee4` · Agent Review `4e1b35d9` · Done in Dev `98236657` · Staging Candidate `a8546aec` · Released `81727993` |
-| Phase | Planning `95094290` · Design `8f692b70` · Implementation `4346f106` · Testing `c17022e6` · Deployment `2f147ee7` |
-| Priority | Critical `1c0c1737` · High `e68906f0` · Medium `fa3e95de` · Low `a0d7eb8a` |
-| Area | Frontend `487e38a4` · Backend `eb3eed31` · AI/ML `f40e696c` · Infrastructure `964aa312` · Documentation `0ebe01b1` |
+The board is the shared record. The `issue-workflow` Skill moves it, and `docs/PROJECT_BOARD.md` has
+the full rules, IDs and commands.
 
-If an ID stops working, re-read them with `gh project field-list 1 --owner sandythomas1 --format json`.
+- Never set a status ahead of reality, and post a progress comment for each push.
+- If the board cannot be updated, stop and tell the owner.
 
-### Commands
+## Agents and capabilities
 
-```sh
-# Create an issue, then add it to the Project (prints the project item ID)
-gh issue create -R sandythomas1/Case-Study-Tech --title "<title>" --body-file <file.md> --label enhancement
-gh project item-add 1 --owner sandythomas1 --url <issue-url> --format json
+Keep work in the lead session unless a specialist reduces a real uncertainty. The lead owns the Issue,
+the PR and the board, and merges findings that point to the same `file:line`.
 
-# Find the project item ID for an existing issue
-gh project item-list 1 --owner sandythomas1 --format json
+| Agent | Where | Use when |
+|---|---|---|
+| `implementer` | global | Optional. The lead may hand it a well-defined slice of the Issue |
+| `qa-tester` | global | After every code change, to prove each acceptance criterion with evidence |
+| `policy-reviewer` | `.claude/agents/` | Before leaving Agent Review, when the diff touches a service, contract, dependency, session data, scores, access, logging or user-visible text |
+| `security-reviewer` | global | Also, when auth, access rules, secrets or student data change |
 
-# Set a single-select field (Status, Phase, Priority, Area)
-gh project item-edit --project-id PVT_kwHOCK80dM4BnqMQ --id <item-id> --field-id <field-id> --single-select-option-id <option-id>
-
-# Set Sequence
-gh project item-edit --project-id PVT_kwHOCK80dM4BnqMQ --id <item-id> --field-id PVTF_lAHOCK80dM4BnqMQzhmNu_A --number <n>
-
-# Post a progress comment
-gh issue comment <n> -R sandythomas1/Case-Study-Tech --body-file <comment.md>
-```
-
-### Windows gotchas
-
-- `gh` may not be on PATH; call `"C:\Program Files\GitHub CLI\gh.exe"` directly.
-- Windows PowerShell 5.1 mangles quotes in inline GraphQL. Write the query to a file and pass
-  `gh api graphql -F query=@<file>`. Use `--body-file` instead of inline `--body` for multi-line text.
+Reviewers are read-only. An `ESCALATE` from any of them goes to the owner and is never settled by the
+lead.
