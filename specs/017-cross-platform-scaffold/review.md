@@ -21,3 +21,14 @@ Date: 2026-10-30. Base: dev aa6ea60. Scope: apps/student, local verification har
 - CI runs ordinary unprivileged PR checks, has read-only repository permissions, disables credential persistence, pins official actions and supplies no secrets. Workflow YAML parsed locally. Actual hosted execution is reported separately after PR creation.
 - Source/configuration and all platform export files were scanned for common credential formats with no matches (98 files). This is bounded pattern evidence plus source/config review, not a universal secret-detection guarantee.
 - No backend/permission/data-access changes, clinical rules, assessment policy, deployment, or protected-branch merge.
+
+## Re-review — 2026-11-19 (Expo 58.0.26 patch, dev sync)
+
+| Finding | Severity | Disposition |
+| --- | --- | --- |
+| e4ddd04 regenerated the lockfile with the local npm 11.6.2 and dropped the @emnapi/core and @emnapi/runtime 1.11.3 optional-peer nodes again. Hosted CI run 44463641151 failed at npm ci. | Blocking verification | Fixed in 4cd1407: regenerated with npm 11.19.1 in isolation, 2 nodes added, 0 removed, 0 version/integrity changes. Clean npm ci and all local checks and exports pass. |
+| npm audit after the patch: 0 high/critical; 22 moderate (20 non-dev) from 2 upstream advisories (glob, minimatch) in Expo build tooling. | LOW (contextual) | Accepted: the build/file-matching tooling is not reachable from student input in a static shell with no network or data paths. Still tracked by #61. |
+| iOS simulator proof cannot be produced on Windows. | Acceptance gap | Owner decision 2026-11-19: split into #103; AC1 narrowed to web and Android. |
+| Runtime regression risk from the dependency bump. | Check | QA re-verification: 6/6 browser tests (web screenshots byte-identical to ed8a6a2), 11/11 Android checkpoints, 0 credential-pattern matches across 101 files. No regressions. |
+
+No open blocking findings. The diff since the last review adds no app source, UI or permission change, so security/UX/architect re-reviews were not re-engaged. The project `policy-reviewer` agent can't be dispatched from this session (it isn't in the agent roster here); the owner's Deep review covers it.

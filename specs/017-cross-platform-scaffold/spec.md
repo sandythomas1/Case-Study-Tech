@@ -31,7 +31,7 @@ As a frontend developer, I can run and extend one navigation shell across all th
 - No new cloud or paid build requirements.
 
 ## Acceptance criteria
-- [ ] Web starts and every shell destination is reachable; Android emulator starts and shows the shell; iOS simulator starts and shows the shell.
+- [x] Web starts and every shell destination is reachable; Android emulator starts and shows the shell. (Narrowed 2026-11-19 by owner decision: the iOS simulator proof moved to #103.)
 - [x] Lint, strict typecheck, and behavior tests pass following npm ci.
 - [x] Source/configuration and exported bundles contain no credentials; no account/AI SDKs or data access are introduced.
 
