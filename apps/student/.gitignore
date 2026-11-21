@@ -1,10 +1,46 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
 node_modules/
+
+# Expo
 .expo/
 dist/
+web-build/
+expo-env.d.ts
+
+# Test output
 coverage/
+
+# Generated native projects
 android/
 ios/
+.kotlin/
+
+# Native signing material
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+
+# Local environment files. Only the public template is tracked.
 .env
 .env.*
+!.env.example
+
+# typescript
 *.tsbuildinfo
-expo-env.d.ts

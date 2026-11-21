@@ -1,0 +1,76 @@
+swagger: '2.0'
+info:
+  title: CaseStudy Tech Accounts
+  version: '0.1.0'
+schemes: [https]
+host: accounts.endpoints.${PROJECT_ID}.cloud.goog
+x-google-endpoints:
+  - name: accounts.endpoints.${PROJECT_ID}.cloud.goog
+    allowCors: true
+produces: [application/json]
+x-google-backend:
+  address: ${ACCOUNTS_SERVICE_URL}
+  jwt_audience: ${ACCOUNTS_SERVICE_URL}
+  path_translation: APPEND_PATH_TO_ADDRESS
+securityDefinitions:
+  firebase:
+    type: oauth2
+    flow: implicit
+    authorizationUrl: ''
+    x-google-issuer: https://securetoken.google.com/${PROJECT_ID}
+    x-google-jwks_uri: https://www.googleapis.com/service_accounts/v1/metadata/x509/securetoken@system.gserviceaccount.com
+    x-google-audiences: ${PROJECT_ID}
+security:
+  - firebase: []
+paths:
+  /health:
+    options:
+      operationId: healthPreflight
+      security: []
+      responses: { '200': { description: CORS preflight } }
+    get:
+      operationId: health
+      security: []
+      responses: { '200': { description: Healthy } }
+  /v1/auth/google:
+    options:
+      operationId: googlePreflight
+      security: []
+      responses: { '200': { description: CORS preflight } }
+    post:
+      operationId: googleSignIn
+      security: []
+      responses: { '200': { description: Authenticated }, '401': { description: Rejected } }
+  /v1/auth/refresh:
+    options:
+      operationId: refreshPreflight
+      security: []
+      responses: { '200': { description: CORS preflight } }
+    post:
+      operationId: refreshSession
+      security: []
+      responses: { '200': { description: Refreshed }, '401': { description: Rejected } }
+  /v1/me:
+    options:
+      operationId: currentStudentPreflight
+      security: []
+      responses: { '200': { description: CORS preflight } }
+    get:
+      operationId: currentStudent
+      responses: { '200': { description: Verified student }, '401': { description: Rejected } }
+  /v1/scores:
+    options:
+      operationId: scoresPreflight
+      security: []
+      responses: { '200': { description: CORS preflight } }
+    get:
+      operationId: ownScores
+      responses: { '200': { description: Own score records }, '401': { description: Rejected } }
+  /v1/account/deletion:
+    options:
+      operationId: deletionPreflight
+      security: []
+      responses: { '200': { description: CORS preflight } }
+    post:
+      operationId: requestDeletion
+      responses: { '202': { description: Accepted }, '401': { description: Rejected } }

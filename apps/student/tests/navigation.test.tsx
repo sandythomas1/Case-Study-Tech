@@ -1,10 +1,21 @@
 import { fireEvent } from '@testing-library/react-native';
-import { renderRouter, screen, testRouter } from 'expo-router/testing-library';
+import { renderRouter, screen, testRouter, waitFor } from 'expo-router/testing-library';
+import { copy, resetSession, signInForTest } from './support/auth';
 
-describe('student navigation preview', () => {
-  it('keeps preview links readable, large enough to tap, and visibly focused', async () => {
+jest.mock('../src/auth/runtime', () => ({ session: jest.requireActual('./support/auth').testSession }));
+jest.mock('@react-native-google-signin/google-signin', () => jest.requireActual('./support/auth').googleSignInMock);
+
+const previewNotice = copy.previewNotice;
+
+beforeEach(async () => {
+  process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID = 'test-web-client-id';
+  await resetSession();
+});
+
+describe('student navigation preview before sign-in', () => {
+  it('keeps the Welcome link readable, large enough to tap, and visibly focused', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
-    const link = screen.getByRole('link', { name: 'Explore the preview' });
+    const link = screen.getByRole('link', { name: 'Sign in to explore' });
     expect(link).toHaveStyle({ minHeight: 48, backgroundColor: '#214f88' });
     await fireEvent(link, 'focus');
     expect(link).toHaveStyle({ outlineStyle: 'solid', outlineWidth: 3 });
@@ -15,11 +26,14 @@ describe('student navigation preview', () => {
     expect(link).toHaveStyle({ backgroundColor: '#214f88' });
   });
 
-  it('explores the practice path and returns to Library without creating a result', async () => {
+  it('signs in from Welcome, explores the practice path, and returns to Library without creating a result', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
     expect(screen.getByRole('header', { name: 'Welcome' })).toBeVisible();
+    await fireEvent.press(screen.getByRole('link', { name: 'Sign in to explore' }));
+    expect(screen).toHavePathname('/sign-in');
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
+    await waitFor(() => expect(screen).toHavePathname('/library'));
     for (const [label, path] of [
-      ['Explore the preview', '/library'],
       ['Preview Preparation', '/library/preparation'],
       ['Preview Session', '/library/session'],
       ['Preview Report', '/library/report'],
@@ -27,10 +41,23 @@ describe('student navigation preview', () => {
     ]) {
       await fireEvent.press(screen.getByRole('link', { name: label }));
       expect(screen).toHavePathname(path);
-      expect(screen.getByText('Navigation preview')).toBeVisible();
+      expect(screen.getByText('Preview')).toBeVisible();
       expect(screen.getByRole('button', { name: 'Library', selected: true })).toBeVisible();
     }
   });
+
+  it('discloses preview limitations when Welcome opens directly', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    expect(screen.getByRole('header', { name: 'Welcome' })).toBeVisible();
+    expect(screen.getByText('Preview')).toBeVisible();
+    expect(screen.getByText(previewNotice)).toBeVisible();
+    expect(screen.getByText('Explore the planned counseling practice screens.')).toBeVisible();
+    expect(screen.queryByRole('textbox')).toBeNull();
+  });
+});
+
+describe('student navigation preview after sign-in', () => {
+  beforeEach(signInForTest);
 
   it.each([
     ['/library/preparation', 'Preparation', 'Back to Library', '/library'],
@@ -69,12 +96,12 @@ describe('student navigation preview', () => {
   });
 
   it.each([
-    ['/', 'Welcome'], ['/library', 'Library'], ['/library/preparation', 'Preparation'],
-    ['/library/session', 'Session'], ['/library/report', 'Report'], ['/history', 'Score history'], ['/account', 'Account'],
+    ['/library', 'Library'], ['/library/preparation', 'Preparation'], ['/library/session', 'Session'],
+    ['/library/report', 'Report'], ['/history', 'Score history'], ['/account', 'Account'],
   ])('discloses preview limitations when %s opens directly', async (path, title) => {
     await renderRouter('./src/app', { initialUrl: path });
     expect(screen.getByRole('header', { name: title })).toBeVisible();
-    expect(screen.getByText('Explore the planned screens. Practice, scores, and accounts are not available in this preview.')).toBeVisible();
+    expect(screen.getByText(previewNotice)).toBeVisible();
     expect(screen.queryByRole('textbox')).toBeNull();
     expect(screen.queryByRole('button', { name: /sign in|start practice|submit|finish/i })).toBeNull();
   });
