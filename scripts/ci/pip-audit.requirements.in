@@ -1,0 +1,2 @@
+# Input for pip-audit.requirements.txt; see docs/decisions/ci-tool-pip-audit.md.
+pip-audit==2.10.1

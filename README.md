@@ -17,6 +17,8 @@ npm run web
 
 See the app README for native startup and export commands, tool requirements, and configuration boundaries. iOS simulator startup requires macOS and Xcode. Build/export success alone does not establish an installed native app works.
 
+Every pull request runs the checks described in [docs/CI.md](docs/CI.md).
+
 ## Feature evidence
 
 - [Issue #17 specification](specs/017-cross-platform-scaffold/spec.md)
