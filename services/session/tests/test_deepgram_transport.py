@@ -8,8 +8,13 @@ These tests check what actually goes on the wire.
 import asyncio
 import json
 import logging
+import math
+import subprocess
+import sys
+import textwrap
 from collections.abc import AsyncIterator, Awaitable, Callable
 from http import HTTPStatus
+from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
@@ -25,7 +30,7 @@ from cst_session.speech import (
     SpeechProviderError,
     TranscriptEvent,
 )
-from cst_session.speech.adapters import deepgram
+from cst_session.speech.adapters import deepgram, deepgram_transport
 from cst_session.speech.adapters.deepgram import (
     CLOSE_STREAM,
     FORCE_END_TURN,
@@ -266,6 +271,7 @@ def test_synthesis_round_trip_over_httpx() -> None:
     (request,) = seen
     assert request.url.params["mip_opt_out"] == "true"
     assert request.headers["authorization"] == f"Token {TEST_API_KEY}"
+    assert request.headers["accept-encoding"] == "identity"
     assert json.loads(request.content) == {"text": "What brings you in today?"}
 
 
@@ -300,6 +306,22 @@ def test_a_read_failure_mid_body_is_unavailable_after_the_first_audio() -> None:
     assert isinstance(error, ProviderUnavailableError)
 
 
+def test_a_body_that_cannot_be_decoded_is_unavailable() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            headers={
+                "content-type": "audio/l16;rate=24000",
+                "content-encoding": "gzip",
+            },
+            content=b"not gzip at all",
+        )
+
+    _, error = asyncio.run(_synthesize_with(_speak_client(handler)))
+
+    assert isinstance(error, ProviderUnavailableError)
+
+
 def test_an_error_status_body_never_reaches_the_error_message() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(
@@ -315,7 +337,7 @@ def test_an_error_status_body_never_reaches_the_error_message() -> None:
 # Logs
 
 
-def test_no_log_record_contains_the_key(
+def test_no_client_log_record_contains_the_key_or_any_content(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     caplog.set_level(logging.DEBUG)
@@ -330,15 +352,77 @@ def test_no_log_record_contains_the_key(
 
     # The local stand-in server logs the headers it receives. It is test code,
     # so only the client side, which is ours, is checked.
-    client_records = [
-        record
+    client_messages = [
+        record.getMessage()
         for record in caplog.records
         if not record.name.startswith("websockets.server")
     ]
-    assert client_records
-    assert all(TEST_API_KEY not in record.getMessage() for record in client_records)
+    assert client_messages
+    for secret_or_content in (
+        TEST_API_KEY,
+        "I have been",
+        "What brings you in",
+    ):
+        assert all(secret_or_content not in message for message in client_messages)
 
 
-def test_timeouts_must_be_positive() -> None:
+def test_the_websockets_logger_is_outside_the_logging_registry() -> None:
+    silent = deepgram_transport._SILENT_LOGGER
+
+    assert silent.name not in logging.Logger.manager.loggerDict
+    assert not silent.propagate
+    assert not silent.isEnabledFor(logging.CRITICAL)
+
+
+_LATER_LOGGING_CONFIG = textwrap.dedent(
+    """
+    import logging
+    import logging.config
+
+    from cst_session.speech.adapters import deepgram_transport
+
+    records = []
+
+
+    class Keep(logging.Handler):
+        def emit(self, record):
+            records.append(record.getMessage())
+
+
+    # An unrelated config first (uvicorn's style), then DEBUG for the service.
+    logging.config.dictConfig(
+        {"version": 1, "disable_existing_loggers": False,
+         "loggers": {"uvicorn": {"level": "INFO"}}}
+    )
+    logging.config.dictConfig(
+        {"version": 1, "disable_existing_loggers": False,
+         "handlers": {"keep": {"()": Keep}},
+         "loggers": {"cst_session": {"level": "DEBUG", "handlers": ["keep"]}}}
+    )
+    deepgram_transport._SILENT_LOGGER.debug("> Authorization: Token %s", "k")
+    logging.getLogger("cst_session.probe").debug("probe")
+    assert records == ["probe"], records
+    """
+)
+
+
+def test_later_logging_config_cannot_switch_the_websockets_logger_back_on() -> None:
+    # A subprocess, so the global logging config of this test run is untouched.
+    result = subprocess.run(
+        [sys.executable, "-c", _LATER_LOGGING_CONFIG],
+        cwd=Path(__file__).resolve().parents[1],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("seconds", [0, -1, math.nan, math.inf])
+def test_timeouts_must_be_positive_numbers(seconds: float) -> None:
     with pytest.raises(ValueError):
-        TransportTimeouts(connect_s=0)
+        TransportTimeouts(connect_s=seconds)
+    with pytest.raises(ValueError):
+        TransportTimeouts(read_s=seconds)

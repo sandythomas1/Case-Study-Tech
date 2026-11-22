@@ -26,6 +26,7 @@ Wire format
 
 import asyncio
 import json
+import math
 import re
 from collections.abc import AsyncIterable, AsyncIterator, Mapping
 from contextlib import AbstractAsyncContextManager
@@ -106,8 +107,8 @@ class DeepgramSettings:
             raise ValueError("a Deepgram API key is required")
         if not _VOICE_PATTERN.fullmatch(self.voice):
             raise ValueError("voice must be a lower-case Aura-2 voice name")
-        if self.finalize_timeout_s <= 0:
-            raise ValueError("finalize_timeout_s must be positive")
+        if not (math.isfinite(self.finalize_timeout_s) and self.finalize_timeout_s > 0):
+            raise ValueError("finalize_timeout_s must be a positive number of seconds")
 
     @property
     def tts_model(self) -> str:
@@ -273,6 +274,7 @@ class _Receiver:
         self._stream = stream
         self._sender = sender
         self._finalize_timeout_s = finalize_timeout_s
+        self._deadline: float | None = None
 
     @property
     def audio_sent(self) -> bool:
@@ -288,12 +290,19 @@ class _Receiver:
                 if receive.done():
                     return receive.result()
             self._sender.result()
-            async with asyncio.timeout(self._finalize_timeout_s):
+            async with asyncio.timeout_at(self._finalize_deadline()):
                 return await receive
         except TimeoutError as error:
             raise ProviderTimeoutError("speech provider timed out") from error
         finally:
             await _cancel(receive)
+
+    def _finalize_deadline(self) -> float:
+        """One deadline for everything after the audio, so a chatty server cannot hold the turn."""
+        if self._deadline is None:
+            loop = asyncio.get_running_loop()
+            self._deadline = loop.time() + self._finalize_timeout_s
+        return self._deadline
 
 
 async def _first_chunk(chunks: AsyncIterator[bytes]) -> bytes:

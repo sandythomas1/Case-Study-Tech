@@ -2,11 +2,12 @@
 
 Every library failure becomes ``ProviderUnavailableError`` or
 ``ProviderTimeoutError``, so nothing vendor- or library-specific crosses the
-speech interface. The ``websockets`` logger is disabled because its debug
-output includes the handshake headers, and so the API key.
+speech interface. The ``websockets`` logger is silenced because its debug
+output includes the handshake headers (the API key) and frame payloads.
 """
 
 import logging
+import math
 from collections.abc import AsyncIterator, Awaitable, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -21,9 +22,23 @@ from cst_session.speech.errors import ProviderTimeoutError, ProviderUnavailableE
 
 MAX_MESSAGE_BYTES: Final = 1 << 20
 
-_SILENT_LOGGER: Final = logging.getLogger(__name__ + ".websockets")
-_SILENT_LOGGER.disabled = True
-_SILENT_LOGGER.propagate = False
+
+def _silent_logger() -> logging.Logger:
+    """A logger for ``websockets`` that nothing can switch back on.
+
+    It is built directly, not through ``logging.getLogger``, so it is not in the
+    logging registry: a later ``dictConfig`` or a handler on ``cst_session``
+    cannot re-enable it or make its records propagate. Its debug output would
+    include the handshake headers and frame payloads (DAT-7).
+    """
+    logger = logging.Logger(__name__ + ".websockets", level=logging.CRITICAL + 1)
+    logger.addHandler(logging.NullHandler())
+    logger.propagate = False
+    logger.disabled = True
+    return logger
+
+
+_SILENT_LOGGER: Final = _silent_logger()
 
 
 @dataclass(frozen=True)
@@ -32,8 +47,8 @@ class TransportTimeouts:
     read_s: float = 10.0
 
     def __post_init__(self) -> None:
-        if self.connect_s <= 0 or self.read_s <= 0:
-            raise ValueError("transport timeouts must be positive")
+        if not all(math.isfinite(s) and s > 0 for s in (self.connect_s, self.read_s)):
+            raise ValueError("transport timeouts must be positive numbers of seconds")
 
 
 class _WebSocketStream:
@@ -121,8 +136,11 @@ class HttpxWebsocketsTransport:
         self, url: str, headers: Mapping[str, str], body: bytes
     ) -> AsyncIterator[SpeakResponse]:
         try:
+            # PCM gains nothing from compression, and asking for none keeps a
+            # decompression step off the response path.
+            request_headers = {**headers, "Accept-Encoding": "identity"}
             async with self._http.stream(
-                "POST", url, headers=dict(headers), content=body
+                "POST", url, headers=request_headers, content=body
             ) as response:
                 yield SpeakResponse(
                     status=response.status_code,
@@ -131,7 +149,7 @@ class HttpxWebsocketsTransport:
                 )
         except httpx.TimeoutException as error:
             raise ProviderTimeoutError("speech provider timed out") from error
-        except httpx.TransportError as error:
+        except httpx.HTTPError as error:
             raise ProviderUnavailableError("speech provider is unavailable") from error
 
 
@@ -142,5 +160,5 @@ async def _typed_body(chunks: AsyncIterator[bytes]) -> AsyncIterator[bytes]:
             yield chunk
     except httpx.TimeoutException as error:
         raise ProviderTimeoutError("speech provider timed out") from error
-    except httpx.TransportError as error:
+    except httpx.HTTPError as error:
         raise ProviderUnavailableError("speech provider is unavailable") from error

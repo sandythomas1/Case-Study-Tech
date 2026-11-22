@@ -5,7 +5,9 @@ Every test runs on ``FakeDeepgramTransport`` with generated audio (DAT-6).
 
 import asyncio
 import json
-from collections.abc import AsyncIterator
+import math
+from collections.abc import AsyncIterator, Mapping
+from contextlib import asynccontextmanager
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
@@ -22,6 +24,7 @@ from cst_session.speech.adapters.deepgram import (
     FORCE_END_TURN,
     DeepgramSettings,
     DeepgramSpeechProvider,
+    DeepgramStream,
     listen_url,
     speak_url,
 )
@@ -180,9 +183,12 @@ def test_settings_reject_a_voice_that_is_not_a_plain_name(voice: str) -> None:
         DeepgramSettings(api_key=TEST_API_KEY, voice=voice)
 
 
-def test_settings_reject_a_non_positive_finalize_timeout() -> None:
+@pytest.mark.parametrize("seconds", [0, -1, math.nan, math.inf])
+def test_settings_reject_a_finalize_timeout_that_is_not_a_positive_number(
+    seconds: float,
+) -> None:
     with pytest.raises(ValueError):
-        DeepgramSettings(api_key=TEST_API_KEY, finalize_timeout_s=0)
+        DeepgramSettings(api_key=TEST_API_KEY, finalize_timeout_s=seconds)
 
 
 # Transcription: mapping Flux turns onto transcript events
@@ -488,3 +494,49 @@ def test_empty_text_is_rejected_before_any_request() -> None:
         _synthesize(transport, "\n ")
 
     assert transport.posts == []
+
+
+class _ChattyStream:
+    """A server that keeps sending updates and never ends the turn."""
+
+    def __init__(self) -> None:
+        self.updates = 0
+
+    async def send_audio(self, chunk: bytes) -> None:
+        return None
+
+    async def send_text(self, message: str) -> None:
+        return None
+
+    async def receive(self) -> str | bytes | None:
+        await asyncio.sleep(0.01)
+        self.updates += 1
+        return turn_info("Update", f"word {self.updates}")
+
+
+class _ChattyTransport(FakeDeepgramTransport):
+    @asynccontextmanager
+    async def connect(
+        self, url: str, headers: Mapping[str, str]
+    ) -> AsyncIterator[DeepgramStream]:
+        yield _ChattyStream()
+
+
+def test_a_server_that_never_ends_the_turn_hits_one_total_deadline() -> None:
+    settings = DeepgramSettings(api_key=TEST_API_KEY, finalize_timeout_s=0.1)
+    provider = DeepgramSpeechProvider(settings, _ChattyTransport())
+    events: list[TranscriptEvent] = []
+
+    async def consume() -> None:
+        async for event in provider.transcribe(stream(tone_chunks(2))):
+            events.append(event)
+
+    async def run() -> None:
+        # A per-message deadline would never fire here; the outer bound turns
+        # that hang into a plain TimeoutError, which fails the test.
+        await asyncio.wait_for(consume(), timeout=2)
+
+    with pytest.raises(ProviderTimeoutError):
+        asyncio.run(run())
+    assert events
+    assert not any(event.is_final for event in events)

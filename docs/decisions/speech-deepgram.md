@@ -29,9 +29,11 @@ text from test accounts may be sent (DAT-6).
   improvement. The adapter builds every URL through one function that adds it, and
   `tests/test_deepgram_speech.py` fails if any recorded request lacks it.
 - The API key is sent only in the `Authorization: Token` header, never in a URL, a log line or a
-  `repr`. The `websockets` library logger is disabled in the transport because its debug output
-  includes the handshake headers. `tests/test_deepgram_transport.py` checks that no client log
-  record contains the key.
+  `repr`. The transport gives `websockets` a silenced logger that sits outside the logging
+  registry, because its debug output includes the handshake headers and frame payloads; later
+  logging config cannot switch it back on. `tests/test_deepgram_transport.py` checks that no
+  client log record contains the key, the transcript or the synthesis text (DAT-7), and
+  `tests/test_speech_import_boundary.py` keeps `websockets` inside `adapters/`.
 - The key belongs in Secret Manager, readable only by the session service account, and never in the
   client. That project does not exist until #18, so no key is stored or loaded yet. The adapter
   takes the key as a constructor argument and has no loader.
@@ -58,4 +60,5 @@ The session service connects out to `api.deepgram.com` on 443 (WSS and HTTPS). N
    - how a rejected key shows on the WebSocket upgrade (mapped to provider unavailable).
 2. **Written terms (#101 AC4).** Request a signed data agreement, no retention and no training
    covering `/v2/listen` and `/v1/speak`, a sub-processor list, and permission to process simulated
-   self-harm role-play. Record the status as a Deepgram row in `provider-zero-retention.md` (#19).
+   self-harm role-play. Update the Deepgram row in `provider-zero-retention.md` (#19), which is the
+   AG-3 zero-retention record and stays **Pending** until then.
