@@ -22,6 +22,7 @@ progress. Runs for pushes to `dev` are never cancelled, so every merge gets a re
 | Python (`services/<name>`) | One job per service: `uv sync --locked --python 3.12`, `ruff check`, `mypy`, `pytest`, then pip-audit over the locked dependencies | Any step fails, the lock file is out of date, or a locked dependency has a known vulnerability |
 | Secret scan (history and tree) | gitleaks over every commit reachable from the checked-out ref (for a PR, the merge commit), then over the checked-out tree | Any finding. The tree scan also covers a merge result that no single commit contains. Values are redacted in the log. |
 | Synthetic-fixture check | Unit tests for the checker, then `scripts/ci/check_synthetic_fixtures.py` over all tracked files | See [Synthetic-fixture check](#synthetic-fixture-check) |
+| Workflow lint (zizmor) | zizmor, offline, over `.github/workflows`, any composite action and `.github/dependabot.yml` | Any finding, such as template injection, broad permissions, an action not pinned by SHA or checkout that keeps credentials. Ignore comments and config files are not honored. A file that does not parse also fails. |
 | CI gate | Collects every job result | Any job did not succeed. Python jobs may be skipped only when no service exists. |
 
 Python services have no package "build" step. Their container build and image scan come with the
@@ -38,9 +39,37 @@ credentials, and every action is pinned to a full commit SHA. Every `run` step u
 | gitleaks | 8.30.1, sha256-verified tarball | [ci-tool-gitleaks.md](decisions/ci-tool-gitleaks.md) |
 | pip-audit | 2.10.1, hashed requirements file | [ci-tool-pip-audit.md](decisions/ci-tool-pip-audit.md) |
 | setup-uv and uv | action by commit SHA; uv 0.13.8 with sha256 | [ci-tool-setup-uv.md](decisions/ci-tool-setup-uv.md) |
+| zizmor | 1.32.0, hashed requirements file | [ci-tool-zizmor.md](decisions/ci-tool-zizmor.md) |
+| Dependabot version updates | GitHub service; config in `.github/dependabot.yml` | [ci-tool-dependabot.md](decisions/ci-tool-dependabot.md) |
 
 A new CI tool is judged by the data it sees. It needs an owner decision (ARCHITECTURE §8) and a
 record in `docs/decisions/`.
+
+## Keeping pins current
+
+Every action and tool is pinned, so a hijacked tag or release cannot change what runs. A pin
+does not move on its own, though, so each one has a way to stay current:
+
+| Pin | Where | Kept current by |
+|---|---|---|
+| Every action `uses:` SHA | `.github/workflows/*.yml` | Dependabot: one grouped PR into `dev` each Monday, for releases at least 7 days old. Reviewed as in [ci-tool-dependabot.md](decisions/ci-tool-dependabot.md#review-of-an-update-pr). |
+| gitleaks version and sha256 | `scripts/ci/install-gitleaks.sh` | The monthly check below, then the steps in [ci-tool-gitleaks.md](decisions/ci-tool-gitleaks.md#upgrade) |
+| uv version and sha256 | the `version` and `checksum` inputs of both `setup-uv` steps in `ci.yml` (Python and Workflow lint jobs) | The monthly check below, then the steps in [ci-tool-setup-uv.md](decisions/ci-tool-setup-uv.md). Change both steps together. |
+| pip-audit and its dependencies | `scripts/ci/pip-audit.requirements.in` and `.txt` | The monthly check below, then the steps in [ci-tool-pip-audit.md](decisions/ci-tool-pip-audit.md#upgrade) |
+| zizmor | `scripts/ci/zizmor.requirements.in` and `.txt` | The monthly check below, then the steps in [ci-tool-zizmor.md](decisions/ci-tool-zizmor.md#upgrade) |
+
+Dependabot cannot update a version in a shell script or in an action's `with:` input, so those
+pins get a check on the first Monday of each month:
+
+1. Compare each pin with the tool's latest release:
+   [gitleaks](https://github.com/gitleaks/gitleaks/releases),
+   [uv](https://github.com/astral-sh/uv/releases),
+   [pip-audit](https://pypi.org/project/pip-audit/) and
+   [zizmor](https://pypi.org/project/zizmor/).
+2. Read the notes of every newer release. A security fix is a reason to upgrade now. Otherwise,
+   upgrade when a release is at least a week old.
+3. Upgrade one tool per PR into `dev`, following the steps in its record. Each change needs the
+   owner's review through CODEOWNERS.
 
 ## Owner actions
 
@@ -185,6 +214,31 @@ To prove the scan still fails closed after an upgrade, commit a fake token in a 
 together with an allow-all `.gitleaks.toml` and an inline `gitleaks:allow`. Both
 `run-gitleaks.sh` modes must report it. Then add a root `.gitleaksignore` holding its fingerprint;
 the script must refuse to scan (exit 2).
+
+### Workflow lint
+
+POSIX (from the repository root):
+
+```sh
+uv venv --python 3.12 /tmp/zizmor-venv
+uv pip install --python /tmp/zizmor-venv --require-hashes -r scripts/ci/zizmor.requirements.txt
+/tmp/zizmor-venv/bin/zizmor --offline --no-config --no-ignores --strict-collection --persona=pedantic --collect=workflows,actions,dependabot .
+```
+
+PowerShell (from the repository root):
+
+```powershell
+uv venv --python 3.12 "$env:TEMP\zizmor-venv"
+uv pip install --python "$env:TEMP\zizmor-venv" --require-hashes -r scripts/ci/zizmor.requirements.txt
+& "$env:TEMP\zizmor-venv\Scripts\zizmor.exe" --offline --no-config --no-ignores --strict-collection --persona=pedantic --collect=workflows,actions,dependabot .
+```
+
+To prove the lint still fails closed after an upgrade, run it in a scratch repo over a workflow
+that uses `actions/checkout@v4` with default credentials, echoes
+`${{ github.event.pull_request.title }}` in a `run` step and sets `permissions: write-all`. Mark
+each line with a `# zizmor: ignore[...]` comment and add a `zizmor.yml` that disables those
+audits. It must still report template injection, unpinned uses, credential persistence and
+excessive permissions, and exit non-zero.
 
 ### Synthetic-fixture check
 
