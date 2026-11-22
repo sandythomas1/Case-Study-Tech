@@ -64,7 +64,7 @@ Never penalize:
 - **Sufficient criterion:** The transcript gave the opportunity the criterion defines, and its minimum evidence is met by cited student turns.
 - **Insufficient criterion:** The opportunity did not occur, or the cited turns do not meet the minimum evidence. The criterion contributes nothing to the rating.
 - **Category rating:** A general category is rated when at least 2 of its 3 criteria are sufficient. The scenario-specific category is rated when every criterion its scenario marks as required is sufficient, and the crisis scenario is also rated when a crisis critical failure is found. The rating is the highest level whose behavior anchor describes the student's typical pattern across the session, supported by at least 2 cited student turns.
-- **Harm cap:** One student turn that matches a level 1 behavior caps the category at level 2. Two or more such turns set the category to level 1. Any crisis critical failure sets the crisis scenario-specific rating to level 1, even when CR-1, CR-2 or CR-3 is insufficient.
+- **Harm cap:** One student turn that matches a level 1 behavior caps the category at level 2. Two or more such turns set the category to level 1. Any crisis critical failure sets the crisis scenario-specific rating to level 1, even when CR-1, CR-2 or CR-3 is insufficient, and regardless of how many student turns are cited.
 - **Conflicting evidence:** Rate the level that describes most of the cited turns. If two adjacent levels are equally supported, choose the lower one and cite turns for both. This guards against score inflation. If the cited turns split between levels two or more apart and no level describes most of them, the category abstains with unresolved_conflict.
 - **Uncertain speech recognition:** A student turn that the transcript marks as uncertain speech recognition can never be the only evidence for a level 1 behavior, a harm cap or a crisis critical failure. If a rating or the safety result depends on such a turn, the category abstains.
 - **Abstention:** A category that is not rated abstains, with one reason code. Abstention is reported as abstention. It is never turned into a number.
@@ -521,7 +521,7 @@ Required for a rating: CR-1, CR-2, CR-3.
   - Student: 'When you say everyone would be better off without you, are you having thoughts of ending your life?'
   - Client: 'He gets rough when he drinks.' Student: 'Are you safe at home tonight? Is the person who hurt you there now?'
 - **Does not show it:**
-  - Student: 'You're not going to do anything silly, are you?' (vague and leading toward 'no'. A level 2 pattern, not on its own a critical failure)
+  - Student: 'You're not going to do anything silly, are you?' (vague, and leads toward 'no')
 - **Sources:**
   - siri-2 (adapted). Direct, nonjudgmental inquiry about risk.
 
@@ -542,7 +542,7 @@ Required for a rating: CR-1, CR-2, CR-3.
 
 | Level | Behavior anchor (grader) | Student sees |
 |---|---|---|
-| 1 Beginning | Any crisis critical failure (see crisis_critical_failures). A critical failure always sets this rating to level 1. | Safety requirement not demonstrated. Your response missed a key safety step for this scenario. The safety section of this report shows which step, and what to try next time. |
+| 1 Beginning | Any crisis critical failure (see crisis_critical_failures). A critical failure always sets this rating to level 1. | Safety requirement not demonstrated. Your response missed a key safety step for this scenario. Review the safety steps in this report. |
 | 2 Emerging | Acknowledges the disclosure but responds vaguely or with euphemisms, or moves on before understanding the risk. Safety steps are weak or late. | You noticed the disclosure, but your response stayed vague about the risk. |
 | 3 Developing | Acknowledges the disclosure and asks about risk, but questions are indirect or incomplete. Safety steps or resources come up only briefly. | You acknowledged the disclosure and asked about risk. Being more direct about safety is the next step. |
 | 4 Consistent | Responds calmly and directly, asks clearly about risk and how immediate it is, and turns to immediate safety and help that fits what the client said, with minor gaps in empathy shown in words or in follow-through. | You responded directly and calmly and put the client's safety first. |
@@ -553,7 +553,7 @@ Required for a rating: CR-1, CR-2, CR-3.
 Applies to `crisis_risk` only.
 
 - **Precedence:** Any one critical failure makes the safety result 'safety requirement not demonstrated'. That result leads the report, and the average is shown only as a secondary measure. No category rating or average can outweigh it (RC-19, SCO-5).
-- **Safety result:** The safety result is 'safety requirement not demonstrated' when any critical failure is found, whatever any category or other rule yields. A critical failure that rests only on a turn marked as uncertain speech recognition is not found (see the uncertain-recognition rule). The result is 'safety requirement met' when CR-1, CR-2 and CR-3 are all sufficient and no critical failure is found. Otherwise the scenario-specific category abstains and no safety result is given.
+- **Safety result:** The safety result is 'safety requirement not demonstrated' when any critical failure is found, whatever any category or other rule yields. The result is 'safety requirement met' when CR-1, CR-2 and CR-3 are all sufficient and no critical failure is found. Otherwise the scenario-specific category abstains and no safety result is given.
 - **Evidence:** A critical failure cites the disclosure turn and the student turn or turns that show the failure. A failure that rests on the absence of a response cites the disclosure and states that no later student turn addresses it.
 
 ### CF-IGNORE Ignoring explicit risk
@@ -570,7 +570,6 @@ Not a failure:
 - a brief reflection of feeling before asking about risk
 - letting the client finish a thought, then returning to the disclosure
 - a normalizing lead-in followed in the same or next student turn by a direct risk question, for example 'When people are in this much pain, they sometimes think about ending their life. Have you had thoughts like that?'
-- a vague or euphemistic risk question, which is a level 2 pattern under CR-2 and not on its own a critical failure
 
 Sources: sdd-v1 (direct); siri-2 (adapted).
 

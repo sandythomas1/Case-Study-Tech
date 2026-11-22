@@ -66,6 +66,9 @@ class RealSpecTest(unittest.TestCase):
         self.assertIn("whatever any category or other rule yields", rule)
         harm_cap = REAL_SPEC["evidence_policy"]["harm_cap_rule"]
         self.assertIn("even when CR-1, CR-2 or CR-3 is insufficient", harm_cap)
+        self.assertIn("regardless of how many student turns are cited", harm_cap)
+        # Owner escalation 4 is open: the spec must not exempt uncertain-recognition turns.
+        self.assertNotIn("is not found", rule)
 
     def test_only_pa4_instruments_are_cited(self) -> None:
         cited = {s["id"] for s in REAL_SPEC["sources"] if s["family"] != "project_requirement"}
@@ -382,11 +385,11 @@ class HardeningTest(SpecRuleTestCase):
         spec["sources"].append(dict(spec["sources"][0], id="bsed", family="social_work_mft"))
         self.assertBreaks(spec, "'bsed' is not a free instrument listed in plan PA-4")
 
-    def test_project_requirement_source_is_allowed(self) -> None:
+    def test_project_requirement_family_cannot_admit_an_instrument(self) -> None:
         spec = fresh()
         sdd = next(s for s in spec["sources"] if s["family"] == "project_requirement")
-        spec["sources"].append(dict(sdd, id="sdd-v2"))
-        self.assertEqual(checker.validate(spec), [])
+        spec["sources"].append(dict(sdd, id="bsed"))
+        self.assertBreaks(spec, "'bsed' is not a known project requirement source")
 
     def test_excluded_instrument_under_another_id_fails(self) -> None:
         for name in ("MITI 4.2.1 coding manual", "Counselor Competencies Scale-Revised"):

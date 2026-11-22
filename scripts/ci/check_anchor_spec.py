@@ -69,8 +69,10 @@ PA4_SOURCES = frozenset(
         "mi-principles",
     }
 )
-# The project's own requirements may also be cited, as the project_requirement family.
+# The project's own requirements may also be cited. Only these ids, so the family can't be
+# used to slip in another instrument.
 PROJECT_REQUIREMENT_FAMILY = "project_requirement"
+PROJECT_REQUIREMENT_SOURCES = frozenset({"sdd-v1"})
 # Catches an excluded instrument listed under another id.
 EXCLUDED_NAMES = re.compile(
     r"\b(CCS-R|MITI)\b|Counselor Competencies Scale|Treatment Integrity", re.IGNORECASE
@@ -284,7 +286,10 @@ class _Validator:
             family = _text_or_none(source.get("family"))
             if family not in SOURCE_FAMILIES:
                 self.fail(where, f"family {source.get('family')!r} is not a known family")
-            elif family != PROJECT_REQUIREMENT_FAMILY and source_id not in PA4_SOURCES:
+            elif family == PROJECT_REQUIREMENT_FAMILY:
+                if source_id not in PROJECT_REQUIREMENT_SOURCES:
+                    self.fail(where, f"{source_id!r} is not a known project requirement source")
+            elif source_id not in PA4_SOURCES:
                 self.fail(
                     where,
                     f"{source_id!r} is not a free instrument listed in plan PA-4 (SCO-7)",
