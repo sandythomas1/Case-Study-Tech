@@ -70,6 +70,12 @@ post a comment on the issue:
   on the default branch, so they do nothing in `dev`).
 - Promotion PRs (`dev → staging`, `staging → main`) list every issue they carry. Use
   `Closes #<n>` only on the `staging → main` PR.
+- Merge method: squash feature PRs into `dev`. Merge promotion PRs with **Create a merge commit**,
+  so each promotion only adds commits on top. The `promotion-gate` Ruleset allows only that method
+  on `staging` and `main`. A squash promotion puts a commit on the target branch that `dev` lacks,
+  and the next promotion then shows old changes again (#95).
+- Sync PRs, which merge `staging` or `main` back into `dev` to repair history, also use
+  **Create a merge commit**. A squash or rebase drops the history they exist to add.
 - After the `main` merge closes an issue, **confirm its Status is Released** and set it if not —
   the Project's built-in "Item closed" automation may move it elsewhere.
 

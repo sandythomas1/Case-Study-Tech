@@ -88,3 +88,57 @@ Adopt the fixes when they ship:
 - The Jest coverage chain moves to test-exclude 8.
 
 The #61 release gate stays open until two things happen: the bump is committed, and the emulator, real-store and native checks are repeated on it.
+
+## Closing re-audit, 2026-11-22
+
+The 2026-11-18 bump is now committed. It is `f514c56` on `feature/4-access-accounts` (PR #62), and the same Expo 58.0.26 tree reached `dev` through #71 (`62462d8`). This section repeats the clean-install audit and the checks the release gate asked for on the committed trees.
+
+Environment: Windows 11, Node 24.11.1, npm 11.19.1 (the version CI uses), uv 0.12.5, Java 25.0.2, firebase-tools 15.18.0. Trees: `origin/dev` at `a365ed4` and `origin/feature/4-access-accounts` at `bfa5066`.
+
+### Audit results
+
+| Tree | Method | High or critical | Moderate |
+| --- | --- | --- | --- |
+| `dev` `apps/student` | `npm ci`, then `npm audit --json` | 0 | 22 entries, 2 advisories |
+| PR #62 `apps/student` | `npm audit --json --package-lock-only` | 0 | 22 entries, 2 advisories |
+| PR #62 `infra` | `npm ci`, then `npm audit` | 0 | 0 |
+
+- Installed versions on `dev`: expo 58.0.26, `@expo/cli` 58.1.21, node-forge 1.4.3, braces 3.0.3, minimatch 10.2.6 (root), glob 13.0.6 (root), jest 30.5.2 and jest-expo 58.0.15. PR #62's lockfile resolves the same versions for each of these packages.
+- The two advisories this Issue was opened for are closed. node-forge [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv) affects 1.4.0 and earlier, and 1.4.3 is installed. braces [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) was withdrawn on 2026-10-23.
+- The 22 moderate entries come from the same two advisories the 2026-11-18 section describes: minimatch [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249) through `expo` → `@expo/fingerprint`, and glob [GHSA-3g3m-2fjr-6pw4](https://github.com/advisories/GHSA-3g3m-2fjr-6pw4) with minimatch 9 through the Jest 30 coverage chain. Each fix is still a semver-major change outside the declared ranges, so no override was applied.
+- npm marks part of the Jest chain as `prod` only because `expo-router` declares an optional peer on `@testing-library/react-native`, which peers on `jest`. `npm explain glob@10.5.0` shows the path. The chain still runs only under `npm test`.
+
+### Checks repeated on the committed trees
+
+| Check | Tree | Result |
+| --- | --- | --- |
+| `npm ci`, `npm audit --audit-level=high` | `dev` student | Pass (exit 0) |
+| `npm run lint`, `npm run typecheck` | `dev` student | Pass |
+| `npm test` | `dev` student | 15 of 15 tests, 2 suites |
+| `npx expo install --check`, Expo Doctor | `dev` student | Pass, Doctor 20 of 20 |
+| `expo export` web, Android and iOS | `dev` student | All three pass |
+| Bundle search for `minimatch`, `globparts`, `node-forge` and `braces` | `dev` exports | No package code. The only match is React's "wrap your children in braces" warning text in the web bundle. |
+| `uv run pytest`, `ruff check`, `mypy` | `dev` `services/session` | 44 passed, clean, clean |
+| Firestore rules tests (`npm --prefix infra test` in the emulator) | PR #62 | 4 of 4 |
+| Real-store adapter tests (`test_store_emulator.py` in the emulator) | PR #62 | 5 of 5 |
+| CI gate | `dev` `a365ed4`, PR #62 `bfa5066` | Green. Both runs include the high-threshold audit and pip-audit. |
+| Installed Android release APK | `dev` student (`8f72a84`) | Built, installed and launched on the Pixel_7 emulator (Android 16, x86_64). Welcome screen, then Library with bottom tabs, then Back. No crash-buffer entries and no `FATAL EXCEPTION`. |
+
+### Installed Android build
+
+The bump changed native-code packages (react-native 0.88.1, react-native-screens, react-native-safe-area-context), and it also pulls in react-native-gesture-handler 3.4.0 as an optional peer of expo-router. The JavaScript exports prove bundling only, so a release APK was built and installed on 2026-11-22.
+
+- **Build:** `npm ci` (npm 11.19.1), `expo prebuild --platform android`, then `gradlew assembleRelease -PreactNativeArchitectures=x86_64`, run from the committed tree in WSL Ubuntu 22.04 with JDK 21, NDK 27.1.12297006 and CMake 3.22.1. The app's own native step (`:app:buildCMakeRelWithDebInfo[x86_64]`) compiled, and `app-release.apk` is 29.6 MB.
+- **Run:** `adb install` succeeded. `am start -W` reported a cold start of 1,880 ms. The app stayed running through Welcome → Library → Back, the crash buffer was empty, and logcat had no `FATAL EXCEPTION` or React Native error.
+- **Windows hosts can't build it natively.** On Windows the same build fails in `:app:buildCMakeDebug` with `ninja: error: mkdir(...)`. The gesture-handler codegen object directory is 267 characters even from `C:\cst61`, which is over the 260-character limit, and the SDK's ninja 1.10.2 has no long-path support. This is a host limit, not an app defect. Build Android on Linux, WSL, macOS or EAS.
+
+### Limitations
+
+- **No iOS installed build.** iOS needs a Mac, and #103 tracks it. The iOS export passes.
+- **One ABI.** Only the x86_64 APK was built and run. The arm64-v8a native code for physical devices was not compiled here.
+- Real Google sign-in is still unverified on any platform. That gate belongs to #25 and PR #62, not to this audit.
+- PR #62's student tree was audited from its lockfile without a separate install. Its own CI run at `bfa5066` installs it and passes.
+
+### Release gate status
+
+Every high and critical finding the gate covers is resolved by a supported in-range update, and the emulator, real-store and installed Android checks the gate asked for were repeated on the committed bump. None of them was declared inapplicable or risk-accepted, and no audit threshold or override changed. Two moderate advisories remain in build and test tooling only, with no in-range upstream fix. They are below the CI gate's threshold, so this is not a clean audit and not a risk acceptance. Adopt the upstream fixes when they ship: `@expo/fingerprint` moving to minimatch 11.0.1 or later, and the Jest coverage chain moving to test-exclude 8. Dependabot does not cover npm in this repository (see [ci-tool-dependabot.md](decisions/ci-tool-dependabot.md)), so check this during dependency updates.
