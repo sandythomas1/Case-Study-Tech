@@ -1,0 +1,2 @@
+# Input for zizmor.requirements.txt; see docs/decisions/ci-tool-zizmor.md.
+zizmor==1.32.0

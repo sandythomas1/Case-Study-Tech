@@ -117,11 +117,15 @@ jobs:
       - run: uv run --frozen ruff check .
       - run: uv run --frozen mypy .
       - run: uv run --frozen pytest
+      # UV_NO_CONFIG and --no-build: a planted uv.toml cannot redirect the index or force a source
+      # build, so only the hashed wheels install (docs/decisions/ci-tool-setup-uv.md).
       - name: Install pinned pip-audit into a throwaway venv
         working-directory: .
+        env:
+          UV_NO_CONFIG: '1'
         run: |
           uv venv --python 3.12 "$RUNNER_TEMP/pip-audit-venv"
-          uv pip install --python "$RUNNER_TEMP/pip-audit-venv" --require-hashes \
+          uv pip install --python "$RUNNER_TEMP/pip-audit-venv" --require-hashes --no-build \
             -r scripts/ci/pip-audit.requirements.txt
       - name: Dependency audit of the locked dependencies
         run: |
@@ -163,9 +167,39 @@ jobs:
       - name: Check tracked files for session content
         run: python scripts/ci/check_synthetic_fixtures.py
 
+  workflow-lint:
+    name: Workflow lint (zizmor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # A planted uv.toml or pyproject.toml [tool.uv] cannot redirect the zizmor install.
+      UV_NO_CONFIG: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.8'
+          # sha256 of uv-x86_64-unknown-linux-gnu.tar.gz for 0.13.8 (docs/decisions/ci-tool-setup-uv.md).
+          checksum: '5acfd9177cfecf0bf87578f059728215ccc884388988f55f7a65041b57387d91'
+          enable-cache: false
+      - name: Install pinned zizmor into a throwaway venv
+        run: |
+          uv venv --python 3.12 "$RUNNER_TEMP/zizmor-venv"
+          uv pip install --python "$RUNNER_TEMP/zizmor-venv" --require-hashes --no-build \
+            -r scripts/ci/zizmor.requirements.txt
+      # Offline: no token and no network. --no-config and --no-ignores stop a planted zizmor.yml
+      # or an inline "zizmor: ignore" comment from hiding a finding. --collect=all also ignores
+      # .gitignore, which would otherwise hide a tracked workflow (docs/decisions/ci-tool-zizmor.md).
+      - name: Lint the workflows, actions and Dependabot config
+        run: |
+          "$RUNNER_TEMP/zizmor-venv/bin/zizmor" --offline --no-config --no-ignores \
+            --strict-collection --persona=pedantic --collect=all --color=always .
+
   ci-gate:
     name: CI gate
-    needs: [student, discover-services, python, secret-scan, fixtures]
+    needs: [student, discover-services, python, secret-scan, fixtures, workflow-lint]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -176,7 +210,7 @@ jobs:
           SERVICES: ${{ needs.discover-services.outputs.services }}
         run: |
           failed=0
-          for job in student discover-services python secret-scan fixtures; do
+          for job in student discover-services python secret-scan fixtures workflow-lint; do
             result="$(jq --raw-output --arg job "$job" '.[$job].result' <<<"$RESULTS")"
             if [ "$job" = python ] && [ "$result" = skipped ] && [ "$SERVICES" = '[]' ]; then
               echo "python: skipped (no Python services found)"
