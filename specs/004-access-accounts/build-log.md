@@ -42,3 +42,16 @@ Routing: the error mapping now reads provider error codes and response bodies on
 - Outcome, dispatch 8 (security re-check): CLEAR. S11 LOW accepted and noted on #104.
 - Outcome, dispatch 7 (QA re-verify): PASS. Jest 97/97; accounts 45/45 with the emulator; browser checks 9/9; web routes 8/8; 9 screenshots re-captured. Keyboard check passes: opening the dialog focuses Cancel, and a stray Enter or Escape does not delete. 4/5 acceptance criteria are proven; #25's real Google sign-in is still PENDING-MANUAL (it needs the owner's OAuth clients). The Firestore emulator (PID 38988) is still running; QA was denied permission to stop it, so the owner has been told.
 - Phase 5 closed except the merge gate. Committing locally; the push and the ready-for-review PR wait for the real sign-in proof (standing rule: only a complete feature is PR'd without asking).
+
+## Run 2026-11-22 (evening): #25 + #26 + #18 ship together in PR #62
+- Input (Sandy, verbatim): "these issues and work  #25, #26, #18: these ship in the same PR #62"
+- Gates: #25 and #26 are In Progress with Human Review Reviewed (this run resumes them). #18 is In Progress with **Human Review Pending**, so its live work waits for the owner (issue-workflow Start check 2). Check 0 passed: CLAUDE.md and .claude match origin/dev.
+- Merged origin/dev (6 commits) as aa33233. One add/add conflict on docs/student-toolchain-audit.md; took dev's copy from #114, a strict superset (+54 lines, no removals). Local commit, not pushed yet.
+- Checks on aa33233: Jest 97/97, lint and tsc clean, npm audit 0 high/critical (22 moderate); accounts 45/45 with the Firestore emulator; session 44/44; ruff and mypy clean in both services; rules 4/4; anchor-spec check valid.
+- Remaining gates, all owner-side:
+  - #25 AC1: real Google sign-in on web and Android needs the owner's OAuth clients.
+  - #18: Human Review; AC1 rewording (grading has no gateway route by design, AD-3); owner-run apply of infra/session-grading with digest-pinned placeholder images (runbook), then the agent runs the 11 read-only checks.
+  - #26: all ACs ticked; nothing left.
+- Roster: none spawned yet. No code is left that an agent can usefully change before the owner's actions; QA runs again after the real sign-in and apply.
+- Sandy's choices (AskUserQuestion, verbatim): "Reword; you set Reviewed (Recommended)" for #18 and "Push now (Recommended)" for the merge-forward.
+- Coordination: session applied-ai-behavioral-sciences-28 (on #46, same PR) is creating the OAuth clients in Chrome. The web client exists. Agreed split: that session finishes the console setup (Android client, Identity Platform provider) and hands over the client IDs. This run owns the branch, apps/student/.env and the real sign-in run for #25 and #46. The deployed API allows only the https://casestudy-tech-dev-2e03d0.web.app origin, so web sign-in runs from Firebase Hosting.
