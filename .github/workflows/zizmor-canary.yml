@@ -1,0 +1,16 @@
+# THROWAWAY canary for #110 AC2. Never merge. Manual trigger only, so it cannot run from this PR.
+name: zizmor canary
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    name: Deliberate template injection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo an attacker-controlled value straight into the shell
+        run: echo "${{ github.event.pull_request.title }}"
