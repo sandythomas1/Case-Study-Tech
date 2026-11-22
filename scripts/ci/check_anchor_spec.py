@@ -55,6 +55,26 @@ GENERAL_CRITERIA_PER_CATEGORY = 3
 
 # PA-4: these must stay listed as excluded, and nothing may cite them.
 REQUIRED_EXCLUSIONS = frozenset({"ccs-r", "miti-manual"})
+# PA-4 and SCO-7: the only instruments and concepts a criterion may cite. Adding one is a
+# plan change for the owner (amend PA-4 first), not a rubric edit.
+PA4_SOURCES = frozenset(
+    {
+        "enact-equip",
+        "fis",
+        "cts-r",
+        "bogo-osce",
+        "cswe-epas-2022",
+        "siri-2",
+        "ivey-microskills",
+        "mi-principles",
+    }
+)
+# The project's own requirements may also be cited, as the project_requirement family.
+PROJECT_REQUIREMENT_FAMILY = "project_requirement"
+# Catches an excluded instrument listed under another id.
+EXCLUDED_NAMES = re.compile(
+    r"\b(CCS-R|MITI)\b|Counselor Competencies Scale|Treatment Integrity", re.IGNORECASE
+)
 SOURCE_FAMILIES = frozenset(
     {
         "counseling_core_skills",
@@ -72,9 +92,12 @@ CRITERION_ID = re.compile(r"[A-Z]{2}-[1-9]\d*")
 # SCO-6 and AG-5: a score or a student-facing label never names an instrument.
 # SCO-9: the score is never a percent. Word boundaries keep "fist" or "phase" safe.
 BANNED_LABEL_TERMS = re.compile(
-    r"\b(MITI|ENACT|EQUIP|CTRS|CTS-R|CCS-R|FIS|SIRI|OSCE|EPAS|BSED)\b|%|\bpercent\b",
+    r"\b(MITI|ENACT|EQUIP|CTRS|CTS-R|CCS-R|FIS|SIRI|OSCE|EPAS|BSED)\b"
+    r"|Treatment Integrity|Counselor Competencies Scale|Cognitive Therapy Scale"
+    r"|Suicide Intervention Response|%|\bpercent\b",
     re.IGNORECASE,
 )
+ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 CRITERION_TEXT_FIELDS = (
     "id",
@@ -108,6 +131,16 @@ def _is_text(value: object) -> TypeGuard[str]:
 
 def _is_text_list(value: object) -> bool:
     return isinstance(value, list) and len(value) > 0 and all(_is_text(v) for v in value)
+
+
+def _is_int(value: object) -> TypeGuard[int]:
+    # bool is a subclass of int, and 1.0 == 1, so neither may stand in for a level or weight.
+    return type(value) is int
+
+
+def _text_or_none(value: object) -> str | None:
+    """Return value if it is text, so it can be used in a set lookup without a TypeError."""
+    return value if isinstance(value, str) else None
 
 
 def _as_list(value: object) -> list[Any]:
@@ -146,12 +179,16 @@ class _Validator:
         return self.errors
 
     def _check_header(self) -> None:
+        for key in ("spec_id", "title"):
+            if not _is_text(self.spec[key]):
+                self.fail(key, "must be non-empty text")
+        for key in ("satisfies", "constrained_by"):
+            if key in self.spec and not _is_text_list(self.spec[key]):
+                self.fail(key, "must be a non-empty list of text")
         version = self.spec["spec_version"]
         if not (isinstance(version, str) and SEMVER.fullmatch(version)):
             self.fail("spec_version", f"{version!r} is not MAJOR.MINOR.PATCH")
-        status = _as_dict(self.spec["approval"]).get("status")
-        if status not in APPROVAL_STATUSES:
-            self.fail("approval.status", f"{status!r} is not one of {sorted(APPROVAL_STATUSES)}")
+        self._check_approval()
         intended = _as_dict(self.spec["intended_use"])
         for key in ("purpose", "student_disclaimer"):
             if not _is_text(intended.get(key)):
@@ -173,24 +210,65 @@ class _Validator:
         for key in ("abstention_reasons", "forbidden_fallbacks"):
             if not _is_text_list(policy.get(key)):
                 self.fail(f"evidence_policy.{key}", "must be a non-empty list of text")
+        outcomes = _as_dict(policy.get("criterion_outcomes"))
+        for key in ("sufficient", "insufficient"):
+            if not _is_text(outcomes.get(key)):
+                self.fail(f"evidence_policy.criterion_outcomes.{key}", "must be non-empty text")
+        boundaries = _as_dict(self.spec["assessment_boundaries"])
+        if not _is_text(boundaries.get("assess_only")):
+            self.fail("assessment_boundaries.assess_only", "must be non-empty text")
+        for key in ("never_infer", "never_reward", "never_penalize"):
+            if not _is_text_list(boundaries.get(key)):
+                self.fail(f"assessment_boundaries.{key}", "must be a non-empty list of text")
+
+    def _check_approval(self) -> None:
+        # Only the owner approves a version (Issue #21), so "approved" must say who and when,
+        # and a proposal must not carry an approver.
+        approval = _as_dict(self.spec["approval"])
+        status = _text_or_none(approval.get("status"))
+        if status not in APPROVAL_STATUSES:
+            self.fail(
+                "approval.status",
+                f"{approval.get('status')!r} is not one of {sorted(APPROVAL_STATUSES)}",
+            )
+            return
+        approved_by, approved_on = approval.get("approved_by"), approval.get("approved_on")
+        if status == "proposed":
+            if approved_by is not None or approved_on is not None:
+                self.fail("approval", "a proposed spec has no approved_by or approved_on")
+            return
+        if not _is_text(approved_by):
+            self.fail("approval.approved_by", f"an {status} spec must name the approver")
+        if not (isinstance(approved_on, str) and ISO_DATE.fullmatch(approved_on)):
+            self.fail("approval.approved_on", f"an {status} spec needs a YYYY-MM-DD date")
 
     def _check_scale(self) -> None:
         scale = _as_dict(self.spec["scale"])
-        if scale.get("min") != 1 or scale.get("max") != 5:
+        if not (_is_int(scale.get("min")) and _is_int(scale.get("max"))) or (
+            scale.get("min"),
+            scale.get("max"),
+        ) != (1, 5):
             self.fail("scale", "must run from 1 to 5 (RC-17)")
         levels = _as_list(scale.get("levels"))
-        numbers = tuple(_as_dict(level).get("level") for level in levels)
-        if numbers != EXPECTED_LEVELS:
-            self.fail("scale.levels", f"levels are {numbers}, expected {EXPECTED_LEVELS}")
+        self._check_level_numbers(levels, "scale.levels")
         for level in levels:
             for key in ("label", "meaning"):
                 if not _is_text(_as_dict(level).get(key)):
                     self.fail(f"scale.levels[{_as_dict(level).get('level')}]", f"{key} is empty")
 
+    def _check_level_numbers(self, levels: Sequence[Any], where: str) -> None:
+        numbers = tuple(_as_dict(level).get("level") for level in levels)
+        if numbers != EXPECTED_LEVELS or not all(_is_int(n) for n in numbers):
+            self.fail(where, f"levels are {numbers}, expected {EXPECTED_LEVELS} (RC-17)")
+
     def _check_scenarios(self) -> None:
-        ids = tuple(_as_dict(s).get("id") for s in _as_list(self.spec["scenarios"]))
+        scenarios = [_as_dict(s) for s in _as_list(self.spec["scenarios"])]
+        ids = tuple(s.get("id") for s in scenarios)
         if ids != EXPECTED_SCENARIOS:
             self.fail("scenarios", f"ids are {ids}, expected {EXPECTED_SCENARIOS}")
+        for scenario in scenarios:
+            if not _is_text(scenario.get("name")):
+                self.fail(f"scenarios[{scenario.get('id')}]", "name is empty")
 
     def _check_sources(self) -> None:
         for index, source in enumerate(_as_list(self.spec["sources"])):
@@ -203,18 +281,28 @@ class _Validator:
             if source_id in self.source_ids:
                 self.fail(where, f"duplicate source id {source_id!r}")
             self.source_ids.add(source_id)
-            if source.get("family") not in SOURCE_FAMILIES:
+            family = _text_or_none(source.get("family"))
+            if family not in SOURCE_FAMILIES:
                 self.fail(where, f"family {source.get('family')!r} is not a known family")
+            elif family != PROJECT_REQUIREMENT_FAMILY and source_id not in PA4_SOURCES:
+                self.fail(
+                    where,
+                    f"{source_id!r} is not a free instrument listed in plan PA-4 (SCO-7)",
+                )
             for key in ("citation", "use"):
                 if not _is_text(source.get(key)):
                     self.fail(where, f"{key} is empty")
+            citation = source.get("citation")
+            if isinstance(citation, str) and EXCLUDED_NAMES.search(citation):
+                self.fail(where, "cites an excluded instrument under another id (PA-4)")
             url = source.get("url")
             if not (isinstance(url, str) and url.startswith("https://")):
                 self.fail(where, "url must be an https link")
         for index, excluded in enumerate(_as_list(self.spec["excluded_sources"])):
             excluded = _as_dict(excluded)
-            if not _is_text(excluded.get("reason")):
-                self.fail(f"excluded_sources[{index}]", "reason is empty")
+            for key in ("name", "reason"):
+                if not _is_text(excluded.get(key)):
+                    self.fail(f"excluded_sources[{index}]", f"{key} is empty")
             if _is_text(excluded.get("id")):
                 self.excluded_ids.add(excluded["id"])
         missing = REQUIRED_EXCLUSIONS - self.excluded_ids
@@ -229,7 +317,7 @@ class _Validator:
         found = tuple(
             (_as_dict(c).get("id"), _as_dict(c).get("weight_percent")) for c in categories
         )
-        if found != EXPECTED_CATEGORIES:
+        if found != EXPECTED_CATEGORIES or not all(_is_int(weight) for _, weight in found):
             self.fail(
                 "categories",
                 f"ids and weights are {found}, expected {EXPECTED_CATEGORIES} (RC-17, SCO-2)",
@@ -243,6 +331,8 @@ class _Validator:
             if category.get("id") == SCENARIO_CATEGORY:
                 self._check_scenario_variants(category, where)
                 continue
+            if "scenario_variants" in category:
+                self.fail(where, f"only {SCENARIO_CATEGORY} may have scenario_variants")
             criteria = _as_list(category.get("criteria"))
             if len(criteria) != GENERAL_CRITERIA_PER_CATEGORY:
                 self.fail(
@@ -267,11 +357,11 @@ class _Validator:
             if not criteria:
                 self.fail(variant_where, "has no criteria")
             self._check_criteria(criteria, variant_where)
-            criterion_ids = {_as_dict(c).get("id") for c in criteria}
+            criterion_ids = {_text_or_none(_as_dict(c).get("id")) for c in criteria}
             required = _as_list(variant.get("required_criteria"))
             if not required:
                 self.fail(variant_where, "required_criteria is empty")
-            unknown = [r for r in required if r not in criterion_ids]
+            unknown = [r for r in required if not _is_text(r) or r not in criterion_ids]
             if unknown:
                 self.fail(variant_where, f"required_criteria {unknown} are not its criteria")
             self._check_levels(variant.get("levels"), variant_where)
@@ -295,9 +385,7 @@ class _Validator:
 
     def _check_levels(self, levels: object, where: str) -> None:
         levels = _as_list(levels)
-        numbers = tuple(_as_dict(level).get("level") for level in levels)
-        if numbers != EXPECTED_LEVELS:
-            self.fail(where, f"levels are {numbers}, expected {EXPECTED_LEVELS} (RC-17)")
+        self._check_level_numbers(levels, where)
         for level in levels:
             level = _as_dict(level)
             for key in LEVEL_TEXT_FIELDS:
@@ -314,7 +402,12 @@ class _Validator:
                 self.fail(f"{where}.{key}", "must be non-empty text")
         failures = _as_list(block.get("failures"))
         ids = [_as_dict(f).get("id") for f in failures]
-        if len(ids) != len(set(ids)) or set(ids) != EXPECTED_CRISIS_FAILURES:
+        text_ids = [i for i in ids if isinstance(i, str)]
+        if (
+            len(text_ids) != len(ids)
+            or len(ids) != len(set(text_ids))
+            or set(text_ids) != EXPECTED_CRISIS_FAILURES
+        ):
             self.fail(
                 where,
                 f"failures are {ids}, expected exactly {sorted(EXPECTED_CRISIS_FAILURES)} (RC-19)",
@@ -339,11 +432,12 @@ class _Validator:
         for citation in citations:
             citation = _as_dict(citation)
             source = citation.get("source")
-            if source in self.excluded_ids:
+            source_id = _text_or_none(source)
+            if source_id in self.excluded_ids:
                 self.fail(where, f"cites excluded source {source!r} (PA-4)")
-            elif source not in self.source_ids:
+            elif source_id not in self.source_ids:
                 self.fail(where, f"cites unknown source {source!r}")
-            if citation.get("relation") not in CITATION_RELATIONS:
+            if _text_or_none(citation.get("relation")) not in CITATION_RELATIONS:
                 self.fail(
                     where,
                     f"relation {citation.get('relation')!r} is not one of "
@@ -377,6 +471,11 @@ def _all_levels(spec: Mapping[str, Any]) -> Iterator[tuple[str, Mapping[str, Any
                 yield f"categories[{category.get('id')}].{variant.get('scenario')}", _as_dict(level)
 
 
+def _criterion_name(criterion: Mapping[str, Any], where: str) -> Iterator[tuple[str, str]]:
+    if isinstance(criterion.get("name"), str):
+        yield f"{where}.{criterion.get('id')}.name", criterion["name"]
+
+
 def _label_texts(spec: Mapping[str, Any]) -> Iterator[tuple[str, str]]:
     """Yield every score label, anchor and line of text a student can see."""
     disclaimer = _as_dict(spec.get("intended_use")).get("student_disclaimer")
@@ -387,10 +486,24 @@ def _label_texts(spec: Mapping[str, Any]) -> Iterator[tuple[str, str]]:
         for key in ("label", "meaning"):
             if isinstance(level.get(key), str):
                 yield f"scale.levels[{level.get('level')}].{key}", level[key]
+    for scenario in _as_list(spec.get("scenarios")):
+        scenario = _as_dict(scenario)
+        if isinstance(scenario.get("name"), str):
+            yield f"scenarios[{scenario.get('id')}].name", scenario["name"]
     for category in _as_list(spec.get("categories")):
         category = _as_dict(category)
+        where = f"categories[{category.get('id')}]"
         if isinstance(category.get("name"), str):
-            yield f"categories[{category.get('id')}].name", category["name"]
+            yield f"{where}.name", category["name"]
+        for criterion in _as_list(category.get("criteria")):
+            yield from _criterion_name(_as_dict(criterion), where)
+        for variant in _as_list(category.get("scenario_variants")):
+            variant = _as_dict(variant)
+            variant_where = f"{where}.{variant.get('scenario')}"
+            if isinstance(variant.get("focus"), str):
+                yield f"{variant_where}.focus", variant["focus"]
+            for criterion in _as_list(variant.get("criteria")):
+                yield from _criterion_name(_as_dict(criterion), variant_where)
     for where, level in _all_levels(spec):
         for key in LEVEL_TEXT_FIELDS:
             if isinstance(level.get(key), str):
@@ -542,7 +655,7 @@ def render_markdown(spec: Mapping[str, Any]) -> str:
             category["definition"],
             "",
         ]
-        if "scenario_variants" in category:
+        if category["id"] == SCENARIO_CATEGORY:
             for variant in category["scenario_variants"]:
                 required = ", ".join(variant["required_criteria"])
                 lines += [

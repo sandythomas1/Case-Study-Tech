@@ -16,18 +16,22 @@ three scenario variants of scenario-specific competence, and the RC-19 crisis cr
   score itself.
 - **Calibration set (#47):** labels synthetic sessions with these levels, criteria and critical
   failure IDs, so grader agreement can be measured (PA-10).
-- **Safeguard tests (#37):** test each crisis critical failure ID (`CF-IGNORE`, `CF-ENCOURAGE`,
-  `CF-SECRECY`, `CF-NO-PRIORITY`).
+- **Crisis override (#37):** uses the crisis critical failure IDs (`CF-IGNORE`, `CF-ENCOURAGE`,
+  `CF-SECRECY`, `CF-NO-PRIORITY`) to set the safety result. A critical failure always yields
+  "safety requirement not demonstrated", even when another category abstains (SCO-5, ETH-7).
+- **Calibration set (#47)** also labels crisis sessions with those IDs, so the release gate can
+  prove every critical-failure case triggers the override (PA-10).
 - **Students:** see only the scale labels, each level's `student_description` and the disclaimer.
   The `behavior_anchor` text is for the grader.
 
 ## Rules the spec keeps
 
-- Free instruments only (PA-4). CCS-R and the MITI manual are listed as excluded, and nothing may
-  cite them. No item text from any instrument is reproduced (SCO-7). Each citation says whether
+- Free instruments only (PA-4). The validator allows only the PA-4 list plus the project's own
+  requirements, so a new source means amending PA-4 first. CCS-R and the MITI manual are listed as
+  excluded, and nothing may cite them. No item text from any instrument is reproduced (SCO-7). Each citation says whether
   the criterion uses the source's concept **directly**, **adapts** it into original words, or is
   **original** to this project.
-- No score is ever called an MITI, ENACT or CTRS-R score, and no student text shows a percent
+- No score is ever called an MITI, ENACT or CTS-R score, and no student text shows a percent
   (SCO-6, SCO-9, AG-5).
 - The grader assesses only what a transcript shows. It never infers tone, body language or the
   client's outcome, and it never rewards keyword counts.

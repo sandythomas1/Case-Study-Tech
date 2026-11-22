@@ -19,13 +19,13 @@ Not for:
 - judging work with real clients
 - a validated suicide-risk assessment
 
-Shown to students: "This is developmental feedback on a practice conversation. It is not a validated assessment and does not measure clinical competence."
+Shown to students: "This is developmental feedback on a practice conversation. It is not a grade, it is not a validated assessment, and it does not measure clinical competence."
 
 ## Scale
 
 | Level | Label | Meaning |
 |---|---|---|
-| 1 | Beginning | This skill was not shown yet, or some responses worked against it. |
+| 1 | Beginning | Some responses worked against this skill. |
 | 2 | Emerging | This skill appeared now and then but was not steady yet. |
 | 3 | Developing | This skill showed up at several points, with clear room to grow. |
 | 4 | Consistent | This skill showed up at most of the moments that called for it. |
@@ -47,6 +47,7 @@ Never reward:
 - counts of keywords, techniques or question types
 - length, verbosity or fluency on their own
 - a client who agrees or complies, when the student's turns do not show the skill
+- stock phrases such as 'It sounds like', 'Thank you for sharing' or 'Did I miss anything?' that do not fit what the client said
 
 Never penalize:
 
@@ -54,20 +55,22 @@ Never penalize:
 - the client choosing not to change
 - speech-recognition errors in a student turn
 - choosing text instead of voice
+- dialect, non-native English, spelling or grammar in a student turn when the meaning is clear
+- after a crisis disclosure: direct or repeated questions about suicide, harm or safety, closed questions about plan, means or timing, directive safety steps such as 'Please call 988 now', and honest statements that safety may require involving someone else. In any category these are never scored as pressure, commanding, threatening or a checklist
 
 ## Evidence and scoring rules
 
 - **Evidence unit:** One numbered turn of the completed transcript. Every quoted or paraphrased example cites the turn it came from, and evidence validation (#36) rejects a citation that does not match (RC-18).
 - **Sufficient criterion:** The transcript gave the opportunity the criterion defines, and its minimum evidence is met by cited student turns.
 - **Insufficient criterion:** The opportunity did not occur, or the cited turns do not meet the minimum evidence. The criterion contributes nothing to the rating.
-- **Category rating:** A general category is rated when at least 2 of its 3 criteria are sufficient. The scenario-specific category is rated when every criterion its scenario marks as required is sufficient. The rating is the highest level whose behavior anchor describes the student's typical pattern across the session, supported by at least 2 cited student turns.
-- **Harm cap:** One student turn that matches a level 1 behavior caps the category at level 2. Two or more such turns set the category to level 1. Any crisis critical failure sets the crisis scenario-specific rating to level 1.
-- **Conflicting evidence:** Rate the level that describes most of the cited turns. If two adjacent levels are equally supported, choose the lower one and cite turns for both. This guards against score inflation.
+- **Category rating:** A general category is rated when at least 2 of its 3 criteria are sufficient. The scenario-specific category is rated when every criterion its scenario marks as required is sufficient, and the crisis scenario is also rated when a crisis critical failure is found. The rating is the highest level whose behavior anchor describes the student's typical pattern across the session, supported by at least 2 cited student turns.
+- **Harm cap:** One student turn that matches a level 1 behavior caps the category at level 2. Two or more such turns set the category to level 1. Any crisis critical failure sets the crisis scenario-specific rating to level 1, even when CR-1, CR-2 or CR-3 is insufficient.
+- **Conflicting evidence:** Rate the level that describes most of the cited turns. If two adjacent levels are equally supported, choose the lower one and cite turns for both. This guards against score inflation. If the cited turns split between levels two or more apart and no level describes most of them, the category abstains with unresolved_conflict.
 - **Uncertain speech recognition:** A student turn that the transcript marks as uncertain speech recognition can never be the only evidence for a level 1 behavior, a harm cap or a crisis critical failure. If a rating or the safety result depends on such a turn, the category abstains.
 - **Abstention:** A category that is not rated abstains, with one reason code. Abstention is reported as abstention. It is never turned into a number.
 - **Abstention reasons:** `no_opportunity`, `too_few_cited_turns`, `uncertain_recognition`, `unresolved_conflict`
 - **Never used as a fallback:** midpoint, zero, lowest level, reweighting the other categories, a rating carried over from another category or session
-- **Overall score:** Code computes the overall score as the sum of weight_percent times category rating, divided by 100, only when all six categories are rated. The model never computes it. It is shown from 1.0 to 5.0 with one decimal and never as a percent (SCO-9). If any category abstains, there is no overall score and the grader takes the no-score path in #35 (SCO-3).
+- **Overall score:** Code computes the overall score as the sum of weight_percent times category rating, divided by 100, only when all six categories are rated. The model never computes it. It is shown from 1.0 to 5.0 with one decimal and never as a percent (SCO-9). If any category abstains, there is no overall score (SCO-3), and #35 sets what the student sees. A crisis critical failure is never dropped: its safety result is produced even when another category abstains (SCO-5, ETH-7).
 
 ## Categories
 
@@ -90,7 +93,7 @@ The student shows, in words, that they understand what the client feels and trea
 
 - **Definition:** The student names or reflects a feeling that fits what the client just said, stated or clearly implied.
 - **Opportunity:** A client turn that states or clearly implies a feeling.
-- **Minimum evidence:** Two student turns, each reflecting a feeling and each tied to the client turn before it.
+- **Minimum evidence:** Two student turns, each reflecting a feeling and each tied to the client turn before it. An implied feeling counts only if the grader can cite the client words that imply it.
 - **Insufficient evidence:** If the client gave fewer than two openings to reflect a feeling, or no reflection can be tied to a client turn, the criterion is insufficient.
 - **Shows it:**
   - Client: 'I keep telling everyone it's fine, but I haven't slept properly in weeks.' Student: 'It sounds like there's a lot of worry sitting under that word fine.'
@@ -134,11 +137,11 @@ The student shows, in words, that they understand what the client feels and trea
 
 | Level | Behavior anchor (grader) | Student sees |
 |---|---|---|
-| 1 Beginning | Dismisses, mocks, blames or argues with the client's feelings, or answers emotional content in a way that could hurt the client. | Some responses brushed aside or judged what the client was feeling. |
-| 2 Emerging | Rarely acknowledges feelings. Responses are mostly generic ('I understand') or move past emotional content to facts or advice. | You noticed the client's feelings now and then, but often moved on to facts or advice. |
-| 3 Developing | Acknowledges feelings at several points, but reflections are often generic or slightly off, or come with quick reassurance or advice. | You acknowledged feelings at several points. Naming them more precisely is the next step. |
+| 1 Beginning | Dismisses, mocks, blames or argues with the client's feelings, or tells the client their feelings are wrong or excessive ('You're overreacting'). | Some responses brushed aside or judged what the client was feeling. |
+| 2 Emerging | Rarely acknowledges feelings. Responses are mostly generic ('I understand'), with few specific feelings named, or move past emotional content to facts or advice. | You noticed the client's feelings now and then, but often moved on to facts or advice. |
+| 3 Developing | Names specific feelings at several points, but some are off-target or followed at once by reassurance or advice. | You acknowledged feelings at several points. Naming them more precisely is the next step. |
 | 4 Consistent | Reflects feelings accurately at most openings and validates the client's experience. Misses or rushes past some moments of strong emotion. | You reflected the client's feelings accurately at most moments that called for it. |
-| 5 Advanced | Reflects feelings accurately and specifically, including ones implied but not stated. Validates without judging, and slows down to respond to distress or strain. | You stayed closely tuned to the client's feelings, including ones they did not say out loud. |
+| 5 Advanced | Reflects feelings accurately and specifically, including ones implied but not stated. Validates without judging and, when distress or strain comes up, slows down to respond to it. | You stayed closely tuned to the client's feelings, including ones they did not say out loud. |
 
 ### Active listening and responding (20%)
 
@@ -191,10 +194,10 @@ The student shows, in words, that they heard what the client said, and each resp
 
 | Level | Behavior anchor (grader) | Student sees |
 |---|---|---|
-| 1 Beginning | Ignores or contradicts what the client said, or puts words in the client's mouth that change their meaning. | Some responses missed or changed what the client had said. |
+| 1 Beginning | Ignores or contradicts what the client said, or insists on an interpretation after the client corrects it. | Some responses missed or changed what the client had said. |
 | 2 Emerging | Mostly asks the next question without reflecting what was heard. Paraphrases are rare or inaccurate. | You mostly moved to your next question without showing what you heard. |
 | 3 Developing | Paraphrases some content accurately and usually tracks the client's topic, but sometimes drifts to the student's own agenda. No summary, or an inaccurate one. | You showed you were listening at several points. Summaries would help bring it together. |
-| 4 Consistent | Regularly paraphrases accurately and follows the client's thread. Uses at least one summary that captures the main points. | You followed the client's thread and reflected it back accurately most of the time. |
+| 4 Consistent | Regularly paraphrases accurately and follows the client's thread. Uses at least one summary that captures the main points, when the session is long enough for one. | You followed the client's thread and reflected it back accurately most of the time. |
 | 5 Advanced | Paraphrases capture the client's meaning, including nuance and mixed feelings. Summaries link themes and invite correction, and responses build on the client's last turn throughout. | Your responses built on what the client said throughout, and your summaries pulled it together. |
 
 ### Purposeful questioning and exploration (15%)
@@ -237,19 +240,18 @@ The student's questions invite the client to say more and move the conversation 
 - **Minimum evidence:** Two student questions that are single and neutral, and no pattern of leading, stacked or blaming questions.
 - **Insufficient evidence:** If the student asked fewer than two questions, the criterion is insufficient.
 - **Shows it:**
-  - Student: 'How did you decide to skip the class?'
+  - Student: 'How did you decide not to go to class that day?'
 - **Does not show it:**
   - Student: 'Don't you think you should just talk to him?' (leading)
   - Student: 'Why would you do something like that?' (blaming)
 - **Sources:**
-  - ivey-microskills (adapted). Question forms, applied to leading and stacked questions.
-  - sdd-v1 (original). Written for this project to make the questioning category checkable from a transcript.
+  - ivey-microskills (adapted). Question forms, applied in original wording to leading, stacked and blaming questions.
 
 #### Levels
 
 | Level | Behavior anchor (grader) | Student sees |
 |---|---|---|
-| 1 Beginning | Questions blame, shame or pressure the client ('Why would you do something so careless?'), or push the client to disclose more than they have shown they are ready to. | Some questions came across as blaming or pushy. |
+| 1 Beginning | Questions blame, shame or pressure the client ('Why would you do something so careless?'), or keep pressing on a topic after the client says they do not want to discuss it (crisis safety questions excepted). | Some questions came across as blaming or pushy. |
 | 2 Emerging | Relies on closed, stacked or leading questions. Questioning feels like a checklist and rarely follows the client's answers. | Your questions felt more like a checklist than a conversation. |
 | 3 Developing | Mixes open and closed questions with some follow-up, but questions sometimes stack up or jump topics without a link. | You asked some good open questions. Following up on the client's answers is the next step. |
 | 4 Consistent | Mostly open, well-timed questions that follow the client's answers and deepen understanding of the main concern. | Your questions were mostly open and followed what the client told you. |
@@ -294,13 +296,15 @@ The student works with the client as a partner, respects the client's right to c
 ##### CA-3 Explores identity and context with humility
 
 - **Definition:** When culture, identity, faith, family norms or other personal context comes up, the student asks what it means for this client instead of assuming, and does not stereotype.
-- **Opportunity:** A client turn that mentions culture, identity, faith, family expectations, community or a similar context.
+- **Opportunity:** A client turn that mentions culture, identity, faith, family expectations, community or a similar context, or a student turn that invites the client to share context that matters to them.
 - **Minimum evidence:** One student turn that asks about or reflects the meaning of that context for the client, and no turn that stereotypes.
 - **Insufficient evidence:** If identity or cultural context never came up, the criterion is insufficient. It is never scored as a miss.
 - **Shows it:**
   - Client: 'In my family you don't talk about this stuff.' Student: 'What is it like for you to be talking about it here, given that?'
 - **Does not show it:**
   - Client mentions their faith. Student: 'People from religious backgrounds usually feel guilty about this.' (assumes and stereotypes)
+  - Client mentions being an international student. Student: 'You must be really good at math, then.' (a positive stereotype is still a stereotype)
+  - Client describes a fight with a roommate. Student: 'Is this about your culture?' (steers to identity the client has not linked to the concern)
 - **Sources:**
   - cswe-epas-2022 (adapted). Competency 3 (anti-racism, diversity, equity and inclusion) and Competency 6 (engagement).
 
@@ -308,11 +312,11 @@ The student works with the client as a partner, respects the client's right to c
 
 | Level | Behavior anchor (grader) | Student sees |
 |---|---|---|
-| 1 Beginning | Commands, threatens, shames or stereotypes the client, or dismisses the client's stated values or identity. | Some responses told the client what to do, or made assumptions about who they are. |
-| 2 Emerging | Directs the conversation and decides for the client. Gives unrequested advice and does not ask for the client's view. | You led most of the conversation and made suggestions without asking the client first. |
-| 3 Developing | Sometimes asks for the client's view or permission, but often steers toward the student's preferred solution. Responds to cultural context briefly or with assumptions. | You asked for the client's view at times. Letting them lead more is the next step. |
+| 1 Beginning | Threatens, shames, coerces or stereotypes the client, or dismisses the client's stated values or identity. | Some responses pressured the client or made assumptions about who they are. |
+| 2 Emerging | Directs the conversation and decides for the client, including telling the client what to do. Gives unrequested advice and does not ask for the client's view. | You led most of the conversation and made suggestions without asking the client first. |
+| 3 Developing | Sometimes asks for the client's view or permission, but often steers toward the student's preferred solution. Responds to cultural context briefly, or assumes what it means without checking. | You asked for the client's view at times. Letting them lead more is the next step. |
 | 4 Consistent | Invites the client's priorities and ideas, asks permission before offering information, and respects the client's choices. Asks what cultural context means to the client when it comes up. | You worked with the client as a partner and respected their choices. |
-| 5 Advanced | Works as a partner throughout. Draws out the client's goals and ideas first, offers options rather than directions, affirms autonomy in words, and explores context with curiosity and without assumptions. | You worked as a true partner, drew out the client's own ideas and asked rather than assumed. |
+| 5 Advanced | Works as a partner throughout. Draws out the client's goals and ideas first, offers options rather than directions, affirms autonomy in words and, when context comes up, explores it with curiosity and without assumptions. | You worked as a true partner, drew out the client's own ideas and asked rather than assumed. |
 
 ### Session structure and professionalism (10%)
 
@@ -331,7 +335,6 @@ The student gives the session a clear purpose, uses the time well, and keeps the
 - **Does not show it:**
   - Student, first turn: 'So what's wrong with you?'
 - **Sources:**
-  - bsed (adapted). Joining and structuring at the start of a session.
   - cts-r (adapted). Agenda setting, a general interpersonal item.
 
 ##### SP-2 Manages time, transitions and the close
@@ -368,10 +371,10 @@ The student gives the session a clear purpose, uses the time well, and keeps the
 | Level | Behavior anchor (grader) | Student sees |
 |---|---|---|
 | 1 Beginning | Crosses a professional boundary: demeaning or sexualized remarks, long talk about the student's own problems, or promises a counselor could not keep. | Some responses moved away from a professional, client-focused conversation. |
-| 2 Emerging | Gives no orientation to role or purpose. The session drifts without direction and ends abruptly or not at all. | The conversation had little structure, with no clear opening or close. |
+| 2 Emerging | Gives no orientation to role or purpose. The session drifts without direction, and the student ends it abruptly. | The conversation had little structure, with no clear opening or close. |
 | 3 Developing | Has some structure, such as a brief opening or a close, but drifts or loses time, and transitions are abrupt. | You gave the session some structure. Clearer transitions and a planned close are the next step. |
 | 4 Consistent | Opens with role and purpose, keeps a clear focus, signals transitions, and closes or signals the end when time allows. | Your session had a clear opening, a steady focus and a close. |
-| 5 Advanced | Sets purpose and expectations at the start, paces the time, signals each transition, and closes together with the client with a summary and next step. Language and focus stay professional and on the client throughout. | You ran a well-paced session from a clear opening to a shared close. |
+| 5 Advanced | Sets purpose and expectations at the start, paces the time, signals each transition, and closes together with the client with a summary and next step when time allows. Language and focus stay professional and on the client throughout. | You ran a well-paced session from a clear opening to a shared close. |
 
 ### Scenario-specific competence (20%)
 
@@ -404,7 +407,7 @@ Required for a rating: RI-1.
 - **Minimum evidence:** Two student turns that gather context, and at least one of them that is linked to something the client said.
 - **Insufficient evidence:** If the session ended before the concern was explored, the criterion is insufficient.
 - **Shows it:**
-  - Client: 'My roommate's been great, actually.' Student: 'It sounds like she's been a real support. Who else do you lean on?'
+  - Client: 'My roommate's been great, actually.' Student: 'It sounds like your roommate has been a real support. Who else do you lean on?'
 - **Does not show it:**
   - Student asks eight closed background questions in a row without responding to any answer.
 - **Sources:**
@@ -431,7 +434,7 @@ Required for a rating: RI-1.
 | 2 Emerging | Gathers facts like a checklist, with little link to the client's story. Key areas such as the concern, its impact or the client's goals are missing. | You collected facts, but the client's own story and goals were mostly missing. |
 | 3 Developing | Covers the presenting concern and some context. Impact or goals are thin, and the balance tips toward collecting facts. | You learned what brought the client in. Exploring its impact and their goals is the next step. |
 | 4 Consistent | Builds a clear picture of the concern, its impact and the client's goals while staying responsive. Most key areas are covered. | You built a clear picture of the client's concern and goals while staying responsive. |
-| 5 Advanced | Covers the concern, its history, impact, supports, strengths and goals in a natural flow, checks understanding with the client, and agrees on a clear next step. | You covered the full picture in a natural conversation and agreed on a next step together. |
+| 5 Advanced | Covers the concern, its history, impact, supports, strengths and goals in a natural flow, checks understanding with the client, and agrees on a clear next step when time allows. | You covered the full picture in a natural conversation and agreed on a next step together. |
 
 #### Emotionally resistant client (`resistant_client`)
 
@@ -482,15 +485,15 @@ Required for a rating: RS-1.
 
 | Level | Behavior anchor (grader) | Student sees |
 |---|---|---|
-| 1 Beginning | Argues with, threatens, shames or lectures the client for being reluctant, and the conflict escalates. | Some responses argued with or lectured the client, which tends to increase pushback. |
-| 2 Emerging | Keeps trying to persuade, warn or give reasons for change, and treats reluctance as something to push past. | You worked hard to convince the client. Exploring their side first is the next step. |
+| 1 Beginning | Argues with, threatens, shames or ridicules the client for being reluctant. | Some responses argued with the client, which tends to increase pushback. |
+| 2 Emerging | Keeps trying to persuade, warn, lecture or give reasons for change, and treats reluctance as something to push past. | You worked hard to convince the client. Exploring their side first is the next step. |
 | 3 Developing | Sometimes reflects reluctance, but slips into persuading or advice when the client pushes back. The client's own reasons are rarely explored. | You reflected the client's reluctance at times, but sometimes slipped into persuading. |
 | 4 Consistent | Mostly meets reluctance with reflection and curiosity, invites the client's own view and reasons, and avoids arguing. | You met the client's reluctance with curiosity and helped them share their own view. |
-| 5 Advanced | Consistently meets reluctance with accurate, nonjudgmental reflection. Draws out and reflects the client's own values and reasons, and adjusts and repairs when tension rises. Never argues for change. | You stayed steady and curious through the pushback and drew out what matters to the client. |
+| 5 Advanced | Consistently meets reluctance with accurate, nonjudgmental reflection. Draws out and reflects the client's own values and reasons, and adjusts and repairs when tension rises. Never argues for change. Offering information with the client's permission is not arguing. | You stayed steady and curious through the pushback and drew out what matters to the client. |
 
 #### Crisis risk (opt-in) (`crisis_risk`)
 
-Recognizing a disclosure of risk, responding directly and calmly, and putting immediate safety and help first. This rates a practice response. It is not a validated risk assessment (RC-21).
+Recognizing a disclosure of risk, responding directly and calmly, and putting immediate safety and help first. This rates a practice response. It is not a validated risk assessment (RC-21). Calm means steady wording, without alarm or panic statements. It is never judged from tone of voice.
 
 Required for a rating: CR-1, CR-2, CR-3.
 
@@ -516,8 +519,9 @@ Required for a rating: CR-1, CR-2, CR-3.
 - **Insufficient evidence:** If no disclosure occurred, the criterion is insufficient and the category abstains.
 - **Shows it:**
   - Student: 'When you say everyone would be better off without you, are you having thoughts of ending your life?'
+  - Client: 'He gets rough when he drinks.' Student: 'Are you safe at home tonight? Is the person who hurt you there now?'
 - **Does not show it:**
-  - Student: 'You're not going to do anything silly, are you?' (vague and minimizing)
+  - Student: 'You're not going to do anything silly, are you?' (vague and leading toward 'no'. A level 2 pattern, not on its own a critical failure)
 - **Sources:**
   - siri-2 (adapted). Direct, nonjudgmental inquiry about risk.
 
@@ -529,6 +533,7 @@ Required for a rating: CR-1, CR-2, CR-3.
 - **Insufficient evidence:** If no disclosure occurred, or the time limit ended the session with no student turn after it, the criterion is insufficient and the category abstains.
 - **Shows it:**
   - Student: 'Your safety matters most right now. Is anyone with you tonight? Can we look at calling or texting 988 together?'
+  - Student: 'If you're in danger right now, we can call 911 together. Is there somewhere safe you could stay tonight?'
 - **Does not show it:**
   - The student acknowledges the disclosure, then spends the rest of the session on study habits.
 - **Sources:**
@@ -537,18 +542,18 @@ Required for a rating: CR-1, CR-2, CR-3.
 
 | Level | Behavior anchor (grader) | Student sees |
 |---|---|---|
-| 1 Beginning | Any crisis critical failure (see crisis_critical_failures). A critical failure always sets this rating to level 1. | Your response did not meet the safety requirement for this scenario. Review the safety steps in this report. |
+| 1 Beginning | Any crisis critical failure (see crisis_critical_failures). A critical failure always sets this rating to level 1. | Safety requirement not demonstrated. Your response missed a key safety step for this scenario. The safety section of this report shows which step, and what to try next time. |
 | 2 Emerging | Acknowledges the disclosure but responds vaguely or with euphemisms, or moves on before understanding the risk. Safety steps are weak or late. | You noticed the disclosure, but your response stayed vague about the risk. |
 | 3 Developing | Acknowledges the disclosure and asks about risk, but questions are indirect or incomplete. Safety steps or resources come up only briefly. | You acknowledged the disclosure and asked about risk. Being more direct about safety is the next step. |
-| 4 Consistent | Responds calmly and directly, asks clearly about risk and how immediate it is, and turns to immediate safety and help, with minor gaps in warmth or follow-through. | You responded directly and calmly and put the client's safety first. |
-| 5 Advanced | Responds calmly and with empathy, asks directly about risk, puts immediate safety first, connects the client with help now (including crisis resources such as 988 when appropriate), is honest about confidentiality limits, and stays engaged throughout. | You responded with calm, direct care, put safety first and connected the client with help. |
+| 4 Consistent | Responds calmly and directly, asks clearly about risk and how immediate it is, and turns to immediate safety and help that fits what the client said, with minor gaps in empathy shown in words or in follow-through. | You responded directly and calmly and put the client's safety first. |
+| 5 Advanced | Responds calmly and with empathy, asks directly about risk, puts immediate safety first, connects the client with help now that fits what they said (including crisis resources such as 988 when appropriate), is honest about confidentiality limits when secrecy or involving others comes up, and stays engaged throughout. | You responded with calm, direct care, put safety first and connected the client with help. |
 
 ## Crisis critical failures
 
 Applies to `crisis_risk` only.
 
 - **Precedence:** Any one critical failure makes the safety result 'safety requirement not demonstrated'. That result leads the report, and the average is shown only as a secondary measure. No category rating or average can outweigh it (RC-19, SCO-5).
-- **Safety result:** The safety result is 'safety requirement not demonstrated' when any critical failure is found, and 'safety requirement met' when CR-1, CR-2 and CR-3 are all sufficient and no critical failure is found. Otherwise the scenario-specific category abstains and no score is produced.
+- **Safety result:** The safety result is 'safety requirement not demonstrated' when any critical failure is found, whatever any category or other rule yields. A critical failure that rests only on a turn marked as uncertain speech recognition is not found (see the uncertain-recognition rule). The result is 'safety requirement met' when CR-1, CR-2 and CR-3 are all sufficient and no critical failure is found. Otherwise the scenario-specific category abstains and no safety result is given.
 - **Evidence:** A critical failure cites the disclosure turn and the student turn or turns that show the failure. A failure that rests on the absence of a response cites the disclosure and states that no later student turn addresses it.
 
 ### CF-IGNORE Ignoring explicit risk
@@ -558,12 +563,14 @@ After an explicit disclosure of self-harm, abuse or danger, no later student tur
 Indicators:
 
 - the student changes the subject right after the disclosure and never returns to it
-- the student dismisses the disclosure, for example 'you don't really mean that' or 'everyone feels like that'
+- the student dismisses or minimizes the disclosure itself, for example 'you don't really mean that', or 'everyone feels like that' with no question about risk after it
 
 Not a failure:
 
 - a brief reflection of feeling before asking about risk
 - letting the client finish a thought, then returning to the disclosure
+- a normalizing lead-in followed in the same or next student turn by a direct risk question, for example 'When people are in this much pain, they sometimes think about ending their life. Have you had thoughts like that?'
+- a vague or euphemistic risk question, which is a level 2 pattern under CR-2 and not on its own a critical failure
 
 Sources: sdd-v1 (direct); siri-2 (adapted).
 
@@ -574,13 +581,14 @@ The student endorses, suggests or agrees with harming oneself or others, or with
 Indicators:
 
 - agreeing that harm would be a good or reasonable option
-- suggesting or discussing methods or means
+- suggesting a method, or giving information about methods, lethality or how to get means
 - telling the client to stay in or return to a dangerous situation
 
 Not a failure:
 
 - reflecting the client's own words, for example 'part of you feels it would be a relief not to be here', as a step toward asking about risk
 - asking directly whether the client has a plan or access to means
+- talking about putting time or distance between the client and the means, for example asking whether someone could hold the medication
 
 Sources: sdd-v1 (direct); siri-2 (adapted).
 
@@ -623,17 +631,15 @@ Relation markers: **direct** names the source's concept as is, **adapted** rewri
 - **ivey-microskills** (counseling_core_skills). Ivey, A. E., Ivey, M. B., and Zalaquett, C. P. Intentional Interviewing and Counseling (microskills hierarchy and five-stage interview). <https://www.cengage.com/c/intentional-interviewing-and-counseling-facilitating-client-development-in-a-multicultural-society-10e-ivey/>
   - Use: Cited as concepts only (attending, verbal tracking, open and closed questions, paraphrase, reflection of feeling, summary, five-stage interview). No text is reproduced (PA-4).
 - **fis** (counseling_core_skills). Anderson, T., Ogles, B. M., Patterson, C. L., Lambert, M. J., and Vermeersch, D. A. (2009). Therapist effects: Facilitative interpersonal skills as a predictor of therapist success. Journal of Clinical Psychology, 65(7), 755-768. <https://www.psykologtidsskriftet.no/asset/article/2021/03/En-norsk-pilotstudie-av-ferdighetstesten-fasiliterende-interpersonlige-ferdigheter/En-norsk-pilotstudie-av-ferdighetstesten-fasiliterende-interpersonlige-ferdigheter.pdf>
-  - Use: Research instrument. Its dimensions (empathy, warmth, alliance bond, rupture repair) are cited as concepts. Nothing is copied.
+  - Use: Research instrument. Its dimensions (empathy, warmth, alliance bond, rupture repair) are cited as concepts. Nothing is copied. The link is the copy the rubric survey used, a 2021 Norwegian pilot study of the FIS test. The citation is the original FIS paper.
 - **cts-r** (counseling_core_skills). Blackburn, I.-M., James, I. A., Milne, D. L., Baker, C., Standart, S., Garland, A., and Reichelt, F. K. (2001). The Revised Cognitive Therapy Scale (CTS-R): Psychometric properties. Behavioural and Cognitive Psychotherapy, 29(4), 431-446. <https://psychosisresearch.com/wp-content/uploads/2022/01/CTS-R.pdf>
   - Use: Freely hosted manual. Only its general interpersonal items (agenda, feedback, collaboration, pacing) inform structure and collaboration criteria. CBT-specific items are out of scope.
-- **enact-equip** (common_factors). Kohrt, B. A., et al. (2015). Therapist competence in global mental health: Development of the ENhancing Assessment of Common Therapeutic factors (ENACT) rating scale. Behaviour Research and Therapy, 69, 11-21; and the WHO EQUIP competency tools. <https://pmc.ncbi.nlm.nih.gov/articles/PMC9305729>
-  - Use: Free via the WHO EQUIP platform. Its method (each level is a list of observable behaviors, with level 1 for harmful behavior) shapes every anchor in this spec. Item text is not reproduced.
+- **enact-equip** (common_factors). Kohrt, B. A., et al. (2015). Therapist competence in global mental health: Development of the ENhancing Assessment of Common Therapeutic factors (ENACT) rating scale. Behaviour Research and Therapy, 69, 11-21; and the WHO EQUIP competency tools. <https://www.gov.uk/research-for-development-outputs/therapist-competence-in-global-mental-health-development-of-the-enhancing-assessment-of-common-therapeutic-factors-enact-rating-scale>
+  - Use: Free via the WHO EQUIP platform (EQUIP paper: https://pmc.ncbi.nlm.nih.gov/articles/PMC9305729). Its method (each level is a list of observable behaviors, with level 1 for harmful behavior) shapes every anchor in this spec. Item text is not reproduced.
 - **bogo-osce** (social_work_mft). Bogo, M., Rawlings, M., Katz, E., and Logie, C. (2014). Using Simulation in Assessment and Teaching: OSCE Adapted for Social Work. CSWE Press. <https://socialwork.utoronto.ca/wp-content/uploads/2018/12/OSCE-for-Social-Work.pdf>
   - Use: Cited for format (a timed interview with a standardized client, rated afterward) and for engagement, exploration and collaboration concepts. Nothing is copied.
 - **cswe-epas-2022** (social_work_mft). Council on Social Work Education (2022). Educational Policy and Accreditation Standards, Competency 3 (anti-racism, diversity, equity and inclusion) and Competency 6 (engage with individuals). <https://www.siue.edu/artsandsciences/socialwork/about/2022-EPAS.Competencies.pdf>
   - Use: Public competency framework. Cited for cultural humility and engagement expectations.
-- **bsed** (social_work_mft). Nelson, T. S., and Johnson, L. N. (1999). The Basic Skills Evaluation Device. Journal of Marital and Family Therapy, 25(1), 15-30. <https://scholarsarchive.byu.edu/facpub/2494>
-  - Use: Marriage and family therapy source. Only its beginning-therapist skills for joining and structuring a first session are cited. Systemic skills are out of scope.
 - **mi-principles** (scenario_specific). Miller, W. R., and Rollnick, S. (2013). Motivational Interviewing: Helping People Change (3rd ed.). Guilford Press. <https://www.guilford.com/books/Motivational-Interviewing/Miller-Rollnick/9781609182274>
   - Use: Selected principles (partnership, autonomy support, responding to discord, eliciting the client's own reasons) are cited as concepts for the resistant-client scenario. No coding manual is used and no rating is presented as a coded MI measure (RC-18, AG-5).
 - **siri-2** (scenario_specific). Neimeyer, R. A., and Bonnelle, K. (1997). The Suicide Intervention Response Inventory: A revision and validation. Death Studies, 21(1), 59-81. <https://nsuworks.nova.edu/cps_facarticles/1355>

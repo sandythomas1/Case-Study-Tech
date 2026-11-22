@@ -60,11 +60,16 @@ class RealSpecTest(unittest.TestCase):
             variant(REAL_SPEC, "crisis_risk")["required_criteria"], ["CR-1", "CR-2", "CR-3"]
         )
 
-    def test_spec_is_still_a_proposal(self) -> None:
-        # The owner approves a version in review (Issue #21). Until then nothing may
-        # treat this spec as approved.
-        self.assertEqual(REAL_SPEC["approval"]["status"], "proposed")
-        self.assertIsNone(REAL_SPEC["approval"]["approved_by"])
+    def test_crisis_failure_always_rates_the_crisis_category(self) -> None:
+        # SCO-5 and ETH-7: an abstention elsewhere must never drop a critical failure.
+        rule = REAL_SPEC["crisis_critical_failures"]["safety_result_rule"]
+        self.assertIn("whatever any category or other rule yields", rule)
+        harm_cap = REAL_SPEC["evidence_policy"]["harm_cap_rule"]
+        self.assertIn("even when CR-1, CR-2 or CR-3 is insufficient", harm_cap)
+
+    def test_only_pa4_instruments_are_cited(self) -> None:
+        cited = {s["id"] for s in REAL_SPEC["sources"] if s["family"] != "project_requirement"}
+        self.assertLessEqual(cited, checker.PA4_SOURCES)
 
     def test_markdown_copy_is_current(self) -> None:
         markdown = checker.markdown_path_for(checker.DEFAULT_SPEC)
@@ -87,7 +92,7 @@ class RealSpecTest(unittest.TestCase):
             self.assertIn(f"### {failure['id']} ", rendered)
 
 
-class RuleViolationTest(unittest.TestCase):
+class SpecRuleTestCase(unittest.TestCase):
     def assertBreaks(self, spec: object, fragment: str) -> None:
         errors = checker.validate(spec)
         self.assertTrue(
@@ -95,6 +100,8 @@ class RuleViolationTest(unittest.TestCase):
             f"expected an error containing {fragment!r}, got {errors}",
         )
 
+
+class RuleViolationTest(SpecRuleTestCase):
     def test_top_level_must_be_an_object(self) -> None:
         self.assertBreaks([], "top level must be a JSON object")
 
@@ -286,6 +293,171 @@ class RuleViolationTest(unittest.TestCase):
         spec["spec_version"] = "one"
         category(spec, "structure_professionalism")["weight_percent"] = 11
         self.assertGreaterEqual(len(checker.validate(spec)), 2)
+
+
+class ApprovalTest(unittest.TestCase):
+    """Only the owner approves a version (Issue #21), so approval must say who and when."""
+
+    def approve(self, by: object, on: object) -> list[str]:
+        spec = fresh()
+        spec["approval"] = {"status": "approved", "approved_by": by, "approved_on": on}
+        errors: list[str] = checker.validate(spec)
+        return errors
+
+    def test_full_approval_is_valid(self) -> None:
+        self.assertEqual(self.approve("Project owner", "2026-11-22"), [])
+
+    def test_approval_needs_an_approver(self) -> None:
+        self.assertTrue(any("name the approver" in e for e in self.approve(None, "2026-11-22")))
+
+    def test_approval_needs_a_date(self) -> None:
+        for bad_date in (None, "22 Nov 2026", 20261122):
+            with self.subTest(bad_date=bad_date):
+                errors = self.approve("Project owner", bad_date)
+                self.assertTrue(any("YYYY-MM-DD" in e for e in errors), errors)
+
+    def test_proposal_has_no_approver(self) -> None:
+        spec = fresh()
+        spec["approval"] = {"status": "proposed", "approved_by": "Someone", "approved_on": None}
+        self.assertTrue(any("a proposed spec has no" in e for e in checker.validate(spec)))
+
+
+class HardeningTest(SpecRuleTestCase):
+    """Rules added after review: malformed values, PA-4 and the wider student-text scope."""
+
+    def test_unhashable_values_are_errors_not_crashes(self) -> None:
+        cases: list[tuple[str, Any]] = [
+            ("approval.status", lambda s: s["approval"].__setitem__("status", ["approved"])),
+            ("family", lambda s: s["sources"][0].__setitem__("family", ["common_factors"])),
+            (
+                "unknown source",
+                lambda s: category(s, "empathic_engagement")["criteria"][0]["citations"][
+                    0
+                ].__setitem__("source", {"id": "fis"}),
+            ),
+            (
+                "relation",
+                lambda s: category(s, "empathic_engagement")["criteria"][0]["citations"][
+                    0
+                ].__setitem__("relation", ["direct"]),
+            ),
+            (
+                "required_criteria",
+                lambda s: variant(s, "crisis_risk")["required_criteria"].append(["CR-1"]),
+            ),
+            (
+                "RC-19",
+                lambda s: s["crisis_critical_failures"]["failures"][0].__setitem__("id", ["CF"]),
+            ),
+        ]
+        for fragment, mutate in cases:
+            with self.subTest(fragment=fragment):
+                spec = fresh()
+                mutate(spec)
+                self.assertBreaks(spec, fragment)
+
+    def test_bool_and_float_are_not_levels_or_weights(self) -> None:
+        cases: list[tuple[str, Any]] = [
+            (
+                "RC-17",
+                lambda s: category(s, "empathic_engagement")["levels"][0].__setitem__(
+                    "level", True
+                ),
+            ),
+            ("RC-17", lambda s: s["scale"]["levels"][0].__setitem__("level", 1.0)),
+            (
+                "SCO-2",
+                lambda s: category(s, "empathic_engagement").__setitem__("weight_percent", 20.0),
+            ),
+            ("must run from 1 to 5", lambda s: s["scale"].__setitem__("min", True)),
+        ]
+        for fragment, mutate in cases:
+            with self.subTest(fragment=fragment):
+                spec = fresh()
+                mutate(spec)
+                self.assertBreaks(spec, fragment)
+
+    def test_source_outside_pa4_fails(self) -> None:
+        spec = fresh()
+        spec["sources"].append(dict(spec["sources"][0], id="bsed", family="social_work_mft"))
+        self.assertBreaks(spec, "'bsed' is not a free instrument listed in plan PA-4")
+
+    def test_project_requirement_source_is_allowed(self) -> None:
+        spec = fresh()
+        sdd = next(s for s in spec["sources"] if s["family"] == "project_requirement")
+        spec["sources"].append(dict(sdd, id="sdd-v2"))
+        self.assertEqual(checker.validate(spec), [])
+
+    def test_excluded_instrument_under_another_id_fails(self) -> None:
+        for name in ("MITI 4.2.1 coding manual", "Counselor Competencies Scale-Revised"):
+            with self.subTest(name=name):
+                spec = fresh()
+                spec["sources"][0]["citation"] = name
+                self.assertBreaks(spec, "excluded instrument under another id")
+
+    def test_required_sections_are_checked_before_rendering(self) -> None:
+        cases: list[tuple[str, Any]] = [
+            (
+                "assessment_boundaries.assess_only",
+                lambda s: s["assessment_boundaries"].pop("assess_only"),
+            ),
+            (
+                "assessment_boundaries.never_penalize",
+                lambda s: s["assessment_boundaries"].__setitem__("never_penalize", []),
+            ),
+            (
+                "criterion_outcomes.insufficient",
+                lambda s: s["evidence_policy"]["criterion_outcomes"].pop("insufficient"),
+            ),
+            ("scenarios[crisis_risk]", lambda s: s["scenarios"][2].pop("name")),
+            ("excluded_sources[0]", lambda s: s["excluded_sources"][0].pop("name")),
+            ("title", lambda s: s.__setitem__("title", 7)),
+            ("satisfies", lambda s: s.__setitem__("satisfies", "RC-17")),
+        ]
+        for fragment, mutate in cases:
+            with self.subTest(fragment=fragment):
+                spec = fresh()
+                mutate(spec)
+                self.assertBreaks(spec, fragment)
+
+    def test_only_the_scenario_category_has_variants(self) -> None:
+        spec = fresh()
+        scenario_variants = category(spec, checker.SCENARIO_CATEGORY)["scenario_variants"]
+        category(spec, "empathic_engagement")["scenario_variants"] = copy.deepcopy(
+            scenario_variants
+        )
+        self.assertBreaks(spec, "only scenario_specific_competence may have scenario_variants")
+
+    def test_banned_terms_in_every_visible_name(self) -> None:
+        cases: list[tuple[str, Any]] = [
+            (
+                "scenarios[routine_intake].name",
+                lambda s: s["scenarios"][0].__setitem__("name", "MITI intake"),
+            ),
+            (
+                "EE-1.name",
+                lambda s: category(s, "empathic_engagement")["criteria"][0].__setitem__(
+                    "name", "ENACT empathy"
+                ),
+            ),
+            (
+                "crisis_risk.focus",
+                lambda s: variant(s, "crisis_risk").__setitem__(
+                    "focus", "Scored as in the Suicide Intervention Response Inventory."
+                ),
+            ),
+            (
+                "CR-1.name",
+                lambda s: variant(s, "crisis_risk")["criteria"][0].__setitem__(
+                    "name", "Motivational Interviewing Treatment Integrity safety"
+                ),
+            ),
+        ]
+        for fragment, mutate in cases:
+            with self.subTest(fragment=fragment):
+                spec = fresh()
+                mutate(spec)
+                self.assertBreaks(spec, fragment)
 
 
 class CommandLineTest(unittest.TestCase):
