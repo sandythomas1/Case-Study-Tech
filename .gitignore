@@ -50,3 +50,7 @@ ui-debug.log
 *.tfplan
 *.tfvars
 crash.log
+
+# Firebase CLI deploy cache and Playwright MCP session output
+.firebase/
+.playwright-mcp/
