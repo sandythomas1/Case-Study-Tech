@@ -1,0 +1,17 @@
+# Synthetic-fixture allowlist, read by scripts/ci/check_synthetic_fixtures.py.
+#
+# Real session audio, transcripts, excerpts and feedback may never be committed, not even
+# as test fixtures (docs/ARCHITECTURE.md section 7, docs/POLICY.md DAT-1 and DAT-6). A
+# file the check flags may be listed here only if it is synthetic: generated or
+# hand-written test data with no real student or session content.
+#
+# Format: one exact repository path, its git blob sha, then a justification comment.
+#   tests/fixtures/sine-440hz.wav 0123456789abcdef0123456789abcdef01234567  # synthetic: generated tone
+# Get the blob sha after staging the file: git ls-files -s -- <path> (the second column).
+# Changing the file changes its sha, so the entry must be updated and reviewed again.
+# Blank lines and lines starting with # are ignored. Paths may not contain "#".
+# A malformed entry, an unjustified entry, or an entry for an untracked path fails the check.
+# gitleaks suppression files (.gitleaks.toml, .gitleaksignore) can never be listed here.
+#
+# CODEOWNERS requests the owner's review of every change to this file. GitHub enforces
+# that review only once the rulesets turn on "Require review from Code Owners".

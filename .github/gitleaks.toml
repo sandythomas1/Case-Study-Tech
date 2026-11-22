@@ -1,0 +1,8 @@
+# gitleaks configuration for CI (docs/CI.md, docs/decisions/ci-tool-gitleaks.md).
+# scripts/ci/run-gitleaks.sh passes this file with --config, so a .gitleaks.toml anywhere
+# else in the repository is ignored. Default rules only and no allowlist: adding one
+# needs an owner decision.
+title = "Case-Study-Tech CI"
+
+[extend]
+useDefault = true
