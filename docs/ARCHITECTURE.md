@@ -133,7 +133,7 @@ Do not replace these without an owner decision and a new decision record.
 | Client | Expo (React Native + react-native-web), one codebase, Expo Router, custom dev builds (Expo Go cannot do native Google sign-in) | DD-06, RC-14, PA-7, ADR 0001 |
 | Backend | Python 3.12, FastAPI, one private Cloud Run service per responsibility | PA-7, DD-09 |
 | Session state | Client-held, server-signed; no server-side session store | AD-1, AD-2 |
-| Cloud | GCP, `us-central1`, managed services only; development and production projects | DD-09, AD-5 |
+| Cloud | GCP, `us-central1`, managed services only; development and production projects. One exception: if Google Speech-to-Text Chirp 3 is used, it runs in the `us` multi-region, because Google serves Chirp 3 only in `us` and `eu`. Data stays in the US. | DD-09, AD-5, owner decision 2026-11-22 (`docs/decisions/provider-zero-retention.md`) |
 | Edge | One API Gateway config, per-route backends | AD-4 |
 | Identity | Identity Platform with Google sign-in only; server-side token exchange | RC-01, DD-05, ADR 0001 |
 | Models | Hosted Vertex AI with a prompt harness; no fine-tuning or self-hosting | DD-01, SDD §2.3 |
