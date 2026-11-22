@@ -22,10 +22,14 @@ Without it, nothing tells us when a pin falls behind a security fix.
 Dependabot reads this file **only from the default branch (`main`)**. A change to it takes effect
 after it is promoted, not when it merges into `dev`.
 
-Out of scope (owner decision, 2026-11-21): the `pip` ecosystem for `scripts/ci/*.requirements.txt`,
-the `npm` and `uv` ecosystems for the app and services, and Dependabot security updates. Those
-open against the default branch regardless of `target-branch`. The pins Dependabot does not cover
-follow the checklist in `docs/CI.md` "Keeping pins current".
+Out of scope (owner decision, 2026-11-21): the `pip` ecosystem for `scripts/ci/*.requirements.txt`
+and the `npm` and `uv` ecosystems for the app and services. The pins Dependabot does not cover
+follow the monthly check in `docs/CI.md` "Keeping pins current".
+
+Dependabot **security updates** stay off (owner decision, 2026-11-22). They open against the
+default branch regardless of `target-branch`, so they would skip the `dev` → `staging` → `main`
+flow. The cost: a fix for a vulnerable action arrives through the weekly version update, so it
+waits out the 7-day cooldown plus review.
 
 ## Review of an update PR
 
@@ -34,7 +38,10 @@ approving:
 
 1. Read the linked release notes for every action in the group. Look for changed defaults,
    removed inputs and new required permissions.
-2. Check that each new SHA is the commit of the release tag in the action's own repository.
+2. Check that each new SHA is the commit of the release tag in the action's own repository, for
+   example with `gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`. Offline zizmor cannot
+   catch a SHA from a fork. The same check applies to any PR that changes a SHA, not only
+   Dependabot's.
 3. For `astral-sh/setup-uv`, confirm the `version` and `checksum` inputs still work as documented
    in [ci-tool-setup-uv.md](ci-tool-setup-uv.md).
 4. CI gate must pass, including **Workflow lint (zizmor)**.

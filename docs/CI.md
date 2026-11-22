@@ -22,7 +22,7 @@ progress. Runs for pushes to `dev` are never cancelled, so every merge gets a re
 | Python (`services/<name>`) | One job per service: `uv sync --locked --python 3.12`, `ruff check`, `mypy`, `pytest`, then pip-audit over the locked dependencies | Any step fails, the lock file is out of date, or a locked dependency has a known vulnerability |
 | Secret scan (history and tree) | gitleaks over every commit reachable from the checked-out ref (for a PR, the merge commit), then over the checked-out tree | Any finding. The tree scan also covers a merge result that no single commit contains. Values are redacted in the log. |
 | Synthetic-fixture check | Unit tests for the checker, then `scripts/ci/check_synthetic_fixtures.py` over all tracked files | See [Synthetic-fixture check](#synthetic-fixture-check) |
-| Workflow lint (zizmor) | zizmor, offline, over `.github/workflows`, any composite action and `.github/dependabot.yml` | Any finding, such as template injection, broad permissions, an action not pinned by SHA or checkout that keeps credentials. Ignore comments and config files are not honored. A file that does not parse also fails. |
+| Workflow lint (zizmor) | zizmor, offline, over `.github/workflows`, any composite action and `.github/dependabot.yml`, including files listed in `.gitignore` | Any finding, such as template injection, broad permissions, an action not pinned by SHA or checkout that keeps credentials. Ignore comments and config files are not honored. A file that does not parse also fails. |
 | CI gate | Collects every job result | Any job did not succeed. Python jobs may be skipped only when no service exists. |
 
 Python services have no package "build" step. Their container build and image scan come with the
@@ -58,8 +58,10 @@ does not move on its own, though, so each one has a way to stay current:
 | pip-audit and its dependencies | `scripts/ci/pip-audit.requirements.in` and `.txt` | The monthly check below, then the steps in [ci-tool-pip-audit.md](decisions/ci-tool-pip-audit.md#upgrade) |
 | zizmor | `scripts/ci/zizmor.requirements.in` and `.txt` | The monthly check below, then the steps in [ci-tool-zizmor.md](decisions/ci-tool-zizmor.md#upgrade) |
 
-Dependabot cannot update a version in a shell script or in an action's `with:` input, so those
-pins get a check on the first Monday of each month:
+Dependabot cannot update a version in a shell script (gitleaks) or in an action's `with:` input
+(uv). Its `pip` ecosystem could update pip-audit and zizmor, but the owner kept Dependabot to
+GitHub Actions only ([ci-tool-dependabot.md](decisions/ci-tool-dependabot.md)). Those four pins get
+a check on the first Monday of each month. The owner runs it; nothing schedules or reminds:
 
 1. Compare each pin with the tool's latest release:
    [gitleaks](https://github.com/gitleaks/gitleaks/releases),
@@ -70,6 +72,11 @@ pins get a check on the first Monday of each month:
    upgrade when a release is at least a week old.
 3. Upgrade one tool per PR into `dev`, following the steps in its record. Each change needs the
    owner's review through CODEOWNERS.
+
+In any PR that changes an action SHA, by Dependabot or by hand, check that the new SHA is the
+release tag's commit in the action's own repository
+(`gh api repos/<owner>/<repo>/commits/<tag> --jq .sha`). Offline zizmor cannot catch a SHA from a
+fork.
 
 ## Owner actions
 
@@ -173,8 +180,8 @@ uv run --frozen pytest
 The dependency audit, POSIX (from the repository root):
 
 ```sh
-uv venv --python 3.12 /tmp/pip-audit-venv
-uv pip install --python /tmp/pip-audit-venv --require-hashes -r scripts/ci/pip-audit.requirements.txt
+uv venv --clear --python 3.12 /tmp/pip-audit-venv
+uv --no-config pip install --python /tmp/pip-audit-venv --require-hashes --no-build -r scripts/ci/pip-audit.requirements.txt
 cd services/session
 uv export --frozen --all-groups --no-emit-project --format requirements-txt --quiet --output-file /tmp/requirements.txt
 /tmp/pip-audit-venv/bin/pip-audit --strict --disable-pip --require-hashes -r /tmp/requirements.txt
@@ -183,8 +190,8 @@ uv export --frozen --all-groups --no-emit-project --format requirements-txt --qu
 The dependency audit, PowerShell (from the repository root):
 
 ```powershell
-uv venv --python 3.12 "$env:TEMP\pip-audit-venv"
-uv pip install --python "$env:TEMP\pip-audit-venv" --require-hashes -r scripts/ci/pip-audit.requirements.txt
+uv venv --clear --python 3.12 "$env:TEMP\pip-audit-venv"
+uv --no-config pip install --python "$env:TEMP\pip-audit-venv" --require-hashes --no-build -r scripts/ci/pip-audit.requirements.txt
 cd services/session
 uv export --frozen --all-groups --no-emit-project --format requirements-txt --quiet --output-file "$env:TEMP\requirements.txt"
 & "$env:TEMP\pip-audit-venv\Scripts\pip-audit.exe" --strict --disable-pip --require-hashes -r "$env:TEMP\requirements.txt"
@@ -220,25 +227,29 @@ the script must refuse to scan (exit 2).
 POSIX (from the repository root):
 
 ```sh
-uv venv --python 3.12 /tmp/zizmor-venv
-uv pip install --python /tmp/zizmor-venv --require-hashes -r scripts/ci/zizmor.requirements.txt
-/tmp/zizmor-venv/bin/zizmor --offline --no-config --no-ignores --strict-collection --persona=pedantic --collect=workflows,actions,dependabot .
+uv venv --clear --python 3.12 /tmp/zizmor-venv
+uv --no-config pip install --python /tmp/zizmor-venv --require-hashes --no-build -r scripts/ci/zizmor.requirements.txt
+/tmp/zizmor-venv/bin/zizmor --offline --no-config --no-ignores --strict-collection --persona=pedantic --collect=all .
 ```
 
 PowerShell (from the repository root):
 
 ```powershell
-uv venv --python 3.12 "$env:TEMP\zizmor-venv"
-uv pip install --python "$env:TEMP\zizmor-venv" --require-hashes -r scripts/ci/zizmor.requirements.txt
-& "$env:TEMP\zizmor-venv\Scripts\zizmor.exe" --offline --no-config --no-ignores --strict-collection --persona=pedantic --collect=workflows,actions,dependabot .
+uv venv --clear --python 3.12 "$env:TEMP\zizmor-venv"
+uv --no-config pip install --python "$env:TEMP\zizmor-venv" --require-hashes --no-build -r scripts/ci/zizmor.requirements.txt
+& "$env:TEMP\zizmor-venv\Scripts\zizmor.exe" --offline --no-config --no-ignores --strict-collection --persona=pedantic --collect=all .
 ```
+
+`--clear` replaces a venv left by an earlier run.
 
 To prove the lint still fails closed after an upgrade, run it in a scratch repo over a workflow
 that uses `actions/checkout@v4` with default credentials, echoes
 `${{ github.event.pull_request.title }}` in a `run` step and sets `permissions: write-all`. Mark
-each line with a `# zizmor: ignore[...]` comment and add a `zizmor.yml` that disables those
-audits. It must still report template injection, unpinned uses, credential persistence and
-excessive permissions, and exit non-zero.
+each line with a `# zizmor: ignore[...]` comment, add a `zizmor.yml` that disables those audits,
+and list the workflow in `.gitignore`. It must still report template injection, unpinned uses,
+credential persistence and excessive permissions, and exit non-zero. On Windows, save the
+workflow without a byte-order mark: zizmor cannot parse a file that starts with one, so the test
+would fail for the wrong reason. PowerShell 5.1's `Set-Content -Encoding utf8` adds one.
 
 ### Synthetic-fixture check
 

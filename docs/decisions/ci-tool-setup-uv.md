@@ -20,6 +20,8 @@ install zizmor's pinned environment (#110).
   sha256 of `uv-x86_64-unknown-linux-gnu.tar.gz`,
   `5acfd9177cfecf0bf87578f059728215ccc884388988f55f7a65041b57387d91`. That matched the release's
   `.sha256` file on 2026-11-20. A different archive fails the step.
+- The pip-audit and zizmor installs run with `UV_NO_CONFIG=1` and `--no-build`, so a planted
+  `uv.toml` cannot redirect the index or force a source build (#110).
 - `uv sync --locked` fails if `uv.lock` is out of date. Packages are checked against the hashes
   in `uv.lock`.
 

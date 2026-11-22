@@ -19,14 +19,21 @@ requires.
   so it excludes releases from the final week before the compile. zizmor is a single binary wheel
   with no Python dependencies.
 - CI installs it into a throwaway venv in `$RUNNER_TEMP` with
-  `uv pip install --require-hashes`. A wheel whose hash does not match fails the install.
+  `uv pip install --require-hashes --no-build` and `UV_NO_CONFIG=1`. A wheel whose hash does not
+  match fails the install, a source build is refused, and a planted `uv.toml` cannot change the
+  index.
 - It runs as
-  `zizmor --offline --no-config --no-ignores --strict-collection --persona=pedantic --collect=workflows,actions,dependabot .`
+  `zizmor --offline --no-config --no-ignores --strict-collection --persona=pedantic --collect=all .`
   - `--offline` disables the online audits and every network call, so it gets no token.
   - `--no-config` ignores any `zizmor.yml` or `.github/zizmor.yml`, so a planted config cannot
     turn an audit off. `--no-ignores` ignores inline `# zizmor: ignore[...]` comments. Without
     these flags, a planted config plus inline comments hid every finding in a test workflow on
     2026-11-21. With them, the same workflow failed.
+  - `--collect=all` collects workflows, actions and the Dependabot config, and also ignores
+    `.gitignore`. Any narrower `--collect` honors `.gitignore`. On 2026-11-22, a tracked workflow
+    with template injection, listed in `.gitignore`, was skipped with
+    `--collect=workflows,actions,dependabot` and failed with `--collect=all`. GitHub runs a tracked
+    workflow whatever `.gitignore` says.
   - `--strict-collection` fails on a workflow that does not parse, instead of skipping it with a
     warning.
   - `--persona=pedantic` also flags code smells. Today it adds the single-job
@@ -46,9 +53,14 @@ runner. No user data, session content, secrets or token.
 - None while it scans (`--offline`).
 
 The online audits (known-vulnerable actions, impostor commits, stale refs) were declined,
-because they would hand the job token to a third-party tool and call `api.github.com`.
-Dependabot keeps the Action pins current instead
-([ci-tool-dependabot.md](ci-tool-dependabot.md)).
+because they would hand the job token to a third-party tool and call `api.github.com`. That
+leaves a gap that nothing automated fills:
+
+- Dependabot version updates propose new releases, but only after the 7-day cooldown, and
+  Dependabot security updates are off ([ci-tool-dependabot.md](ci-tool-dependabot.md)). A fix for
+  a vulnerable action therefore waits at least a week plus review.
+- No check catches an impostor commit, a SHA from a fork that is not the tag's commit. The
+  reviewer checks that by hand for every SHA change (`docs/CI.md` "Keeping pins current").
 
 ## Upgrade
 
