@@ -10,6 +10,18 @@ variable "image" {
   type        = string
   description = "Immutable accounts image digest or revision tag built from verified source."
 }
+# Output session_service_url of infra/session-grading. Empty keeps the gateway
+# config accounts-only, so this module still applies before session exists.
+# The check pins this project (URL hash 447ob3nwoa-uc, number 613104664964);
+# update it for the production project.
+variable "session_service_url" {
+  type    = string
+  default = ""
+  validation {
+    condition     = var.session_service_url == "" || can(regex("^https://session-(447ob3nwoa-uc\\.a|613104664964\\.us-central1)\\.run\\.app$", var.session_service_url))
+    error_message = "session_service_url must be empty or this development project's session Cloud Run URL."
+  }
+}
 variable "allowed_origins" {
   type    = list(string)
   default = ["https://casestudy-tech-dev-2e03d0.web.app", "https://casestudy-tech-dev-2e03d0.firebaseapp.com"]
@@ -250,6 +262,7 @@ resource "google_api_gateway_api_config" "accounts" {
       contents = base64encode(templatefile("${path.module}/../gateway.yaml.template", {
         PROJECT_ID           = var.project_id
         ACCOUNTS_SERVICE_URL = google_cloud_run_v2_service.accounts.uri
+        SESSION_SERVICE_URL  = var.session_service_url
       }))
     }
   }
