@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "Case-Study-Tech",
+    "slug": "case-study-tech-student",
+    "version": "1.0.0",
+    "scheme": "casestudytech",
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router"],
+    "web": { "bundler": "metro", "output": "single" },
+    "android": { "package": "com.casestudytech.student" },
+    "ios": { "bundleIdentifier": "com.casestudytech.student", "supportsTablet": true }
+  }
+}

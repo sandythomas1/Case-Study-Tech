@@ -2,7 +2,7 @@ import {
   GoogleSignin,
   isSuccessResponse,
 } from "@react-native-google-signin/google-signin";
-import { Button } from "react-native";
+import { ActionButton } from "../components/Page";
 type Props = {
   onCredential(credential: string): void;
   onError(): void;
@@ -27,8 +27,8 @@ export function GoogleButton({ onCredential, onError, disabled }: Props) {
     }
   }
   return (
-    <Button
-      title="Continue with Google"
+    <ActionButton
+      label="Continue with Google"
       disabled={disabled}
       onPress={() => {
         void signIn();

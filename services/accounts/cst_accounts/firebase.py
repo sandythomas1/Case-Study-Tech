@@ -9,7 +9,24 @@ from firebase_admin import App, auth
 from firebase_admin.exceptions import FirebaseError
 from pydantic import ValidationError
 
-from .domain import Rejected, Student, Tokens, Unavailable
+from .domain import DeletionPending, Rejected, Student, Tokens, Unavailable
+
+
+def _reports_disabled(response: httpx.Response) -> bool:
+    """True when signInWithIdp or securetoken refused a disabled account.
+
+    Deletion is the only path in this system that disables users, so a disabled
+    account always means a pending deletion. Only the error code is read; the
+    provider's message text never leaves this function.
+    """
+    try:
+        error = response.json().get("error")
+        message = error.get("message") if isinstance(error, dict) else None
+    except (ValueError, AttributeError):
+        return False
+    if not isinstance(message, str):
+        return False
+    return message.split(":")[0].strip() == "USER_DISABLED"
 
 
 class FirebaseIdentity:
@@ -22,7 +39,8 @@ class FirebaseIdentity:
     ) -> None:
         self.app, self.api_key, self.request_uri = app, api_key, request_uri
         self.client = client or httpx.Client(timeout=10, follow_redirects=False)
-        # HTTP client INFO logs include query API keys. Own logs contain counts only.
+        # The API key travels in a header, so request URLs carry no secret. HTTP
+        # client INFO logs stay off as defense in depth; own logs hold counts only.
         logging.getLogger("httpx").setLevel(logging.WARNING)
         logging.getLogger("httpcore").setLevel(logging.WARNING)
 
@@ -52,15 +70,19 @@ class FirebaseIdentity:
 
     def _tokens(self, url: str, **kwargs: Any) -> dict[str, Any]:
         try:
-            response = self.client.post(url, params={"key": self.api_key}, **kwargs)
+            response = self.client.post(
+                url, headers={"X-Goog-Api-Key": self.api_key}, **kwargs
+            )
             if response.status_code in {400, 401, 403}:
+                if _reports_disabled(response):
+                    raise DeletionPending()
                 raise Rejected()
             response.raise_for_status()
             payload = response.json()
             if not isinstance(payload, dict):
                 raise Unavailable()
             return payload
-        except Rejected:
+        except (Rejected, DeletionPending):
             raise
         except (httpx.HTTPError, ValueError, TypeError):
             raise Unavailable() from None

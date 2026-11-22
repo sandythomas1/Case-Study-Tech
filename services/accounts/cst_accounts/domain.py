@@ -11,6 +11,10 @@ class Rejected(Exception):
     """Invalid, expired, revoked, or non-Google credential."""
 
 
+class DeletionPending(Exception):
+    """The account has a pending deletion request, so it cannot sign in."""
+
+
 class Unavailable(Exception):
     """An external dependency failed; access must fail closed."""
 

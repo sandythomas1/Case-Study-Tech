@@ -24,8 +24,11 @@ class FakeAuth:
         return Student(uid=token)
 
     def exchange(self, credential):
-        from cst_accounts.domain import Tokens
+        from cst_accounts.domain import DeletionPending, Tokens
 
+        if credential in self.disabled:
+            # The provider reports USER_DISABLED for an account being deleted.
+            raise DeletionPending()
         self.verify(credential)
         return Tokens(id_token=credential, refresh_token="refresh-a", expires_in=3600)
 
@@ -256,17 +259,29 @@ def test_deletion_requires_confirmation_and_denies_access_immediately(setup):
     assert "student-b" not in store.requests
 
 
-def test_pending_deletion_blocks_refresh_and_new_exchange(setup):
+PENDING = {"detail": "account_deletion_pending"}
+
+
+def test_pending_deletion_blocks_refresh_and_new_exchange_with_a_stable_code(setup):
     client, _, store = setup
     store.request_deletion("student-a", datetime.now(UTC))
-    assert (
-        client.post("/v1/auth/google", json={"credential": "student-a"}).status_code
-        == 403
-    )
-    assert (
-        client.post("/v1/auth/refresh", json={"refresh_token": "refresh-a"}).status_code
-        == 403
-    )
+    exchange = client.post("/v1/auth/google", json={"credential": "student-a"})
+    assert exchange.status_code == 403
+    assert exchange.json() == PENDING
+    refresh = client.post("/v1/auth/refresh", json={"refresh_token": "refresh-a"})
+    assert refresh.status_code == 403
+    assert refresh.json() == PENDING
+
+
+def test_provider_disabled_account_is_reported_as_pending_deletion(setup):
+    client, auth, _ = setup
+    auth.disabled.add("student-a")
+    exchange = client.post("/v1/auth/google", json={"credential": "student-a"})
+    assert exchange.status_code == 403
+    assert exchange.json() == PENDING
+    refresh = client.post("/v1/auth/refresh", json={"refresh_token": "refresh-a"})
+    assert refresh.status_code == 403
+    assert refresh.json() == PENDING
 
 
 def test_deletion_denial_survives_provider_revocation_outage(setup):
@@ -285,6 +300,71 @@ def test_deletion_denial_survives_provider_revocation_outage(setup):
     assert result.status_code == 202
     assert "student-a" in store.requests
     assert client.get("/v1/scores", headers=headers).status_code == 403
+
+
+def _keep_tokens_valid(auth):
+    """Model a lost 202: revocation failed, so the student's token still verifies."""
+    from cst_accounts.domain import Unavailable
+
+    def failed_disable(uid):
+        raise Unavailable()
+
+    auth.disable = failed_disable
+
+
+def test_repeated_deletion_request_from_owner_returns_the_existing_request(setup):
+    client, auth, store = setup
+    _keep_tokens_valid(auth)
+    headers = {"Authorization": "Bearer student-a"}
+    body = {"confirmation": "DELETE"}
+    first = client.post("/v1/account/deletion", json=body, headers=headers)
+    assert first.status_code == 202
+    second = client.post("/v1/account/deletion", json=body, headers=headers)
+    assert second.status_code == 202
+    assert second.json()["accepted"] is True
+    assert second.json() == first.json()
+    assert list(store.requests) == ["student-a"]
+    # Every other route stays closed while deletion is pending.
+    assert client.get("/v1/me", headers=headers).status_code == 403
+    assert client.get("/v1/scores", headers=headers).status_code == 403
+    assert (
+        client.post("/v1/auth/refresh", json={"refresh_token": "refresh-a"}).status_code
+        == 403
+    )
+    assert (
+        client.post("/v1/account/deletion", json={}, headers=headers).status_code == 400
+    )
+
+
+def test_another_owner_cannot_touch_a_pending_deletion(setup):
+    client, auth, store = setup
+    _keep_tokens_valid(auth)
+    a = {"Authorization": "Bearer student-a"}
+    b = {"Authorization": "Bearer student-b"}
+    body = {"confirmation": "DELETE"}
+    assert client.post("/v1/account/deletion", json=body, headers=a).status_code == 202
+    pending_a = store.requests["student-a"]
+    # The owner comes only from the verified token, never from the body or query.
+    assert (
+        client.post(
+            "/v1/account/deletion", json={**body, "uid": "student-a"}, headers=b
+        ).status_code
+        == 400
+    )
+    assert (
+        client.post(
+            "/v1/account/deletion?uid=student-a",
+            json=body,
+            headers={"Authorization": "Bearer forged"},
+        ).status_code
+        == 401
+    )
+    assert "student-b" not in store.requests
+    assert client.get("/v1/scores", headers=b).status_code == 200
+    assert client.post("/v1/account/deletion", json=body, headers=b).status_code == 202
+    assert store.requests["student-a"] is pending_a
+    assert store.requests["student-b"].uid == "student-b"
+    assert store.records["student-a"]
 
 
 def test_score_projection_drops_extra_private_fields(setup):

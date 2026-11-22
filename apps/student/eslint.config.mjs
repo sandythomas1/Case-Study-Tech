@@ -1,29 +1,38 @@
-import js from "@eslint/js";
-import ts from "typescript-eslint";
+import js from '@eslint/js';
+import ts from 'typescript-eslint';
+
 export default ts.config(
-  { ignores: ["dist/**", "node_modules/**", ".expo/**"] },
+  { ignores: ['node_modules/**', 'dist/**', '.expo/**', 'coverage/**', 'android/**', 'ios/**'] },
   js.configs.recommended,
   ...ts.configs.recommended,
   {
     languageOptions: {
       globals: {
-        __DEV__: "readonly",
-        process: "readonly",
-        window: "readonly",
-        document: "readonly",
-        fetch: "readonly",
-        URL: "readonly",
-        AbortSignal: "readonly",
-        HTMLElement: "readonly",
-        HTMLDivElement: "readonly",
-        HTMLScriptElement: "readonly",
+        // Jest and CommonJS configuration files
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        jest: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        __dirname: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        // React Native and web runtime
+        __DEV__: 'readonly',
+        process: 'readonly',
+        window: 'readonly',
+        document: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        AbortSignal: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLScriptElement: 'readonly',
       },
     },
     rules: {
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { argsIgnorePattern: "^_" },
-      ],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
   },
 );

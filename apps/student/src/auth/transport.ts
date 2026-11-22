@@ -1,9 +1,19 @@
+import { ApiError, DELETION_PENDING } from "./errors";
 import type { Transport } from "./session";
-export class ApiError extends Error {
-  constructor(readonly status: number) {
-    super(
-      status === 401 ? "Sign in again." : "The request could not be completed.",
-    );
+export { ApiError } from "./errors";
+
+// Reads a 403 body only to recognize the pending-deletion code.
+async function refusalCode(response: Response) {
+  try {
+    const body: unknown = await response.json();
+    return body &&
+      typeof body === "object" &&
+      "detail" in body &&
+      body.detail === DELETION_PENDING
+      ? DELETION_PENDING
+      : undefined;
+  } catch {
+    return undefined;
   }
 }
 export function createTransport(base: string, allowLocal = false): Transport {
@@ -36,7 +46,11 @@ export function createTransport(base: string, allowLocal = false): Transport {
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       },
     );
-    if (!response.ok) throw new ApiError(response.status);
+    if (!response.ok)
+      throw new ApiError(
+        response.status,
+        response.status === 403 ? await refusalCode(response) : undefined,
+      );
     return response.json() as Promise<unknown>;
   };
 }
