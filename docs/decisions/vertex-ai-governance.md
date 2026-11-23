@@ -1,10 +1,8 @@
 ﻿# Vertex AI governance: models, region and zero-retention settings
 
-**Status:** Draft, 2026-11-22, #65. The models are approved by the owner. Settings 1, 3 and 8 are
-verified on the live development project (2026-11-23 UTC). Two are **pending the owner's run**:
-setting 2 needs a `check` with the new control read and a dated console screenshot, and setting 7
-needs the apply that sets `CST_VERTEX_LOCATION=us` on the services. An agent ran the first steps under
-a recorded one-off AG-9 exception (`ag9-one-off-exceptions.md`); the owner runs the rest.
+**Status:** Draft, 2026-11-22, #65. The models are approved by the owner. Settings 1, 2, 3, 7 and 8
+are verified on the live development project (2026-11-23 UTC). An agent ran the first steps under a recorded one-off AG-9 exception
+(`ag9-one-off-exceptions.md`); the owner ran the `us` apply and the final `check`.
 
 > **Synthetic data only (PA-3).** Written zero-retention terms for Vertex AI are not confirmed
 > (`provider-zero-retention.md`, row "Vertex AI Gemini", **Pending**). Until that row says
@@ -79,12 +77,12 @@ project, so the owner's real `terraform plan` and `apply` output is the evidence
 | # | Setting | How it is applied | Verification | Evidence |
 |---|---|---|---|---|
 | 1 | Implicit caching off, project-wide (both tiers) | No Terraform resource exists, so the owner runs `python infra/session-grading/vertex_governance.py disable-cache` (PATCH the documented `https://aiplatform.googleapis.com/v1/projects/<PROJECT_ID>/cacheConfig` with `disableCache: true`, then GET it back) | `vertex_governance.py check` prints `PASS setting 1` only when the GET shows `disableCache: true` | **PASS.** `disable-cache` 2026-11-23T03:24:06Z: `PATCH cacheConfig: HTTP 200`, then `disableCache: true`. `check` 03:24:08Z and 03:28:43Z: `PASS setting 1`. |
-| 2 | Request-response logging stays off | Off by default: Google says logging "is disabled by default until you configure a `PublisherModelConfig` resource", one per model and location. Turning it on takes `aiplatform.endpoints.setPublisherModelConfig` (Google's request-response logging page says to restrict it). `cstVertexInvoke` holds only `aiplatform.endpoints.predict`, so neither service can turn it on | Terraform test `vertex_role_is_inference_only`; `vertex_governance.py check` reads `fetchPublisherModelConfig` for each pinned model on `us` and prints `PASS setting 2` on `enabled: false`, or on HTTP 404 (never configured) only when a control read of the same model on the same host and API version returns HTTP 200. A wrong host, version or model ID also returns 404, so a 404 alone proves nothing. Plus one dated console screenshot (AC2) | **Pending the owner's run.** `check` 2026-11-23T03:28:43Z returned HTTP 404 for both models on `us`, but that run had no control read, so it is not counted. Needs a `check` with the control read and the console screenshot. |
+| 2 | Request-response logging stays off | Off by default: Google says logging "is disabled by default until you configure a `PublisherModelConfig` resource", one per model and location. Turning it on takes `aiplatform.endpoints.setPublisherModelConfig` (Google's request-response logging page says to restrict it). `cstVertexInvoke` holds only `aiplatform.endpoints.predict`, so neither service can turn it on | Terraform test `vertex_role_is_inference_only`; `vertex_governance.py check` reads `fetchPublisherModelConfig` for each pinned model on `us` and prints `PASS setting 2` on `enabled: false`, or on HTTP 404 (never configured) only when a control read of the same model on the same host and API version returns HTTP 200. A wrong host, version or model ID also returns 404, so a 404 alone proves nothing. Plus a dated Logs Explorer search: no console screen shows this setting (Google: base models are configured "by using the REST API or Python SDK"), so the console evidence is the Admin Activity audit log, which is always on and kept 400 days | **PASS.** Owner's `check` 2026-11-23T03:58:50Z: `PASS setting 2` for `gemini-3.8-flash` and `gemini-4-argon`, each "HTTP 404, never configured (off by default); model read HTTP 200". The earlier 03:28:43Z 404s had no control read and are not counted. Logs Explorer, 2026-11-23 ~04:07Z, last 400 days: `protoPayload.methodName:"SetPublisherModelConfig"` returned **0 results**; the control search `protoPayload.methodName:"CacheConfig"` in the same window returned 1, the setting 1 `UpdateCacheConfig` call at 03:24:06Z. Screenshots kept outside the repo. |
 | 3 | No explicit context caches | `cstVertexInvoke` has no `aiplatform.cachedContents.create` | Terraform test `vertex_role_is_inference_only`; `vertex_governance.py check` prints `PASS setting 3` when the `us` list is empty | **PASS.** 0 caches on `us-central1` (03:24:08Z) and on `us` (03:28:43Z). Config test passes. |
 | 4 | No Grounding with Google Search or Maps | Code rule: no request includes a `googleSearch` or `googleMaps` tool | Repo search, 2026-11-22: no application code calls Vertex AI yet. The persona harness (#67) and the grader (#35) must each ship a test that fails if a request carries a grounding tool. | Search clean (2026-11-22). Tests due with #67 and #35; tracked by a comment on each (owner decision, 2026-11-22). |
 | 5 | `store=false` on any Interactions API call | Code rule | Same repo search. Any caller of the Interactions API must ship a test that every request sets `store=false`. | Search clean (2026-11-22). No caller planned. |
 | 6 | Live API session resumption stays off | Code rule | Same repo search. A Live API caller must ship a test that no session sets `sessionResumption`. | Search clean (2026-11-22). No caller planned. |
-| 7 | `us` multi-region endpoint, never `global` | `local.vertex.location = "us"` → `CST_VERTEX_LOCATION` on both services | Terraform tests `vertex_pins_match_the_governance_record` and `each_service_gets_only_its_own_model`; `vertex_governance.py probe` | Probe: `us-central1` HTTP 404 for both (03:24:10Z); `us` HTTP 200 for both (03:28:46Z). Config tests pass. Live services still say `us-central1` from the 03:23:50Z apply. The saved plan for `us` changes only `CST_VERTEX_LOCATION` on the two services. **Its apply is pending.** |
+| 7 | `us` multi-region endpoint, never `global` | `local.vertex.location = "us"` → `CST_VERTEX_LOCATION` on both services | Terraform tests `vertex_pins_match_the_governance_record` and `each_service_gets_only_its_own_model`; `vertex_governance.py probe` | Probe: `us-central1` HTTP 404 for both (03:24:10Z); `us` HTTP 200 for both (03:28:46Z). Config tests pass. **PASS.** The owner applied the saved `us` plan on 2026-11-23, before the 03:58:50Z `check` (the apply output has no timestamp): `0 added, 2 changed, 0 destroyed`, `CST_VERTEX_LOCATION` on the grading and session services only. The plan after it: `No changes`. |
 | 8 | No batch prediction for session content | `cstVertexInvoke` has no `aiplatform.batchPredictionJobs.create` | Terraform test `vertex_role_is_inference_only` | **PASS.** Config test passes. Live apply 2026-11-23T03:23:50Z: `0 added, 2 changed, 0 destroyed`, env vars only, IAM unchanged. The plan after it: `No changes`. |
 
 **Abuse-monitoring logging exemption.** It can't be set by us: it depends on the agreement
@@ -120,8 +118,9 @@ From the repo root, signed in with `gcloud auth login` as an account with `roles
    development)
 3. `python infra/session-grading/vertex_governance.py check` (settings 1, 2 and 3)
 4. `python infra/session-grading/vertex_governance.py probe`
-5. In the console, confirm request-response logging is off for both pinned models in `us`, and save
-   a dated screenshot outside the repo (setting 2).
+5. In Logs Explorer, search the last 400 days for `protoPayload.methodName:"SetPublisherModelConfig"`
+   (expect 0 results) and, as the control, `protoPayload.methodName:"CacheConfig"` (expect the
+   setting 1 call). Save dated screenshots outside the repo (setting 2).
 6. Paste each output with its UTC time into the Evidence column.
 
 Re-run `check` whenever the project's Vertex AI configuration changes and before the release gate (#70).
@@ -159,3 +158,6 @@ region answers are in comment 7090369227, and the last two are in the PR progres
   then chose "You run it, I record (Recommended)": the owner runs the apply and the agent records it.
 - **Setting 2 evidence:** "Add control read + console check (Recommended)". `check` counts a 404 only
   after a successful control read, and the owner adds one dated console screenshot.
+- **Setting 2 console evidence:** no console screen shows request-response logging for base models,
+  so the owner chose "Audit log search (Recommended)": a dated Logs Explorer search for any
+  `SetPublisherModelConfig` call, with a control search that must find a known call.
