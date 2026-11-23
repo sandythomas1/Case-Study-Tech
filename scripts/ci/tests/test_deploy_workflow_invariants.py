@@ -166,17 +166,22 @@ class ProviderMatchesWorkflowTest(unittest.TestCase):
         self.assertEqual(_ROOT / workflow_ref.group(1), _WORKFLOW)
 
     def test_impersonation_is_bound_to_the_environment_subject_only(self) -> None:
-        self.assertIn("/subject/${local.github_subject}\"", self.terraform)
         self.assertNotIn("principalSet://", self.terraform)
+        self.assertEqual(self.terraform.count('"roles/iam.workloadIdentityUser"'), 1)
+        members = re.findall(r'member\s*=\s*"principal://[^"]*"', self.terraform)
+        self.assertEqual(len(members), 1)
+        self.assertTrue(
+            members[0].endswith('/subject/${local.github_subject}"'), members[0]
+        )
 
     def test_subject_uses_githubs_immutable_format(self) -> None:
         # The repository sets use_immutable_subject, so the token's sub is
         # repo:OWNER@OWNER_ID/REPO@REPO_ID:environment:ENV (#124).
-        self.assertIn(
-            'github_subject   = "repo:${local.github_owner}@${var.github_owner_id}/'
-            '${local.github_repo_name}@${var.github_repository_id}'
-            ':environment:${local.environment}"',
+        self.assertRegex(
             self.terraform,
+            r'github_subject\s*=\s*"repo:\$\{local\.github_owner\}@\$\{var\.github_owner_id\}/'
+            r'\$\{local\.github_repo_name\}@\$\{var\.github_repository_id\}'
+            r':environment:\$\{local\.environment\}"',
         )
 
     def test_old_name_based_subject_is_gone(self) -> None:
