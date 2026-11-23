@@ -12,11 +12,12 @@ Authority, highest first: SDD v1.0 (`output/CSCI_5520_CaseStudy_Tech_Software_De
 
 ## 1. At a glance
 
-CaseStudy Tech is a practice tool. A counseling student holds a timed, voice-first conversation
-with a simulated client. When the conversation ends, a separate grader turns the complete
-transcript into a developmental report. The report goes to the device. The server keeps only the
-scores. The backend is a headless, stateless API: any instance can serve any request, and web, iOS
-and Android share one contract.
+CaseStudy Tech is a practice tool. A counseling student holds a timed, voice-first conversation with
+a simulated client. When the conversation ends, a separate grader turns the complete transcript into
+a developmental report. The report goes to the device. The server keeps the scores and, unless the
+student opts out, one encrypted transcript per completed session for the student's own review
+(POLICY DAT-1). The backend is a headless, stateless API: any instance can serve any request, and
+web, iOS and Android share one contract.
 
 ```text
 Student device (Expo app: web / iOS / Android) — holds the signed conversation state
@@ -138,16 +139,18 @@ Do not replace these without an owner decision and a new decision record.
 | Identity | Identity Platform with Google sign-in only; server-side token exchange | RC-01, DD-05, ADR 0001 |
 | Models | Hosted Vertex AI with a prompt harness; no fine-tuning or self-hosting | DD-01, SDD §2.3 |
 | Speech | Replaceable interface; vendor chosen by the Phase 2 ADR | RC-16, PA-2 |
-| Data | Firestore: score records and one access record per account (POLICY DAT-2 exception) | DD-03, RC-04, PA-12 |
+| Data | Firestore: score records, saved transcripts encrypted at the application layer with a Cloud KMS key, and one access record per account (POLICY DAT-1 and DAT-2 exceptions) | DD-03, RC-04, PA-12, owner decision 2026-11-18 (`docs/decisions/transcript-storage.md`) |
 | Infrastructure | Terraform under `infra/`; gateway config generated from a template | PA-11 |
 | Report export | PDF built on the device; no server render endpoint | PA-6 |
-| iOS | TestFlight or internal distribution only | RC-15 |
+| iOS | TestFlight or internal distribution only. Builds use Expo Application Services (EAS) for internal iOS builds only; EAS never sees session content or student data | RC-15, owner decision 2026-11-22 |
+| Web hosting | Firebase Hosting serves the static web export (development project today) | Owner decision 2026-11-22 |
 
 ## 7. Trust and data boundaries
 
 | Data | May exist in | Must never reach |
 |---|---|---|
-| Audio, transcript, excerpts, narrative feedback | App memory during the session and report view, including the signed state; request bodies in transit; service memory while processing; the speech provider and Vertex AI under written zero-retention terms | Firestore, any database or cache, logs, analytics, crash reports, test fixtures, an external session store, device storage |
+| Audio, transcript, excerpts, narrative feedback | App memory during the session and report view, including the signed state; request bodies in transit; service memory while processing; the speech provider and Vertex AI under written zero-retention terms | Firestore (except the saved transcript in the next row), any database or cache, logs, analytics, crash reports, test fixtures, an external session store, device storage |
+| Saved transcript of a completed session (POLICY DAT-1) | Firestore under the owner's UID, encrypted by the grading service with a Cloud KMS key; decrypted only by the accounts service for its owner; the app while the student reviews it; a file the student chooses to export | Any other student, the admin or any human principal, any model or vendor, an eval or calibration set, logs, the development project (as real data) |
 | Score record: overall and category scores, completion time, crisis safety result | Firestore under the owner's UID; the app | Any other student; the admin |
 | Access record: display name, Google email, state, times | Firestore (server-only); the admin queue; the owner's email (name and email only) | Logs; any account other than its owner and the admin |
 | Firebase ID token | App memory; request headers | Disk on any platform, logs |
@@ -161,8 +164,11 @@ Cloud Run (plan IR-5).
 
 ## 8. Invariants
 
-- **Never** persist session content anywhere (RC-03). State loss takes the lost-content path; it is
-  never patched with storage.
+- **Never** persist session content anywhere (RC-03), except the saved transcript of a completed
+  session, which only the grading service writes, encrypted (POLICY DAT-1). Audio, excerpts and
+  narrative feedback are never persisted. State loss takes the lost-content path; it is never
+  patched with storage, and recovery never reads a saved transcript.
+- **Never** let a human principal decrypt a saved transcript in production.
 - **Never** process a turn or grade a transcript whose signed state fails verification, belongs to
   another UID or is past its time limit.
 - **Never** produce a score from an incomplete transcript or an unvalidated grader result (RC-09,
@@ -185,7 +191,10 @@ Cloud Run (plan IR-5).
 
 - Cloud Run services are private (no unauthenticated invoke). The gateway service account invokes
   the accounts and session services. Only the session service account invokes the grader.
-- Every deploy needs a human's approval. No agent triggers a deploy (plan AG-9).
+- Every deploy needs a human's approval. No agent triggers a deploy (plan AG-9). One-off owner
+  exceptions are listed in `docs/decisions/ag9-one-off-exceptions.md` and never carry forward.
+- The web app is a static export on Firebase Hosting. Native iOS builds run on EAS for internal
+  distribution only.
 - Real students use the system only after the release gate review (#70): written zero-retention
   terms (PA-3) and the calibration and safeguard gates (PA-10).
 
