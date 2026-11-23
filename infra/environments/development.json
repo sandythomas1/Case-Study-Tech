@@ -1,0 +1,15 @@
+{
+  "projectId": "casestudy-tech-dev-2e03d0",
+  "projectNumber": "613104664964",
+  "displayName": "CaseStudy Tech Development",
+  "region": "us-central1",
+  "database": "(default)",
+  "firebaseWebAppId": "1:613104664964:web:4d551431bea457c6baddd1",
+  "firebaseAndroidAppId": "1:613104664964:android:20a4298bc75f3b35baddd1",
+  "firebaseIosAppId": "1:613104664964:ios:ca6ab7a9e5c7f984baddd1",
+  "accountsGatewayUrl": "https://accounts-7tnmor5w.uc.gateway.dev",
+  "privateAccountsServiceUrl": "https://accounts-447ob3nwoa-uc.a.run.app",
+  "accountsImageDigest": "sha256:8c6e9150426a4ee7af19542c75d1e00547d4e80d004c17f16dd7f6500105411c",
+  "iosBundleIdentifier": "com.casestudytech.student",
+  "androidPackage": "com.casestudytech.student"
+}
