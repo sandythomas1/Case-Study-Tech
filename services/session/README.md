@@ -1,7 +1,8 @@
 # Session service
 
-Holds the practice-session logic (ARCHITECTURE §3). So far it contains only the replaceable speech
-provider interface from #64. The HTTP layer, signed state and persona turns come with #31.
+Holds the practice-session logic (ARCHITECTURE §3). So far it contains the replaceable speech
+provider interface from #64 and the Deepgram bake-off adapter from #101. The HTTP layer, signed
+state and persona turns come with #31.
 
 ## Layout
 
@@ -10,9 +11,12 @@ provider interface from #64. The HTTP layer, signed state and persona turns come
 | `cst_session/speech/interface.py` | The `SpeechProvider` protocol, transcript events and the audio format contract |
 | `cst_session/speech/errors.py` | Typed errors: provider unavailable, timeout, unsupported audio |
 | `cst_session/speech/fake.py` | `FakeSpeechProvider`, which plays scripted responses and simulates latency and each error |
-| `cst_session/speech/adapters/` | Vendor adapters. The only place a vendor speech SDK may be imported. Empty until #20 |
+| `cst_session/speech/adapters/` | Vendor adapters. The only place a vendor speech SDK or `websockets` may be imported (`tests/test_speech_import_boundary.py`) |
+| `cst_session/speech/adapters/deepgram.py` | `DeepgramSpeechProvider`: Flux speech-to-text and Aura-2 text-to-speech, a #20 bake-off candidate (#101). Synthetic data only, see `docs/decisions/speech-deepgram.md` |
+| `cst_session/speech/adapters/deepgram_transport.py` | The adapter's network transport, over `websockets` and `httpx` |
 | `tests/speech_contract.py` | `SpeechProviderContract`, the suite every adapter must pass |
-| `tests/test_speech_import_boundary.py` | Fails when a vendor speech SDK is imported outside `adapters/` |
+| `tests/test_speech_import_boundary.py` | Fails when a vendor speech SDK or `websockets` is imported outside `adapters/`, or a module that handles session content imports logging or storage |
+| `tests/deepgram_fakes.py` | A scripted fake Deepgram network that records every request |
 
 ## Audio contract
 

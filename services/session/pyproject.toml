@@ -2,7 +2,10 @@
 name = "session"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "httpx>=0.28.1",
+    "websockets>=17.4",
+]
 
 [dependency-groups]
 dev = [

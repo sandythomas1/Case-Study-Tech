@@ -36,6 +36,7 @@ A row turns **Confirmed** only once its condition is met and the evidence is rec
 | Google Cloud Speech-to-Text batch recognition | No. Transcripts are kept about 5 days. | n/a | n/a | **Rejected** for session content |
 | Google Cloud Text-to-Speech, standard and Chirp 3 HD voices | **Retention: yes.** Google states it logs no TTS text or audio and the service is stateless. **Training: by inference only.** The TTS page has no explicit no-training sentence, so this relies on SST §18. Whether §4.3 applies is unverified. | Not needed (published terms) | Nothing to set | **Pending** the §4.3 answer from the Vertex support case |
 | Google Cloud Text-to-Speech, Gemini-TTS voices | Unknown. They may fall under Gemini abuse monitoring. | Not requested | n/a | **Pending**. Not to be used until confirmed. |
+| Deepgram Flux STT (`/v2/listen`) and Aura-2 TTS (`/v1/speak`), #101 | **Only with `mip_opt_out=true` (setting 13), and unconfirmed in writing.** Deepgram documents that opted-out data is kept only as long as needed to process the request and is not used for model improvement. A signed agreement, the sub-processor list and permission for simulated self-harm role-play are not yet requested. See `speech-deepgram.md`. | Not requested (#101 AC4) | Set in code on every request; no key exists until #18 | **Pending**. Approved by the owner on 2026-11-22 for synthetic-data benchmarking only (DAT-6). No session content. |
 | OpenAI (all speech models) | Assessed in `research.md`: file transcription likely meets RC-05 by default; Realtime and speech output need ZDR or MAM approval | n/a | n/a | **Dropped by owner decision, 2026-11-22.** The speech candidates are Google, Deepgram (#101) and Azure (#102). Not to be used. |
 
 No provider is used for session content until its row says **Confirmed**, with the date and where the
@@ -66,6 +67,11 @@ evidence recorded here: API output or a dated console screenshot.
 11. Use standard or Chirp 3 HD voices, not Gemini-TTS, until it is confirmed.
 12. If Chirp 3 is used, call the `us` multi-region endpoint (ARCHITECTURE §6 exception). Everything else
     stays in `us-central1`.
+
+**Deepgram**
+13. Send `mip_opt_out=true` on every `/v2/listen` and `/v1/speak` request. The adapter adds it to every URL
+    it builds, and `services/session/tests/test_deepgram_speech.py` fails if any request lacks it. The key
+    goes only in the `Authorization` header.
 
 ## Request to send
 
@@ -99,5 +105,8 @@ documents themselves.
 - **2026-11-22: OpenAI dropped** as a speech candidate. Google, Deepgram (#101) and Azure (#102) remain.
   Plan line 204 (OpenAI and Google adapters) and the CD-1 swap target still name OpenAI. They need a
   follow-up update.
+- **2026-11-22: Deepgram synthetic-only.** The Deepgram adapter (#101) may merge and be benchmarked with
+  synthetic audio and scripted text only, with its row above at Pending. This row is the AG-3 zero-retention
+  record for it. Real session content waits for written terms (#101 AC4) and a Confirmed row.
 - **2026-11-22: Chirp 3 region.** If Chirp 3 is used, it runs in the `us` multi-region. ARCHITECTURE §6
   records this exception.

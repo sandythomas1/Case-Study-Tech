@@ -34,15 +34,20 @@ VENDOR_SPEECH_MODULES = (
 CONTENT_HANDLING_MODULES = (
     "cst_session/speech/interface.py",
     "cst_session/speech/fake.py",
+    "cst_session/speech/adapters/deepgram.py",
 )
 PERSISTENCE_MODULES = ("logging", "pathlib", "pickle", "shelve", "sqlite3", "tempfile")
 
 
-def _is_vendor_module(name: str) -> bool:
-    return any(
-        name == vendor or name.startswith(vendor + ".")
-        for vendor in VENDOR_SPEECH_MODULES
-    )
+# The speech wire client. Tests may use it to stand in for a vendor, so only
+# the service package is checked for it.
+SPEECH_WIRE_MODULES = ("websockets",)
+
+
+def _is_vendor_module(
+    name: str, modules: tuple[str, ...] = VENDOR_SPEECH_MODULES
+) -> bool:
+    return any(name == vendor or name.startswith(vendor + ".") for vendor in modules)
 
 
 def _imported_names(tree: ast.AST) -> list[tuple[int, str]]:
@@ -74,21 +79,41 @@ def _python_files(root: Path) -> list[Path]:
     ]
 
 
-def find_vendor_imports(root: Path, adapters_dir: Path) -> list[str]:
-    """Every vendor speech import under ``root`` outside ``adapters_dir``."""
+def find_vendor_imports(
+    root: Path,
+    adapters_dir: Path,
+    modules: tuple[str, ...] = VENDOR_SPEECH_MODULES,
+) -> list[str]:
+    """Every import of ``modules`` under ``root`` outside ``adapters_dir``."""
     violations: list[str] = []
     for path in _python_files(root):
         if path.is_relative_to(adapters_dir):
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for lineno, name in _imported_names(tree):
-            if _is_vendor_module(name):
+            if _is_vendor_module(name, modules):
                 violations.append(f"{path.relative_to(root)}:{lineno} imports {name}")
     return sorted(set(violations))
 
 
 def test_service_imports_no_vendor_speech_sdk_outside_the_adapters() -> None:
     assert find_vendor_imports(SERVICE_ROOT, ADAPTERS_DIR) == []
+
+
+def test_the_service_package_uses_the_speech_wire_client_only_in_the_adapters() -> None:
+    package = SERVICE_ROOT / "cst_session"
+
+    assert find_vendor_imports(package, ADAPTERS_DIR, SPEECH_WIRE_MODULES) == []
+
+
+def test_the_wire_check_fails_on_websockets_outside_the_adapters(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "session_logic.py").write_text(
+        "from websockets.asyncio.client import connect", encoding="utf-8"
+    )
+
+    assert find_vendor_imports(tmp_path, tmp_path / "adapters", SPEECH_WIRE_MODULES)
 
 
 @pytest.mark.parametrize(
@@ -135,7 +160,9 @@ def test_the_check_ignores_non_vendor_imports(tmp_path: Path, source: str) -> No
 
 
 @pytest.mark.parametrize("relative_path", CONTENT_HANDLING_MODULES)
-def test_interface_and_fake_import_no_logging_or_storage(relative_path: str) -> None:
+def test_content_handling_modules_import_no_logging_or_storage(
+    relative_path: str,
+) -> None:
     tree = ast.parse((SERVICE_ROOT / relative_path).read_text(encoding="utf-8"))
     imported = {name.split(".")[0] for _, name in _imported_names(tree)}
     called = {
