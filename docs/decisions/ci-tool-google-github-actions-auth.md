@@ -35,8 +35,12 @@ workflow (`infra/ci-deploy/main.tf`):
   branch, a pull request (including `pull_request_target`), another workflow file, a job without
   the environment or a re-run cannot get a Google token. The re-run rule (owner decision
   2026-11-22) means repository Write, which can re-run jobs, cannot deploy.
-- Only the subject `repo:sandythomas1/Case-Study-Tech:environment:development` may act as
-  `cst-deploy`.
+- Only the subject `repo:sandythomas1@145699956/Case-Study-Tech@1382155772:environment:development`
+  may act as `cst-deploy`. The repository uses GitHub's immutable subject format
+  (`use_immutable_subject: true`), which carries the owner and repository IDs, so renaming or
+  re-creating either one breaks the binding instead of passing it to the new holder. It's an exact
+  `principal://` member, never a `principalSet` (owner decision 2026-11-22, #124). The old
+  name-based subject never matched, and it failed the first deploy (run 45109763808).
 - `cst-deploy` can update existing Cloud Run services and the job, push to the `accounts` image
   repository and act as the five runtime identities. It cannot read Terraform state, secrets or
   Firestore, create or delete a Cloud Run service, or change Cloud Run or project IAM.

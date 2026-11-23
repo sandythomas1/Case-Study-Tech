@@ -24,10 +24,26 @@ variable "github_repository" {
   type    = string
   default = "sandythomas1/Case-Study-Tech"
 }
+# The owner's numeric user ID, for the immutable OIDC subject. Read it with
+# `gh api users/OWNER --jq .id`.
+variable "github_owner_id" {
+  type    = string
+  default = "145699956"
+  validation {
+    condition     = can(regex("^[0-9]+$", var.github_owner_id))
+    error_message = "github_owner_id must be the numeric user ID."
+  }
+}
 
 locals {
   # The GitHub environment that gates deploys to this project. deploy.yml names the same one.
   environment = "development"
+  # The repository uses GitHub's immutable subject format (`use_immutable_subject: true` in
+  # `gh api repos/OWNER/REPO/actions/oidc/customization/sub`), so the token's `sub` is
+  # repo:OWNER@OWNER_ID/REPO@REPO_ID:environment:ENV. The name-only format never matches (#124).
+  github_owner     = split("/", var.github_repository)[0]
+  github_repo_name = split("/", var.github_repository)[1]
+  github_subject   = "repo:${local.github_owner}@${var.github_owner_id}/${local.github_repo_name}@${var.github_repository_id}:environment:${local.environment}"
   # The runtime identities the deploy sets on its services, job and gateway config.
   runtime_identities = toset(["accounts", "deletion", "gateway", "session", "grading"])
 }
@@ -78,11 +94,12 @@ resource "google_service_account" "deploy" {
   description  = "Rolls Cloud Run images and the gateway config. No keys (#105)."
 }
 
-# GitHub's default subject for a job that names an environment.
+# Exactly the subject GitHub sends for a job in the development environment, and no
+# principalSet (owner decision 2026-11-22, #124).
 resource "google_service_account_iam_member" "github" {
   service_account_id = google_service_account.deploy.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/subject/repo:${var.github_repository}:environment:${local.environment}"
+  member             = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/subject/${local.github_subject}"
 }
 
 # Update existing services and the job, and read their status. No create, delete, IAM policy

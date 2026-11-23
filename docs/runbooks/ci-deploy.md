@@ -90,7 +90,7 @@ provider, the `cst-deploy` account, the `cstDeploy` custom role and these bindin
 
 | Binding | Scope |
 |---|---|
-| `roles/iam.workloadIdentityUser` | `cst-deploy`, for subject `repo:sandythomas1/Case-Study-Tech:environment:development` only |
+| `roles/iam.workloadIdentityUser` | `cst-deploy`, for subject `repo:sandythomas1@145699956/Case-Study-Tech@1382155772:environment:development` only (GitHub's immutable subject format, #124) |
 | `cstDeploy` (get and update services and jobs, read revisions and operations) | project |
 | `roles/apigateway.admin` (owner decision 2026-11-22) | project |
 | `roles/artifactregistry.writer` | the `accounts` repository only |
@@ -247,6 +247,7 @@ makes the next accounts plan recreate it.
 |---|---|---|
 | `Deploy config rejected: <field> is missing or malformed` | `development.json` changed | Fix the field in a pull request. Never weaken the validator to pass. |
 | Auth fails with `unauthorized_client` or an attribute condition error | The run is a re-run, not a push to `staging`, not from `deploy.yml`, not in the `development` environment, or the repository ID changed | Re-runs never deploy. To retry a failed deploy, merge a fix (or an empty change) into `staging` through a pull request. Re-read the ID with `gh api repos/sandythomas1/Case-Study-Tech --jq .id`. |
+| Auth passes, then the first `gcloud` call fails with `iam.serviceAccounts.getAccessToken` denied | The token's subject doesn't match the `workloadIdentityUser` binding on `cst-deploy` | Check the repository's OIDC subject format first: `gh api repos/sandythomas1/Case-Study-Tech/actions/oidc/customization/sub`. With `use_immutable_subject: true`, the subject is `repo:OWNER@OWNER_ID/REPO@REPO_ID:environment:development`. Fix `github_owner_id`, `github_repository` or `github_repository_id` in `infra/ci-deploy` in a reviewed change, and have the owner apply it. Never widen the binding to a `principalSet`. |
 | `iam.serviceAccounts.actAs` denied | A service runs as an identity the deploy cannot act as | Add the identity to `runtime_identities` in `infra/ci-deploy/main.tf` in a reviewed change |
 | `run.services.update` denied on a new service | `cstDeploy` updates services; it cannot create them | Create the service with Terraform first |
 | Health check `the revision does not run the image this deploy set` | A revision failed to start, or someone deployed by hand | Read the revision's logs. Fix forward or roll back as above. |

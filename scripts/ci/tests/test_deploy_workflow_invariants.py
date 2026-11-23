@@ -166,8 +166,36 @@ class ProviderMatchesWorkflowTest(unittest.TestCase):
         self.assertEqual(_ROOT / workflow_ref.group(1), _WORKFLOW)
 
     def test_impersonation_is_bound_to_the_environment_subject_only(self) -> None:
-        self.assertIn(':environment:${local.environment}"', self.terraform)
+        self.assertIn("/subject/${local.github_subject}\"", self.terraform)
         self.assertNotIn("principalSet://", self.terraform)
+
+    def test_subject_uses_githubs_immutable_format(self) -> None:
+        # The repository sets use_immutable_subject, so the token's sub is
+        # repo:OWNER@OWNER_ID/REPO@REPO_ID:environment:ENV (#124).
+        self.assertIn(
+            'github_subject   = "repo:${local.github_owner}@${var.github_owner_id}/'
+            '${local.github_repo_name}@${var.github_repository_id}'
+            ':environment:${local.environment}"',
+            self.terraform,
+        )
+
+    def test_old_name_based_subject_is_gone(self) -> None:
+        # The name-based subject never matches an immutable-format token (run 45109763808).
+        self.assertNotRegex(self.terraform, r"subject/repo:\$\{var\.github_repository\}")
+        self.assertNotRegex(self.terraform, r"repo:[A-Za-z0-9-]+/[A-Za-z0-9_.-]+:environment:")
+
+    def test_owner_and_repository_ids_are_the_live_ones(self) -> None:
+        owner_id = re.search(
+            r'variable "github_owner_id" \{\s*type\s*=\s*string\s*default\s*=\s*"([0-9]+)"',
+            self.terraform,
+        )
+        repository_id = re.search(
+            r'variable "github_repository_id" \{\s*type\s*=\s*string\s*default\s*=\s*"([0-9]+)"',
+            self.terraform,
+        )
+        assert owner_id and repository_id
+        self.assertEqual(owner_id.group(1), "145699956")
+        self.assertEqual(repository_id.group(1), "1382155772")
 
     def test_environment_file_names_what_terraform_creates(self) -> None:
         data = json.loads(_ENVIRONMENT.read_text(encoding="utf-8"))
