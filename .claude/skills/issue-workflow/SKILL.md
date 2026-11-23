@@ -14,13 +14,21 @@ Run checks 0–5 before you branch, edit a file or change the board, and run all
 one fails. If any fail, stop. Change nothing, and tell the owner every check that failed, with its
 evidence: the field value or the blocker's number and state. Never fix a failed gate yourself.
 
-0. **The session's configuration is current.** Run `git fetch origin`. If `CLAUDE.md` or `.claude/`
-   on `HEAD` differs from `origin/dev` (`git diff --quiet HEAD origin/dev -- CLAUDE.md .claude`
-   fails), or a checkout, pull or merge in this session changed them, stop. Tell the owner to update
-   the checkout and restart Claude Code in it, because a running session may not pick up changed
-   instructions, Skills or agents.
+0. **The session's configuration is current.** Run `git fetch origin`, then stop if any of these
+   is true:
+   - `CLAUDE.md` or `.claude/` in the working tree differs from `origin/dev`, committed or not
+     (`git diff --quiet origin/dev -- CLAUDE.md .claude` fails);
+   - there are untracked files under them (`git ls-files --others --exclude-standard -- CLAUDE.md .claude`
+     prints anything);
+   - a checkout, pull or merge in this session changed them.
+
+   Tell the owner to update the checkout and restart Claude Code in it, because a running session
+   may not pick up changed instructions, Skills or agents. Gitignored files such as
+   `.claude/settings.local.json` don't count.
 1. Read the Issue body, then its gates with "Check an Issue's gates" in `docs/PROJECT_BOARD.md`.
-2. **Human Review is Reviewed.** If it is Pending, refuse. Only the owner sets Reviewed.
+2. **Human Review is Reviewed.** If it is Pending, refuse. Only the owner decides Reviewed. Set it
+   yourself only on the owner's explicit instruction naming the Issue, and quote that instruction in
+   a comment on the Issue (POLICY AGT-4).
 3. **Status is Ready.** Backlog means it is not refined. In Progress or later means someone else may
    own it.
 4. **Every blocker is clear.** Each blocked-by Issue is closed or has Status Agent Review or later.

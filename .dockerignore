@@ -1,0 +1,3 @@
+# Never send the Google credential file that google-github-actions/auth writes to the
+# workspace root into an image build context (#105).
+gha-creds-*.json

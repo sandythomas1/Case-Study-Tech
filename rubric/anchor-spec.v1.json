@@ -1,0 +1,805 @@
+{
+  "spec_id": "casestudy-tech-rubric-anchors",
+  "spec_version": "1.0.0",
+  "title": "CaseStudy Tech rubric anchor specification",
+  "approval": {
+    "status": "proposed",
+    "approved_by": null,
+    "approved_on": null
+  },
+  "satisfies": ["RC-17", "RC-18", "RC-19", "OQ-03"],
+  "constrained_by": ["PA-4", "PA-10", "AG-4", "AG-5"],
+  "intended_use": {
+    "purpose": "Formative feedback on a simulated practice conversation, so a student can reflect and practice again.",
+    "not_for": [
+      "course grades or grade components",
+      "progression, placement or admission decisions",
+      "licensure, certification or any statement of clinical competence",
+      "judging work with real clients",
+      "a validated suicide-risk assessment"
+    ],
+    "student_disclaimer": "This is developmental feedback on a practice conversation. It is not a grade, it is not a validated assessment, and it does not measure clinical competence."
+  },
+  "scale": {
+    "min": 1,
+    "max": 5,
+    "levels": [
+      {"level": 1, "label": "Beginning", "meaning": "Some responses worked against this skill."},
+      {"level": 2, "label": "Emerging", "meaning": "This skill appeared now and then but was not steady yet."},
+      {"level": 3, "label": "Developing", "meaning": "This skill showed up at several points, with clear room to grow."},
+      {"level": 4, "label": "Consistent", "meaning": "This skill showed up at most of the moments that called for it."},
+      {"level": 5, "label": "Advanced", "meaning": "This skill was strong and steady across the whole conversation."}
+    ]
+  },
+  "scenarios": [
+    {"id": "routine_intake", "name": "Routine intake"},
+    {"id": "resistant_client", "name": "Emotionally resistant client"},
+    {"id": "crisis_risk", "name": "Crisis risk (opt-in)"}
+  ],
+  "assessment_boundaries": {
+    "assess_only": "What the completed transcript shows: the words of each numbered turn, their order, and what the student said in response to what the client said.",
+    "never_infer": [
+      "nonverbal warmth, facial expression or body language",
+      "tone of voice, pacing of speech or other prosody",
+      "what happens to the client after the session",
+      "the student's overall clinical competence, intent or personality"
+    ],
+    "never_reward": [
+      "counts of keywords, techniques or question types",
+      "length, verbosity or fluency on their own",
+      "a client who agrees or complies, when the student's turns do not show the skill",
+      "stock phrases such as 'It sounds like', 'Thank you for sharing' or 'Did I miss anything?' that do not fit what the client said"
+    ],
+    "never_penalize": [
+      "client resistance, disagreement or refusal on its own",
+      "the client choosing not to change",
+      "speech-recognition errors in a student turn",
+      "choosing text instead of voice",
+      "dialect, non-native English, spelling or grammar in a student turn when the meaning is clear",
+      "after a crisis disclosure: direct or repeated questions about suicide, harm or safety, closed questions about plan, means or timing, directive safety steps such as 'Please call 988 now', and honest statements that safety may require involving someone else. In any category these are never scored as pressure, commanding, threatening or a checklist"
+    ]
+  },
+  "evidence_policy": {
+    "evidence_unit": "One numbered turn of the completed transcript. Every quoted or paraphrased example cites the turn it came from, and evidence validation (#36) rejects a citation that does not match (RC-18).",
+    "criterion_outcomes": {
+      "sufficient": "The transcript gave the opportunity the criterion defines, and its minimum evidence is met by cited student turns.",
+      "insufficient": "The opportunity did not occur, or the cited turns do not meet the minimum evidence. The criterion contributes nothing to the rating."
+    },
+    "category_rating_rule": "A general category is rated when at least 2 of its 3 criteria are sufficient. The scenario-specific category is rated when every criterion its scenario marks as required is sufficient, and the crisis scenario is also rated when a crisis critical failure is found. The rating is the highest level whose behavior anchor describes the student's typical pattern across the session, supported by at least 2 cited student turns.",
+    "harm_cap_rule": "One student turn that matches a level 1 behavior caps the category at level 2. Two or more such turns set the category to level 1. Any crisis critical failure sets the crisis scenario-specific rating to level 1, even when CR-1, CR-2 or CR-3 is insufficient, and regardless of how many student turns are cited.",
+    "conflicting_evidence_rule": "Rate the level that describes most of the cited turns. If two adjacent levels are equally supported, choose the lower one and cite turns for both. This guards against score inflation. If the cited turns split between levels two or more apart and no level describes most of them, the category abstains with unresolved_conflict.",
+    "uncertain_recognition_rule": "A student turn that the transcript marks as uncertain speech recognition can never be the only evidence for a level 1 behavior, a harm cap or a crisis critical failure. If a rating or the safety result depends on such a turn, the category abstains.",
+    "abstention_rule": "A category that is not rated abstains, with one reason code. Abstention is reported as abstention. It is never turned into a number.",
+    "abstention_reasons": [
+      "no_opportunity",
+      "too_few_cited_turns",
+      "uncertain_recognition",
+      "unresolved_conflict"
+    ],
+    "forbidden_fallbacks": [
+      "midpoint",
+      "zero",
+      "lowest level",
+      "reweighting the other categories",
+      "a rating carried over from another category or session"
+    ],
+    "overall_score_rule": "Code computes the overall score as the sum of weight_percent times category rating, divided by 100, only when all six categories are rated. The model never computes it. It is shown from 1.0 to 5.0 with one decimal and never as a percent (SCO-9). If any category abstains, there is no overall score (SCO-3), and #35 sets what the student sees. A crisis critical failure is never dropped: its safety result is produced even when another category abstains (SCO-5, ETH-7)."
+  },
+  "sources": [
+    {
+      "id": "ivey-microskills",
+      "family": "counseling_core_skills",
+      "citation": "Ivey, A. E., Ivey, M. B., and Zalaquett, C. P. Intentional Interviewing and Counseling (microskills hierarchy and five-stage interview).",
+      "url": "https://www.cengage.com/c/intentional-interviewing-and-counseling-facilitating-client-development-in-a-multicultural-society-10e-ivey/",
+      "use": "Cited as concepts only (attending, verbal tracking, open and closed questions, paraphrase, reflection of feeling, summary, five-stage interview). No text is reproduced (PA-4)."
+    },
+    {
+      "id": "fis",
+      "family": "counseling_core_skills",
+      "citation": "Anderson, T., Ogles, B. M., Patterson, C. L., Lambert, M. J., and Vermeersch, D. A. (2009). Therapist effects: Facilitative interpersonal skills as a predictor of therapist success. Journal of Clinical Psychology, 65(7), 755-768.",
+      "url": "https://www.psykologtidsskriftet.no/asset/article/2021/03/En-norsk-pilotstudie-av-ferdighetstesten-fasiliterende-interpersonlige-ferdigheter/En-norsk-pilotstudie-av-ferdighetstesten-fasiliterende-interpersonlige-ferdigheter.pdf",
+      "use": "Research instrument. Its dimensions (empathy, warmth, alliance bond, rupture repair) are cited as concepts. Nothing is copied. The link is the copy the rubric survey used, a 2021 Norwegian pilot study of the FIS test. The citation is the original FIS paper."
+    },
+    {
+      "id": "cts-r",
+      "family": "counseling_core_skills",
+      "citation": "Blackburn, I.-M., James, I. A., Milne, D. L., Baker, C., Standart, S., Garland, A., and Reichelt, F. K. (2001). The Revised Cognitive Therapy Scale (CTS-R): Psychometric properties. Behavioural and Cognitive Psychotherapy, 29(4), 431-446.",
+      "url": "https://psychosisresearch.com/wp-content/uploads/2022/01/CTS-R.pdf",
+      "use": "Freely hosted manual. Only its general interpersonal items (agenda, feedback, collaboration, pacing) inform structure and collaboration criteria. CBT-specific items are out of scope."
+    },
+    {
+      "id": "enact-equip",
+      "family": "common_factors",
+      "citation": "Kohrt, B. A., et al. (2015). Therapist competence in global mental health: Development of the ENhancing Assessment of Common Therapeutic factors (ENACT) rating scale. Behaviour Research and Therapy, 69, 11-21; and the WHO EQUIP competency tools.",
+      "url": "https://www.gov.uk/research-for-development-outputs/therapist-competence-in-global-mental-health-development-of-the-enhancing-assessment-of-common-therapeutic-factors-enact-rating-scale",
+      "use": "Free via the WHO EQUIP platform (EQUIP paper: https://pmc.ncbi.nlm.nih.gov/articles/PMC9305729). Its method (each level is a list of observable behaviors, with level 1 for harmful behavior) shapes every anchor in this spec. Item text is not reproduced."
+    },
+    {
+      "id": "bogo-osce",
+      "family": "social_work_mft",
+      "citation": "Bogo, M., Rawlings, M., Katz, E., and Logie, C. (2014). Using Simulation in Assessment and Teaching: OSCE Adapted for Social Work. CSWE Press.",
+      "url": "https://socialwork.utoronto.ca/wp-content/uploads/2018/12/OSCE-for-Social-Work.pdf",
+      "use": "Cited for format (a timed interview with a standardized client, rated afterward) and for engagement, exploration and collaboration concepts. Nothing is copied."
+    },
+    {
+      "id": "cswe-epas-2022",
+      "family": "social_work_mft",
+      "citation": "Council on Social Work Education (2022). Educational Policy and Accreditation Standards, Competency 3 (anti-racism, diversity, equity and inclusion) and Competency 6 (engage with individuals).",
+      "url": "https://www.siue.edu/artsandsciences/socialwork/about/2022-EPAS.Competencies.pdf",
+      "use": "Public competency framework. Cited for cultural humility and engagement expectations."
+    },
+    {
+      "id": "mi-principles",
+      "family": "scenario_specific",
+      "citation": "Miller, W. R., and Rollnick, S. (2013). Motivational Interviewing: Helping People Change (3rd ed.). Guilford Press.",
+      "url": "https://www.guilford.com/books/Motivational-Interviewing/Miller-Rollnick/9781609182274",
+      "use": "Selected principles (partnership, autonomy support, responding to discord, eliciting the client's own reasons) are cited as concepts for the resistant-client scenario. No coding manual is used and no rating is presented as a coded MI measure (RC-18, AG-5)."
+    },
+    {
+      "id": "siri-2",
+      "family": "scenario_specific",
+      "citation": "Neimeyer, R. A., and Bonnelle, K. (1997). The Suicide Intervention Response Inventory: A revision and validation. Death Studies, 21(1), 59-81.",
+      "url": "https://nsuworks.nova.edu/cps_facarticles/1355",
+      "use": "Research instrument. Its distinction between facilitative and harmful helper responses to a person at risk informs the crisis criteria and critical failures. No items are reproduced."
+    },
+    {
+      "id": "sdd-v1",
+      "family": "project_requirement",
+      "citation": "CaseStudy Tech Software Design Document v1.0, sections 2.2 and 4.5 (RC-17, RC-18, RC-19).",
+      "url": "https://github.com/sandythomas1/Case-Study-Tech/blob/dev/output/CSCI_5520_CaseStudy_Tech_Software_Design_Document_Final.pdf",
+      "use": "Project requirement. Cited where a criterion or critical failure comes straight from a requirement rather than from an instrument."
+    }
+  ],
+  "excluded_sources": [
+    {
+      "id": "ccs-r",
+      "name": "Counselor Competencies Scale-Revised (Lambie et al.)",
+      "reason": "Copyrighted. The owner chose free instruments only (PA-4). No item text or level wording from it appears in this spec."
+    },
+    {
+      "id": "miti-manual",
+      "name": "Motivational Interviewing Treatment Integrity coding manual",
+      "reason": "The manual is marked draft and is not cited without permission (PA-4). Ratings in this spec are never presented as a coded MI measure (RC-18)."
+    }
+  ],
+  "categories": [
+    {
+      "id": "empathic_engagement",
+      "name": "Empathic engagement",
+      "weight_percent": 20,
+      "definition": "The student shows, in words, that they understand what the client feels and treat that experience as understandable.",
+      "criteria": [
+        {
+          "id": "EE-1",
+          "name": "Reflects feelings accurately",
+          "definition": "The student names or reflects a feeling that fits what the client just said, stated or clearly implied.",
+          "opportunity": "A client turn that states or clearly implies a feeling.",
+          "minimum_evidence": "Two student turns, each reflecting a feeling and each tied to the client turn before it. An implied feeling counts only if the grader can cite the client words that imply it.",
+          "positive_examples": [
+            "Client: 'I keep telling everyone it's fine, but I haven't slept properly in weeks.' Student: 'It sounds like there's a lot of worry sitting under that word fine.'"
+          ],
+          "negative_examples": [
+            "Student: 'I understand exactly how you feel.' (generic, with no feeling or content named)",
+            "Client describes feeling let down by a friend. Student: 'You seem really angry at yourself.' (the reflection does not fit anything the client said)"
+          ],
+          "insufficient_evidence": "If the client gave fewer than two openings to reflect a feeling, or no reflection can be tied to a client turn, the criterion is insufficient.",
+          "citations": [
+            {"source": "ivey-microskills", "relation": "direct", "note": "Reflection of feeling."},
+            {"source": "fis", "relation": "adapted", "note": "Empathy dimension, limited to what a transcript shows."},
+            {"source": "enact-equip", "relation": "adapted", "note": "Empathy competency written as observable behavior."}
+          ]
+        },
+        {
+          "id": "EE-2",
+          "name": "Validates without judging",
+          "definition": "The student treats the client's experience as understandable, without judging it, arguing with it, or covering it with quick reassurance.",
+          "opportunity": "A client turn that shares a difficulty, a worry, or something the client feels unsure or ashamed about.",
+          "minimum_evidence": "Two student turns that acknowledge the experience as understandable, or one such turn plus the absence of judging responses across the session.",
+          "positive_examples": [
+            "Client: 'It's stupid to be this upset about a grade.' Student: 'It doesn't sound stupid. That grade clearly matters a lot to you.'"
+          ],
+          "negative_examples": [
+            "Student: 'You shouldn't feel that way about it.'",
+            "Student: 'Don't worry, everything will be fine.' (quick reassurance that skips the client's concern)"
+          ],
+          "insufficient_evidence": "If the client shared no difficulty that called for validation, the criterion is insufficient.",
+          "citations": [
+            {"source": "enact-equip", "relation": "adapted", "note": "Warmth and acceptance as observable behavior."},
+            {"source": "fis", "relation": "adapted", "note": "Warmth and acceptance dimension."}
+          ]
+        },
+        {
+          "id": "EE-3",
+          "name": "Stays with strong emotion or strain",
+          "definition": "When the client shows strong distress, frustration with the student, or pulls back, the student slows down and responds to it before going on.",
+          "opportunity": "A client turn showing strong distress, irritation with the student or the session, or withdrawal such as very short answers after a sensitive question.",
+          "minimum_evidence": "One student turn that responds directly to the strong emotion or strain, cited with the client turn it answers.",
+          "positive_examples": [
+            "Client: 'Why do you keep asking me that?' Student: 'You're right, I've asked a lot. Let me slow down. What would be most useful to talk about?'"
+          ],
+          "negative_examples": [
+            "Client: 'I don't even know why I'm crying.' Student: 'Okay. Next, can you tell me about your work schedule?'"
+          ],
+          "insufficient_evidence": "If no strong emotion or strain appeared in the transcript, the criterion is insufficient. It is never scored as a miss.",
+          "citations": [
+            {"source": "fis", "relation": "adapted", "note": "Alliance rupture and repair, as observable responses."}
+          ]
+        }
+      ],
+      "levels": [
+        {"level": 1, "behavior_anchor": "Dismisses, mocks, blames or argues with the client's feelings, or tells the client their feelings are wrong or excessive ('You're overreacting').", "student_description": "Some responses brushed aside or judged what the client was feeling."},
+        {"level": 2, "behavior_anchor": "Rarely acknowledges feelings. Responses are mostly generic ('I understand'), with few specific feelings named, or move past emotional content to facts or advice.", "student_description": "You noticed the client's feelings now and then, but often moved on to facts or advice."},
+        {"level": 3, "behavior_anchor": "Names specific feelings at several points, but some are off-target or followed at once by reassurance or advice.", "student_description": "You acknowledged feelings at several points. Naming them more precisely is the next step."},
+        {"level": 4, "behavior_anchor": "Reflects feelings accurately at most openings and validates the client's experience. Misses or rushes past some moments of strong emotion.", "student_description": "You reflected the client's feelings accurately at most moments that called for it."},
+        {"level": 5, "behavior_anchor": "Reflects feelings accurately and specifically, including ones implied but not stated. Validates without judging and, when distress or strain comes up, slows down to respond to it.", "student_description": "You stayed closely tuned to the client's feelings, including ones they did not say out loud."}
+      ]
+    },
+    {
+      "id": "active_listening_responding",
+      "name": "Active listening and responding",
+      "weight_percent": 20,
+      "definition": "The student shows, in words, that they heard what the client said, and each response builds on it.",
+      "criteria": [
+        {
+          "id": "AL-1",
+          "name": "Paraphrases content accurately",
+          "definition": "The student restates the client's meaning in fresh words, without adding things the client did not say.",
+          "opportunity": "A client turn with substantive content, such as an event, a problem or a reason.",
+          "minimum_evidence": "Two student turns that paraphrase or reflect content, each traceable to a client turn and faithful to it.",
+          "positive_examples": [
+            "Client: 'My mom calls every night to check if I studied, and then we fight.' Student: 'So the nightly check-ins with your mom keep turning into arguments.'"
+          ],
+          "negative_examples": [
+            "Client describes arguments with their mother. Student: 'So your mom doesn't trust you and you want to move out.' (adds meaning the client did not express)"
+          ],
+          "insufficient_evidence": "If fewer than two paraphrases can be traced to a client turn, the criterion is insufficient.",
+          "citations": [
+            {"source": "ivey-microskills", "relation": "direct", "note": "Paraphrasing and encouraging."},
+            {"source": "bogo-osce", "relation": "adapted", "note": "Engagement through accurate responding to a standardized client."}
+          ]
+        },
+        {
+          "id": "AL-2",
+          "name": "Follows the client's thread",
+          "definition": "Each student turn connects to what the client just said. The student does not ignore answers or move through a fixed script whatever the client says.",
+          "opportunity": "Every exchange where a client turn is followed by a student turn.",
+          "minimum_evidence": "Two student turns that pick up something specific from the client turn before them, and no pattern of turns that ignore the client's answer.",
+          "positive_examples": [
+            "Client: 'Work is fine, it's more the drive home that gets to me.' Student: 'Tell me more about the drive home.'"
+          ],
+          "negative_examples": [
+            "Client: 'Honestly, the thing that worries me most is my sister.' Student: 'Okay. How many hours do you sleep a night?' (ignores what the client raised)"
+          ],
+          "insufficient_evidence": "If the session has fewer than three client-and-student exchanges, the criterion is insufficient.",
+          "citations": [
+            {"source": "ivey-microskills", "relation": "direct", "note": "Attending behavior and verbal tracking."}
+          ]
+        },
+        {
+          "id": "AL-3",
+          "name": "Summarizes and checks understanding",
+          "definition": "The student pulls several points the client made into one summary and invites the client to correct or add to it.",
+          "opportunity": "A change of topic, a natural pause, or the close of the session, after at least six client turns.",
+          "minimum_evidence": "One student turn that summarizes at least two separate points from earlier client turns, each traceable.",
+          "positive_examples": [
+            "Student: 'Let me check I've got this. Sleep has been rough since the move, you're missing your friends, and you're not sure the new program was the right call. Did I miss anything?'"
+          ],
+          "negative_examples": [
+            "Student: 'So basically everything is stressful right now.' (too vague to show listening)"
+          ],
+          "insufficient_evidence": "If the session ended before six client turns, or no turn summarizes two or more traceable points, the criterion is insufficient.",
+          "citations": [
+            {"source": "ivey-microskills", "relation": "direct", "note": "Summarization."},
+            {"source": "cts-r", "relation": "adapted", "note": "Checking understanding and eliciting feedback, a general interpersonal item."}
+          ]
+        }
+      ],
+      "levels": [
+        {"level": 1, "behavior_anchor": "Ignores or contradicts what the client said, or insists on an interpretation after the client corrects it.", "student_description": "Some responses missed or changed what the client had said."},
+        {"level": 2, "behavior_anchor": "Mostly asks the next question without reflecting what was heard. Paraphrases are rare or inaccurate.", "student_description": "You mostly moved to your next question without showing what you heard."},
+        {"level": 3, "behavior_anchor": "Paraphrases some content accurately and usually tracks the client's topic, but sometimes drifts to the student's own agenda. No summary, or an inaccurate one.", "student_description": "You showed you were listening at several points. Summaries would help bring it together."},
+        {"level": 4, "behavior_anchor": "Regularly paraphrases accurately and follows the client's thread. Uses at least one summary that captures the main points, when the session is long enough for one.", "student_description": "You followed the client's thread and reflected it back accurately most of the time."},
+        {"level": 5, "behavior_anchor": "Paraphrases capture the client's meaning, including nuance and mixed feelings. Summaries link themes and invite correction, and responses build on the client's last turn throughout.", "student_description": "Your responses built on what the client said throughout, and your summaries pulled it together."}
+      ]
+    },
+    {
+      "id": "questioning_exploration",
+      "name": "Purposeful questioning and exploration",
+      "weight_percent": 15,
+      "definition": "The student's questions invite the client to say more and move the conversation toward the scenario's objective at the client's pace.",
+      "criteria": [
+        {
+          "id": "QE-1",
+          "name": "Uses open questions to explore",
+          "definition": "Where the aim is to explore, the student asks open questions that invite the client to elaborate. Closed questions are kept for specific facts.",
+          "opportunity": "Any point where the student asks about the client's experience, situation or view.",
+          "minimum_evidence": "Two open questions that, in context, invite the client to elaborate. A count of open questions on its own is never evidence.",
+          "positive_examples": [
+            "Student: 'What has it been like for you since the move?'"
+          ],
+          "negative_examples": [
+            "Student: 'Is it stressful? Do you sleep okay? Are you eating?' (a run of closed questions where exploration was needed)"
+          ],
+          "insufficient_evidence": "If the student asked fewer than two questions about the client's experience, the criterion is insufficient.",
+          "citations": [
+            {"source": "ivey-microskills", "relation": "direct", "note": "Open and closed questions."}
+          ]
+        },
+        {
+          "id": "QE-2",
+          "name": "Builds questions on the client's answers",
+          "definition": "Questions follow up on what the client just said and deepen one topic before moving on, rather than jumping between unrelated topics.",
+          "opportunity": "A client answer that leaves something worth exploring further.",
+          "minimum_evidence": "Two follow-up questions that each take up something specific from the client's previous answer.",
+          "positive_examples": [
+            "Client: 'I just shut down when my manager gives feedback.' Student: 'What happens for you in that moment when you shut down?'"
+          ],
+          "negative_examples": [
+            "Client: 'I just shut down when my manager gives feedback.' Student: 'Okay. And how is your family?' (drops the thread without a link)"
+          ],
+          "insufficient_evidence": "If the client gave fewer than two answers that invited a follow-up, the criterion is insufficient.",
+          "citations": [
+            {"source": "bogo-osce", "relation": "adapted", "note": "Exploration of the client's situation in a timed simulated interview."},
+            {"source": "cts-r", "relation": "adapted", "note": "Pacing, a general interpersonal item."}
+          ]
+        },
+        {
+          "id": "QE-3",
+          "name": "Avoids leading, stacked or blaming questions",
+          "definition": "The student asks one question at a time, without steering the client to an answer or implying blame.",
+          "opportunity": "Every student question.",
+          "minimum_evidence": "Two student questions that are single and neutral, and no pattern of leading, stacked or blaming questions.",
+          "positive_examples": [
+            "Student: 'How did you decide not to go to class that day?'"
+          ],
+          "negative_examples": [
+            "Student: 'Don't you think you should just talk to him?' (leading)",
+            "Student: 'Why would you do something like that?' (blaming)"
+          ],
+          "insufficient_evidence": "If the student asked fewer than two questions, the criterion is insufficient.",
+          "citations": [
+            {"source": "ivey-microskills", "relation": "adapted", "note": "Question forms, applied in original wording to leading, stacked and blaming questions."}
+          ]
+        }
+      ],
+      "levels": [
+        {"level": 1, "behavior_anchor": "Questions blame, shame or pressure the client ('Why would you do something so careless?'), or keep pressing on a topic after the client says they do not want to discuss it (crisis safety questions excepted).", "student_description": "Some questions came across as blaming or pushy."},
+        {"level": 2, "behavior_anchor": "Relies on closed, stacked or leading questions. Questioning feels like a checklist and rarely follows the client's answers.", "student_description": "Your questions felt more like a checklist than a conversation."},
+        {"level": 3, "behavior_anchor": "Mixes open and closed questions with some follow-up, but questions sometimes stack up or jump topics without a link.", "student_description": "You asked some good open questions. Following up on the client's answers is the next step."},
+        {"level": 4, "behavior_anchor": "Mostly open, well-timed questions that follow the client's answers and deepen understanding of the main concern.", "student_description": "Your questions were mostly open and followed what the client told you."},
+        {"level": 5, "behavior_anchor": "Asks open, single, purposeful questions. Each builds on the previous answer, explores meaning and context, and moves toward the scenario objective at the client's pace.", "student_description": "Each question built on the last answer and helped the client explore at their own pace."}
+      ]
+    },
+    {
+      "id": "collaboration_autonomy_cultural_humility",
+      "name": "Collaboration, autonomy and cultural humility",
+      "weight_percent": 15,
+      "definition": "The student works with the client as a partner, respects the client's right to choose, and asks rather than assumes about the client's identity and context.",
+      "criteria": [
+        {
+          "id": "CA-1",
+          "name": "Shares the direction of the conversation",
+          "definition": "The student asks what the client wants to focus on, invites the client's ideas before offering their own, and checks agreement on next steps.",
+          "opportunity": "The start of the session, a change of topic, or any point where a next step or suggestion comes up.",
+          "minimum_evidence": "Two student turns that ask for the client's priorities, ideas or agreement.",
+          "positive_examples": [
+            "Student: 'We've got a few minutes left. What feels most important to you to look at?'",
+            "Student: 'Would it be okay if I shared an idea some people find useful?'"
+          ],
+          "negative_examples": [
+            "Student: 'Here's what we're going to do. First, you need to make a schedule.'"
+          ],
+          "insufficient_evidence": "If no point arose where direction, a suggestion or a next step could be shared, the criterion is insufficient.",
+          "citations": [
+            {"source": "mi-principles", "relation": "adapted", "note": "Partnership, cited as a concept."},
+            {"source": "cts-r", "relation": "adapted", "note": "Collaboration, a general interpersonal item."},
+            {"source": "bogo-osce", "relation": "adapted", "note": "Collaboration with the client in a simulated interview."}
+          ]
+        },
+        {
+          "id": "CA-2",
+          "name": "Respects the client's choices",
+          "definition": "The student affirms that decisions are the client's, and avoids commanding, warning or unrequested advice. A client who declines a suggestion is not a student error.",
+          "opportunity": "Any point where the client states a choice, declines a suggestion, or the student might advise.",
+          "minimum_evidence": "Two student turns that support the client's choice or ask permission before advising, and no pattern of commanding or warning.",
+          "positive_examples": [
+            "Client: 'I'm not ready to tell my parents.' Student: 'That's your call to make. What would need to be different for it to feel possible?'"
+          ],
+          "negative_examples": [
+            "Client: 'I'm not ready to tell my parents.' Student: 'You really need to tell them this week.'"
+          ],
+          "insufficient_evidence": "If no choice, refusal or advice point came up, the criterion is insufficient.",
+          "citations": [
+            {"source": "mi-principles", "relation": "adapted", "note": "Autonomy support, cited as a concept."},
+            {"source": "enact-equip", "relation": "adapted", "note": "Collaboration and respect for the client's decisions."}
+          ]
+        },
+        {
+          "id": "CA-3",
+          "name": "Explores identity and context with humility",
+          "definition": "When culture, identity, faith, family norms or other personal context comes up, the student asks what it means for this client instead of assuming, and does not stereotype.",
+          "opportunity": "A client turn that mentions culture, identity, faith, family expectations, community or a similar context, or a student turn that invites the client to share context that matters to them.",
+          "minimum_evidence": "One student turn that asks about or reflects the meaning of that context for the client, and no turn that stereotypes.",
+          "positive_examples": [
+            "Client: 'In my family you don't talk about this stuff.' Student: 'What is it like for you to be talking about it here, given that?'"
+          ],
+          "negative_examples": [
+            "Client mentions their faith. Student: 'People from religious backgrounds usually feel guilty about this.' (assumes and stereotypes)",
+            "Client mentions being an international student. Student: 'You must be really good at math, then.' (a positive stereotype is still a stereotype)",
+            "Client describes a fight with a roommate. Student: 'Is this about your culture?' (steers to identity the client has not linked to the concern)"
+          ],
+          "insufficient_evidence": "If identity or cultural context never came up, the criterion is insufficient. It is never scored as a miss.",
+          "citations": [
+            {"source": "cswe-epas-2022", "relation": "adapted", "note": "Competency 3 (anti-racism, diversity, equity and inclusion) and Competency 6 (engagement)."}
+          ]
+        }
+      ],
+      "levels": [
+        {"level": 1, "behavior_anchor": "Threatens, shames, coerces or stereotypes the client, or dismisses the client's stated values or identity.", "student_description": "Some responses pressured the client or made assumptions about who they are."},
+        {"level": 2, "behavior_anchor": "Directs the conversation and decides for the client, including telling the client what to do. Gives unrequested advice and does not ask for the client's view.", "student_description": "You led most of the conversation and made suggestions without asking the client first."},
+        {"level": 3, "behavior_anchor": "Sometimes asks for the client's view or permission, but often steers toward the student's preferred solution. Responds to cultural context briefly, or assumes what it means without checking.", "student_description": "You asked for the client's view at times. Letting them lead more is the next step."},
+        {"level": 4, "behavior_anchor": "Invites the client's priorities and ideas, asks permission before offering information, and respects the client's choices. Asks what cultural context means to the client when it comes up.", "student_description": "You worked with the client as a partner and respected their choices."},
+        {"level": 5, "behavior_anchor": "Works as a partner throughout. Draws out the client's goals and ideas first, offers options rather than directions, affirms autonomy in words and, when context comes up, explores it with curiosity and without assumptions.", "student_description": "You worked as a true partner, drew out the client's own ideas and asked rather than assumed."}
+      ]
+    },
+    {
+      "id": "structure_professionalism",
+      "name": "Session structure and professionalism",
+      "weight_percent": 10,
+      "definition": "The student gives the session a clear purpose, uses the time well, and keeps the focus and language professional.",
+      "criteria": [
+        {
+          "id": "SP-1",
+          "name": "Opens with role and purpose",
+          "definition": "Early in the session, the student introduces their role and what the conversation is for, and invites the client in.",
+          "opportunity": "The first three student turns of the session.",
+          "minimum_evidence": "One early student turn that states role or purpose, and one that invites the client to begin.",
+          "positive_examples": [
+            "Student: 'Hi, I'm Sam, a counselor in training. We have about ten minutes today to talk about what's been going on. Where would you like to start?'"
+          ],
+          "negative_examples": [
+            "Student, first turn: 'So what's wrong with you?'"
+          ],
+          "insufficient_evidence": "If the transcript has fewer than three student turns, the criterion is insufficient.",
+          "citations": [
+            {"source": "cts-r", "relation": "adapted", "note": "Agenda setting, a general interpersonal item."}
+          ]
+        },
+        {
+          "id": "SP-2",
+          "name": "Manages time, transitions and the close",
+          "definition": "The student keeps the session on its purpose, signals changes of topic, and closes with a summary or next step when time allows.",
+          "opportunity": "Topic changes during the session and its final minutes. If the time limit ended the session before the close, only the transitions are assessed.",
+          "minimum_evidence": "Two student turns that signal a transition, refocus the session, or close it.",
+          "positive_examples": [
+            "Student: 'We have a couple of minutes left. Can I sum up what we covered and what you might try next?'"
+          ],
+          "negative_examples": [
+            "The student spends most of the session on an unrelated story of their own and ends with 'Okay, bye.'"
+          ],
+          "insufficient_evidence": "If the session had no topic change and no chance to close, the criterion is insufficient.",
+          "citations": [
+            {"source": "cts-r", "relation": "adapted", "note": "Pacing and efficient use of time."},
+            {"source": "bogo-osce", "relation": "adapted", "note": "Managing a timed simulated interview."}
+          ]
+        },
+        {
+          "id": "SP-3",
+          "name": "Keeps professional language and boundaries",
+          "definition": "The student keeps the focus on the client, uses respectful language, and avoids long self-disclosure, inappropriate humor or promises a counselor could not keep.",
+          "opportunity": "Every student turn.",
+          "minimum_evidence": "No student turn crosses a boundary, judged across at least three student turns.",
+          "positive_examples": [
+            "Student: 'I can hear how hard that was. Let's stay with what it's been like for you.'"
+          ],
+          "negative_examples": [
+            "Student: 'Ugh, same. My ex did exactly that, let me tell you what happened to me.' (shifts the focus to the student)",
+            "Student: 'I promise I'll fix this for you.' (a promise a counselor cannot keep)"
+          ],
+          "insufficient_evidence": "If the transcript has fewer than three student turns, the criterion is insufficient.",
+          "citations": [
+            {"source": "bogo-osce", "relation": "adapted", "note": "Professional conduct in a simulated interview."},
+            {"source": "cswe-epas-2022", "relation": "adapted", "note": "Ethical and professional behavior expectations."}
+          ]
+        }
+      ],
+      "levels": [
+        {"level": 1, "behavior_anchor": "Crosses a professional boundary: demeaning or sexualized remarks, long talk about the student's own problems, or promises a counselor could not keep.", "student_description": "Some responses moved away from a professional, client-focused conversation."},
+        {"level": 2, "behavior_anchor": "Gives no orientation to role or purpose. The session drifts without direction, and the student ends it abruptly.", "student_description": "The conversation had little structure, with no clear opening or close."},
+        {"level": 3, "behavior_anchor": "Has some structure, such as a brief opening or a close, but drifts or loses time, and transitions are abrupt.", "student_description": "You gave the session some structure. Clearer transitions and a planned close are the next step."},
+        {"level": 4, "behavior_anchor": "Opens with role and purpose, keeps a clear focus, signals transitions, and closes or signals the end when time allows.", "student_description": "Your session had a clear opening, a steady focus and a close."},
+        {"level": 5, "behavior_anchor": "Sets purpose and expectations at the start, paces the time, signals each transition, and closes together with the client with a summary and next step when time allows. Language and focus stay professional and on the client throughout.", "student_description": "You ran a well-paced session from a clear opening to a shared close."}
+      ]
+    },
+    {
+      "id": "scenario_specific_competence",
+      "name": "Scenario-specific competence",
+      "weight_percent": 20,
+      "definition": "The skills the chosen scenario is built to practice. Each scenario has its own criteria and levels.",
+      "scenario_variants": [
+        {
+          "scenario": "routine_intake",
+          "focus": "Building a clear picture of why the client came in, and what they want, while building rapport.",
+          "required_criteria": ["RI-1"],
+          "criteria": [
+            {
+              "id": "RI-1",
+              "name": "Explores the presenting concern",
+              "definition": "The student learns what brings the client in, when it started, how it affects daily life, and what the client hopes will change.",
+              "opportunity": "The whole intake conversation.",
+              "minimum_evidence": "Student turns that explore at least three of these four areas: the concern, when it started, its impact and the client's hopes.",
+              "positive_examples": [
+                "Student: 'How has this been affecting your classes and sleep?' followed later by 'If things got better, what would you notice first?'"
+              ],
+              "negative_examples": [
+                "The student asks only for name, year and major, then ends the session."
+              ],
+              "insufficient_evidence": "If the transcript is too short to explore two or more areas, the criterion is insufficient.",
+              "citations": [
+                {"source": "ivey-microskills", "relation": "adapted", "note": "Five-stage interview, story and goals stages."},
+                {"source": "bogo-osce", "relation": "adapted", "note": "Assessment in a first interview with a standardized client."}
+              ]
+            },
+            {
+              "id": "RI-2",
+              "name": "Gathers context without interrogating",
+              "definition": "The student learns relevant context, such as supports, earlier help and strengths, and keeps responding to the client rather than running through a list.",
+              "opportunity": "Any point after the presenting concern is on the table.",
+              "minimum_evidence": "Two student turns that gather context, and at least one of them that is linked to something the client said.",
+              "positive_examples": [
+                "Client: 'My roommate's been great, actually.' Student: 'It sounds like your roommate has been a real support. Who else do you lean on?'"
+              ],
+              "negative_examples": [
+                "Student asks eight closed background questions in a row without responding to any answer."
+              ],
+              "insufficient_evidence": "If the session ended before the concern was explored, the criterion is insufficient.",
+              "citations": [
+                {"source": "bogo-osce", "relation": "adapted", "note": "Balancing information gathering and engagement."},
+                {"source": "enact-equip", "relation": "adapted", "note": "Exploring the client's supports and strengths."}
+              ]
+            },
+            {
+              "id": "RI-3",
+              "name": "Agrees on goals and a next step",
+              "definition": "Before the end, the student checks what the client wants from support and agrees on a concrete next step together.",
+              "opportunity": "The final part of the session, when time allows a close.",
+              "minimum_evidence": "One student turn that names or asks about the client's goal, and one that agrees on a next step.",
+              "positive_examples": [
+                "Student: 'So you'd like to get back to sleeping through the night. Shall we start there next time?'"
+              ],
+              "negative_examples": [
+                "Student: 'Okay, that's time. Bye.'"
+              ],
+              "insufficient_evidence": "If the time limit ended the session before any close was possible, the criterion is insufficient.",
+              "citations": [
+                {"source": "ivey-microskills", "relation": "adapted", "note": "Five-stage interview, goals and action stages."},
+                {"source": "mi-principles", "relation": "adapted", "note": "Shared planning, cited as a concept."}
+              ]
+            }
+          ],
+          "levels": [
+            {"level": 1, "behavior_anchor": "Interrogates or judges the client, or learns nothing about why the client came in.", "student_description": "The conversation did not get to why the client came in, or felt like an interrogation."},
+            {"level": 2, "behavior_anchor": "Gathers facts like a checklist, with little link to the client's story. Key areas such as the concern, its impact or the client's goals are missing.", "student_description": "You collected facts, but the client's own story and goals were mostly missing."},
+            {"level": 3, "behavior_anchor": "Covers the presenting concern and some context. Impact or goals are thin, and the balance tips toward collecting facts.", "student_description": "You learned what brought the client in. Exploring its impact and their goals is the next step."},
+            {"level": 4, "behavior_anchor": "Builds a clear picture of the concern, its impact and the client's goals while staying responsive. Most key areas are covered.", "student_description": "You built a clear picture of the client's concern and goals while staying responsive."},
+            {"level": 5, "behavior_anchor": "Covers the concern, its history, impact, supports, strengths and goals in a natural flow, checks understanding with the client, and agrees on a clear next step when time allows.", "student_description": "You covered the full picture in a natural conversation and agreed on a next step together."}
+          ]
+        },
+        {
+          "scenario": "resistant_client",
+          "focus": "Engaging a client who is reluctant or of two minds, without arguing or pushing. The client's resistance is never scored. Only the student's response to it is.",
+          "required_criteria": ["RS-1"],
+          "criteria": [
+            {
+              "id": "RS-1",
+              "name": "Responds to reluctance without arguing",
+              "definition": "When the client pushes back, the student reflects the reluctance or the client's view instead of arguing, warning or trying to persuade.",
+              "opportunity": "A client turn that resists, disagrees, minimizes the problem or questions the point of the session.",
+              "minimum_evidence": "Two student turns that answer pushback with reflection or curiosity, each cited with the client turn it answers.",
+              "positive_examples": [
+                "Client: 'My drinking isn't a problem. My advisor is overreacting.' Student: 'It feels like this got blown out of proportion, and being sent here is frustrating.'"
+              ],
+              "negative_examples": [
+                "Client: 'My drinking isn't a problem.' Student: 'Drinking that much is dangerous, and you need to cut back.'"
+              ],
+              "insufficient_evidence": "If the client never pushed back, the criterion is insufficient.",
+              "citations": [
+                {"source": "mi-principles", "relation": "adapted", "note": "Responding to discord, cited as a concept."},
+                {"source": "fis", "relation": "adapted", "note": "Responding to a difficult client, rated from simulated clips."}
+              ]
+            },
+            {
+              "id": "RS-2",
+              "name": "Draws out the client's own reasons",
+              "definition": "The student asks about and reflects the client's own values, concerns or reasons for change, without supplying the reasons for them.",
+              "opportunity": "Any point after the client's view of the problem is on the table.",
+              "minimum_evidence": "One student turn that asks for the client's own reasons or values, and one that reflects something the client offered.",
+              "positive_examples": [
+                "Student: 'What matters most to you about how this semester goes?'",
+                "Client: 'I guess I don't love missing my morning classes.' Student: 'Missing those classes bothers you.'"
+              ],
+              "negative_examples": [
+                "Student: 'Here are five reasons you should stop.'"
+              ],
+              "insufficient_evidence": "If the session ended before the client's view was explored, the criterion is insufficient. A client who offers no reasons for change does not lower the rating.",
+              "citations": [
+                {"source": "mi-principles", "relation": "adapted", "note": "Evoking the client's own reasons, cited as a concept."}
+              ]
+            },
+            {
+              "id": "RS-3",
+              "name": "Repairs strain in the relationship",
+              "definition": "When the client shows frustration with the student or the session, the student acknowledges it, adjusts, and keeps the relationship intact.",
+              "opportunity": "A client turn that shows frustration with the student, the questions or the session itself.",
+              "minimum_evidence": "One student turn that acknowledges the strain and adjusts the approach.",
+              "positive_examples": [
+                "Client: 'This is pointless.' Student: 'You didn't choose to be here, and I've been asking a lot. What would make the next few minutes worth your time?'"
+              ],
+              "negative_examples": [
+                "Client: 'This is pointless.' Student: 'Well, you have to be here, so let's continue.'"
+              ],
+              "insufficient_evidence": "If the client never showed frustration with the student or session, the criterion is insufficient.",
+              "citations": [
+                {"source": "fis", "relation": "adapted", "note": "Alliance rupture and repair."}
+              ]
+            }
+          ],
+          "levels": [
+            {"level": 1, "behavior_anchor": "Argues with, threatens, shames or ridicules the client for being reluctant.", "student_description": "Some responses argued with the client, which tends to increase pushback."},
+            {"level": 2, "behavior_anchor": "Keeps trying to persuade, warn, lecture or give reasons for change, and treats reluctance as something to push past.", "student_description": "You worked hard to convince the client. Exploring their side first is the next step."},
+            {"level": 3, "behavior_anchor": "Sometimes reflects reluctance, but slips into persuading or advice when the client pushes back. The client's own reasons are rarely explored.", "student_description": "You reflected the client's reluctance at times, but sometimes slipped into persuading."},
+            {"level": 4, "behavior_anchor": "Mostly meets reluctance with reflection and curiosity, invites the client's own view and reasons, and avoids arguing.", "student_description": "You met the client's reluctance with curiosity and helped them share their own view."},
+            {"level": 5, "behavior_anchor": "Consistently meets reluctance with accurate, nonjudgmental reflection. Draws out and reflects the client's own values and reasons, and adjusts and repairs when tension rises. Never argues for change. Offering information with the client's permission is not arguing.", "student_description": "You stayed steady and curious through the pushback and drew out what matters to the client."}
+          ]
+        },
+        {
+          "scenario": "crisis_risk",
+          "focus": "Recognizing a disclosure of risk, responding directly and calmly, and putting immediate safety and help first. This rates a practice response. It is not a validated risk assessment (RC-21). Calm means steady wording, without alarm or panic statements. It is never judged from tone of voice.",
+          "required_criteria": ["CR-1", "CR-2", "CR-3"],
+          "criteria": [
+            {
+              "id": "CR-1",
+              "name": "Recognizes and acknowledges the disclosure",
+              "definition": "The student responds directly to the client's disclosure of self-harm, abuse or danger, without changing the subject or minimizing it.",
+              "opportunity": "The client turn that discloses self-harm, abuse or imminent danger, and at least one student turn after it.",
+              "minimum_evidence": "The disclosure turn and the student turn that acknowledges it, both cited.",
+              "positive_examples": [
+                "Client: 'Sometimes I think everyone would be better off without me.' Student: 'Thank you for telling me that. It sounds like you're in a lot of pain right now.'"
+              ],
+              "negative_examples": [
+                "Client: 'Sometimes I think everyone would be better off without me.' Student: 'Everyone feels that way sometimes. So, how are classes going?'"
+              ],
+              "insufficient_evidence": "If no disclosure occurred, or the time limit ended the session with no student turn after it, the criterion is insufficient and the category abstains.",
+              "citations": [
+                {"source": "siri-2", "relation": "adapted", "note": "Facilitative versus dismissive responses to a person at risk."},
+                {"source": "sdd-v1", "relation": "original", "note": "RC-19: the student must be able to respond to the disclosure."}
+              ]
+            },
+            {
+              "id": "CR-2",
+              "name": "Asks directly about risk",
+              "definition": "The student asks clearly and calmly about thoughts of harm, intent, plans or immediate danger, in plain words that fit the disclosure.",
+              "opportunity": "Any student turn after the disclosure.",
+              "minimum_evidence": "One student turn that asks directly about risk or immediate danger, cited with the disclosure.",
+              "positive_examples": [
+                "Student: 'When you say everyone would be better off without you, are you having thoughts of ending your life?'",
+                "Client: 'He gets rough when he drinks.' Student: 'Are you safe at home tonight? Is the person who hurt you there now?'"
+              ],
+              "negative_examples": [
+                "Student: 'You're not going to do anything silly, are you?' (vague, and leads toward 'no')"
+              ],
+              "insufficient_evidence": "If no disclosure occurred, the criterion is insufficient and the category abstains.",
+              "citations": [
+                {"source": "siri-2", "relation": "adapted", "note": "Direct, nonjudgmental inquiry about risk."}
+              ]
+            },
+            {
+              "id": "CR-3",
+              "name": "Puts immediate safety and help first",
+              "definition": "The student turns to the client's immediate safety: whether they are safe now, who can be with them, and how to reach help now, such as the 988 Suicide and Crisis Lifeline or emergency services. Where it matters, the student is honest about the limits of confidentiality.",
+              "opportunity": "Any student turn after the disclosure.",
+              "minimum_evidence": "One student turn that addresses immediate safety or connects the client with immediate help, cited with the disclosure.",
+              "positive_examples": [
+                "Student: 'Your safety matters most right now. Is anyone with you tonight? Can we look at calling or texting 988 together?'",
+                "Student: 'If you're in danger right now, we can call 911 together. Is there somewhere safe you could stay tonight?'"
+              ],
+              "negative_examples": [
+                "The student acknowledges the disclosure, then spends the rest of the session on study habits."
+              ],
+              "insufficient_evidence": "If no disclosure occurred, or the time limit ended the session with no student turn after it, the criterion is insufficient and the category abstains.",
+              "citations": [
+                {"source": "siri-2", "relation": "adapted", "note": "Prioritizing safety in a response to a person at risk."},
+                {"source": "sdd-v1", "relation": "original", "note": "RC-19 and SDD Fig. 7 crisis resources, including 988."}
+              ]
+            }
+          ],
+          "levels": [
+            {"level": 1, "behavior_anchor": "Any crisis critical failure (see crisis_critical_failures). A critical failure always sets this rating to level 1.", "student_description": "Safety requirement not demonstrated. Your response missed a key safety step for this scenario. Review the safety steps in this report."},
+            {"level": 2, "behavior_anchor": "Acknowledges the disclosure but responds vaguely or with euphemisms, or moves on before understanding the risk. Safety steps are weak or late.", "student_description": "You noticed the disclosure, but your response stayed vague about the risk."},
+            {"level": 3, "behavior_anchor": "Acknowledges the disclosure and asks about risk, but questions are indirect or incomplete. Safety steps or resources come up only briefly.", "student_description": "You acknowledged the disclosure and asked about risk. Being more direct about safety is the next step."},
+            {"level": 4, "behavior_anchor": "Responds calmly and directly, asks clearly about risk and how immediate it is, and turns to immediate safety and help that fits what the client said, with minor gaps in empathy shown in words or in follow-through.", "student_description": "You responded directly and calmly and put the client's safety first."},
+            {"level": 5, "behavior_anchor": "Responds calmly and with empathy, asks directly about risk, puts immediate safety first, connects the client with help now that fits what they said (including crisis resources such as 988 when appropriate), is honest about confidentiality limits when secrecy or involving others comes up, and stays engaged throughout.", "student_description": "You responded with calm, direct care, put safety first and connected the client with help."}
+          ]
+        }
+      ]
+    }
+  ],
+  "crisis_critical_failures": {
+    "applies_to": "crisis_risk",
+    "precedence": "Any one critical failure makes the safety result 'safety requirement not demonstrated'. That result leads the report, and the average is shown only as a secondary measure. No category rating or average can outweigh it (RC-19, SCO-5).",
+    "safety_result_rule": "The safety result is 'safety requirement not demonstrated' when any critical failure is found, whatever any category or other rule yields. The result is 'safety requirement met' when CR-1, CR-2 and CR-3 are all sufficient and no critical failure is found. Otherwise the scenario-specific category abstains and no safety result is given.",
+    "evidence_rule": "A critical failure cites the disclosure turn and the student turn or turns that show the failure. A failure that rests on the absence of a response cites the disclosure and states that no later student turn addresses it.",
+    "failures": [
+      {
+        "id": "CF-IGNORE",
+        "name": "Ignoring explicit risk",
+        "definition": "After an explicit disclosure of self-harm, abuse or danger, no later student turn addresses it, or the student dismisses or minimizes it.",
+        "indicators": [
+          "the student changes the subject right after the disclosure and never returns to it",
+          "the student dismisses or minimizes the disclosure itself, for example 'you don't really mean that', or 'everyone feels like that' with no question about risk after it"
+        ],
+        "not_a_failure": [
+          "a brief reflection of feeling before asking about risk",
+          "letting the client finish a thought, then returning to the disclosure",
+          "a normalizing lead-in followed in the same or next student turn by a direct risk question, for example 'When people are in this much pain, they sometimes think about ending their life. Have you had thoughts like that?'"
+        ],
+        "citations": [
+          {"source": "sdd-v1", "relation": "direct", "note": "RC-19 names ignoring explicit risk as a critical safety failure."},
+          {"source": "siri-2", "relation": "adapted", "note": "Dismissive helper responses."}
+        ]
+      },
+      {
+        "id": "CF-ENCOURAGE",
+        "name": "Encouraging harm",
+        "definition": "The student endorses, suggests or agrees with harming oneself or others, or with staying in danger, or gives information that would make harm easier.",
+        "indicators": [
+          "agreeing that harm would be a good or reasonable option",
+          "suggesting a method, or giving information about methods, lethality or how to get means",
+          "telling the client to stay in or return to a dangerous situation"
+        ],
+        "not_a_failure": [
+          "reflecting the client's own words, for example 'part of you feels it would be a relief not to be here', as a step toward asking about risk",
+          "asking directly whether the client has a plan or access to means",
+          "talking about putting time or distance between the client and the means, for example asking whether someone could hold the medication"
+        ],
+        "citations": [
+          {"source": "sdd-v1", "relation": "direct", "note": "RC-19 names encouraging harm as a critical safety failure."},
+          {"source": "siri-2", "relation": "adapted", "note": "Harmful helper responses."}
+        ]
+      },
+      {
+        "id": "CF-SECRECY",
+        "name": "Promising secrecy",
+        "definition": "The student promises to keep a disclosure of risk or abuse confidential without conditions, or agrees not to tell anyone or seek help when safety is at stake.",
+        "indicators": [
+          "'I promise I won't tell anyone.'",
+          "agreeing to the client's request to keep the danger secret"
+        ],
+        "not_a_failure": [
+          "explaining confidentiality and its limits honestly",
+          "asking who the client would want involved, while being clear that safety may require telling someone"
+        ],
+        "citations": [
+          {"source": "sdd-v1", "relation": "direct", "note": "RC-19 names promising secrecy as a critical safety failure."}
+        ]
+      },
+      {
+        "id": "CF-NO-PRIORITY",
+        "name": "Failing to prioritize immediate help",
+        "definition": "After an explicit disclosure, the student never asks about or addresses the client's immediate safety, and never points toward help now, before the session ends.",
+        "indicators": [
+          "the student ends the session after the disclosure without any safety step",
+          "the student moves on to unrelated topics, such as scheduling or study habits, and does not return to safety"
+        ],
+        "not_a_failure": [
+          "exploring feelings for a few turns before turning to safety, when the student does turn to it",
+          "a session ended by the time limit with no student turn after the disclosure (the category abstains instead)"
+        ],
+        "citations": [
+          {"source": "sdd-v1", "relation": "direct", "note": "RC-19 names failing to prioritize immediate help as a critical safety failure."},
+          {"source": "siri-2", "relation": "adapted", "note": "Prioritizing safety in a helper response."}
+        ]
+      }
+    ]
+  }
+}

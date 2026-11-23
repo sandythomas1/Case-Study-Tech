@@ -1,4 +1,14 @@
-# AI agents treat CLAUDE.md as instructions, so changes to it (and to repo
-# automation config under .github/) require review by the human owner.
-/CLAUDE.md  @sandythomas1
-/.github/   @sandythomas1
+# AI agents treat CLAUDE.md as instructions, and CI's checks and suppression files decide
+# what can merge, so changes to them request the human owner's review. GitHub enforces
+# that review only once the dev, staging and main rulesets turn on "Require review from
+# Code Owners" (docs/CI.md).
+/CLAUDE.md          @sandythomas1
+/.github/           @sandythomas1
+/.gitattributes     @sandythomas1
+/scripts/ci/        @sandythomas1
+# The deploy workflow rolls the gateway template and development.json on the next staging
+# merge, and infra/ holds every cloud permission (#105).
+/infra/             @sandythomas1
+/.gitleaks.toml     @sandythomas1
+**/.gitleaks.toml   @sandythomas1
+**/.gitleaksignore  @sandythomas1

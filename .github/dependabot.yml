@@ -1,0 +1,21 @@
+# Dependabot version updates for the GitHub Action pins in .github/workflows (#110).
+# Dependabot reads this file only from the default branch (main), so a change here takes
+# effect after it is promoted. See docs/CI.md "Keeping pins current" and
+# docs/decisions/ci-tool-dependabot.md.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+    # Matches the rule for the other CI tools: take a release only once it is a week old.
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+    commit-message:
+      prefix: ci
