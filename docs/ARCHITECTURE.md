@@ -57,7 +57,7 @@ file differ, this file records the decisions and the code as built (plan PA-11).
 | Accounts service | Server-side Google token exchange and refresh, current student, own scores read, account deletion; access requests, the approval check and admin decisions (POLICY ACC-4 to ACC-9) | `services/accounts` | Built in PR #62; access approval is #72, #73 |
 | Session service | Verifies and signs conversation state, persona turns, speech calls, time limit, conduct safeguard, end of session, grader call | `services/session` | Speech interface only (#64); the rest is Phase 3–4 |
 | Grading service | Private. Accepts only complete transcripts from the session service, scores against the anchor spec, validates evidence, writes scores, returns the report | not yet | Phase 5 |
-| Vertex AI | Persona inference and grader inference, as separate calls with separate prompts | — | Models open (OD-2) |
+| Vertex AI | Persona inference and grader inference, as separate calls with separate prompts | — | `gemini-3.8-flash` for personas, `gemini-4-argon` for the grader (OD-2, settled 2026-11-22 in `docs/decisions/vertex-ai-governance.md`) |
 | Speech provider | Speech-to-text and text-to-speech behind a replaceable interface | `services/session/cst_session/speech` | Interface and fake built (#64); vendor and adapter open (Phase 2 ADR, #20) |
 | Firestore | `students/{uid}/scores/{scoreId}`, `account_deletions/{uid}` and one server-only access record per account | `infra/firestore.rules` | Built in PR #62; access record is #72 |
 | Email provider | Sends the owner one email per access request (name and Google email only) | not yet | Vendor open (OD-3, #74) |
@@ -202,7 +202,6 @@ Cloud Run (plan IR-5).
 
 | ID | Question | Blocks | Settled by |
 |---|---|---|---|
-| OD-2 | Which Vertex AI models run the personas and the grader | Persona harness, grader, calibration drafting | Phase 2 governance record (#65) |
 | OQ-01 | Speech vendor and turn transport (one request per turn, or streaming) | Voice session work | Phase 2 ADR (#20) |
 | OD-3 | Which email provider sends the owner's access-request emails | Owner notification email (#74) | Owner decision with a data-use record (POLICY DAT-5) |
 

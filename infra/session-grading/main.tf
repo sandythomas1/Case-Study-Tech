@@ -36,6 +36,15 @@ variable "allowed_origins" {
 }
 
 locals {
+  # Pinned by owner decision OD-2 (2026-11-22, #65). docs/decisions/vertex-ai-governance.md records why.
+  # These are locals, not variables, so no tfvars file or -var flag can swap a model or region at
+  # apply time. A change needs a reviewed diff, a new owner decision and an updated record.
+  # Never "global": it may route a request outside the US (ARCHITECTURE §6).
+  vertex = {
+    location      = "us-central1"
+    persona_model = "gemini-3.8-flash"
+    grader_model  = "gemini-4-argon"
+  }
   services = toset([
     "run.googleapis.com", "artifactregistry.googleapis.com", "secretmanager.googleapis.com",
     "iam.googleapis.com", "aiplatform.googleapis.com", "firestore.googleapis.com"
@@ -71,7 +80,10 @@ resource "google_service_account" "identity" {
 }
 
 # Vertex AI: inference only. roles/aiplatform.user also grants dataset, model,
-# training-job and endpoint management, which neither service needs.
+# training-job and endpoint management, which neither service needs. This role is
+# also part of the zero-retention controls (#65): without cachedContents.create or
+# batchPredictionJobs.create, neither service can create an explicit context cache
+# or a batch job (record settings 3 and 8). Adding either permission needs an owner decision.
 resource "google_project_iam_custom_role" "vertex_invoke" {
   role_id     = "cstVertexInvoke"
   title       = "CaseStudy Vertex AI inference"
@@ -166,6 +178,14 @@ resource "google_cloud_run_v2_service" "grading" {
         name  = "CST_PROJECT_ID"
         value = var.project_id
       }
+      env {
+        name  = "CST_VERTEX_LOCATION"
+        value = local.vertex.location
+      }
+      env {
+        name  = "CST_GRADER_MODEL"
+        value = local.vertex.grader_model
+      }
       startup_probe {
         http_get { path = "/health" }
         initial_delay_seconds = 2
@@ -208,6 +228,14 @@ resource "google_cloud_run_v2_service" "session" {
       env {
         name  = "CST_PROJECT_ID"
         value = var.project_id
+      }
+      env {
+        name  = "CST_VERTEX_LOCATION"
+        value = local.vertex.location
+      }
+      env {
+        name  = "CST_PERSONA_MODEL"
+        value = local.vertex.persona_model
       }
       env {
         name  = "CST_ALLOWED_ORIGINS"

@@ -1,4 +1,4 @@
-# Provider zero-retention and no-training terms
+﻿# Provider zero-retention and no-training terms
 
 **Status:** Draft, 2026-11-22, #19. **Not approved.** No provider is cleared for session content yet.
 Until the owner records written confirmation below, development uses synthetic data only (plan PA-3),
@@ -28,7 +28,7 @@ A row turns **Confirmed** only once its condition is met and the evidence is rec
 
 | Provider and use | Published terms allow RC-05? | Written confirmation | Settings applied | Verdict |
 |---|---|---|---|---|
-| Vertex AI Gemini, personas and grader (`us-central1`) | **Only with caching disabled (setting 1) and an abuse-monitoring exemption.** Implicit caching is on by default and includes a durable at-rest tier. No training (SST §18). No storage past output (SST §20(h)). But on the online Cloud terms, Google may keep prompts its safety classifiers flag for up to 90 days, with human review (ToS §4.3). Master Agreement customers are exempt by default. | Not requested | No (no project until #18) | **Pending**. Needs the exemption or a Master Agreement in writing. |
+| Vertex AI Gemini, personas and grader (`us-central1`) | **Only with caching disabled (setting 1) and an abuse-monitoring exemption.** Implicit caching is on by default and includes a durable at-rest tier. No training (SST §18). No storage past output (SST §20(h)). But on the online Cloud terms, Google may keep prompts its safety classifiers flag for up to 90 days, with human review (ToS §4.3). Master Agreement customers are exempt by default. | Not requested | Not yet. #65 wrote the steps for settings 1–8 and the owner runs them (`vertex-ai-governance.md`) | **Pending**. Needs the exemption or a Master Agreement in writing. |
 | Vertex AI Frontier models (SST §34: Gemini 4 Carbon, Gemini 4 Carbon for cyber, Gemini 4 Argon Cyber Permissive) | No. Prompts and responses are logged for up to 30 days (SST §34). | n/a | n/a | **Rejected** for session content. #65 must not pick them. |
 | Partner models on Vertex Model Garden (OpenAI, Anthropic and other "Advanced AI" models) | No, unless the partner's own ZDR is approved. Otherwise prompts are logged for 30 days. | n/a | n/a | **Rejected** for session content |
 | Gemini Live / native audio on Vertex (speech path option) | Same as Vertex AI above, plus session resumption caches for up to 24 h if enabled | Not requested | No | **Pending**, same as Vertex AI |
@@ -37,6 +37,7 @@ A row turns **Confirmed** only once its condition is met and the evidence is rec
 | Google Cloud Text-to-Speech, standard and Chirp 3 HD voices | **Retention: yes.** Google states it logs no TTS text or audio and the service is stateless. **Training: by inference only.** The TTS page has no explicit no-training sentence, so this relies on SST §18. Whether §4.3 applies is unverified. | Not needed (published terms) | Nothing to set | **Pending** the §4.3 answer from the Vertex support case |
 | Google Cloud Text-to-Speech, Gemini-TTS voices | Unknown. They may fall under Gemini abuse monitoring. | Not requested | n/a | **Pending**. Not to be used until confirmed. |
 | Deepgram Flux STT (`/v2/listen`) and Aura-2 TTS (`/v1/speak`), #101 | **Only with `mip_opt_out=true` (setting 13), and unconfirmed in writing.** Deepgram documents that opted-out data is kept only as long as needed to process the request and is not used for model improvement. A signed agreement, the sub-processor list and permission for simulated self-harm role-play are not yet requested. See `speech-deepgram.md`. | Not requested (#101 AC4) | Set in code on every request; no key exists until #18 | **Pending**. Approved by the owner on 2026-11-22 for synthetic-data benchmarking only (DAT-6). No session content. |
+| Anthropic Claude, calibration-set drafting (CD-5), #47 | Not assessed. #47 sets the access path, the account holder and the terms, and records them here before the first call. | Not requested | None yet | **Pending**. Approved by the owner on 2026-11-22 for synthetic transcripts only (DAT-5). It never receives student data or session content. No call until this row is filled. |
 | OpenAI (all speech models) | Assessed in `research.md`: file transcription likely meets RC-05 by default; Realtime and speech output need ZDR or MAM approval | n/a | n/a | **Dropped by owner decision, 2026-11-22.** The speech candidates are Google, Deepgram (#101) and Azure (#102). Not to be used. |
 
 No provider is used for session content until its row says **Confirmed**, with the date and where the
@@ -44,20 +45,22 @@ evidence or signed terms are stored. #115 tracks that.
 
 ## Required settings
 
-The owner applies these once the GCP baseline (#18) exists, under #115. None has been applied. Each one needs
-evidence recorded here: API output or a dated console screenshot.
+The owner applies these now that the GCP baseline (#18) exists. Settings 1–8 belong to #65, and their
+evidence is recorded in `vertex-ai-governance.md`. Settings 9–12 belong to #115 and are recorded here.
+None has been applied yet. Each one needs evidence: API output or a dated console screenshot.
 
 **Vertex AI (project-wide)**
 1. Turn off implicit caching: `PATCH https://aiplatform.googleapis.com/v1/projects/<PROJECT_ID>/cacheConfig`
    with `{"name":"projects/<PROJECT_ID>/cacheConfig","disableCache":true}`. Verify with a `GET` on the same
-   URL that it shows `disableCache: true`. The research found no Terraform resource for it (unverified).
-   #65 decides how to apply it and records the evidence.
+   URL that it shows `disableCache: true`. The research found no Terraform resource for it (unverified),
+   so #65 applies it with `infra/session-grading/vertex_governance.py disable-cache`, which calls this URL.
 2. Leave request-response logging off (the default) for every model.
 3. Create no explicit context caches.
 4. Use no Grounding with Google Search or Google Maps. Their logs can't be turned off.
 5. Send `store=false` on any Interactions API call, because the default is `true`.
 6. Don't turn on Live API session resumption.
-7. Call the `us-central1` regional endpoint, not `global`.
+7. Call the `us-central1` regional endpoint, not `global`. If the #65 probe shows a pinned model isn't
+   served there, use the `us` multi-region instead (owner decision 2026-11-22, `vertex-ai-governance.md`).
 8. Keep session content out of batch prediction. Its inputs and outputs persist in our buckets (RC-03).
 
 **Speech-to-Text and Text-to-Speech**
@@ -91,7 +94,9 @@ documents themselves.
 1. Can online-terms customers still ask for the Vertex abuse-monitoring exemption? The public pages no
    longer say. This decides whether CD-2 holds the release.
 2. Is the project's Google Cloud account on the online terms or a Master Agreement? Only the owner knows.
-3. Which current GA Gemini models serve regionally in `us-central1`? Check this in the console during #65.
+3. Which current GA Gemini models serve regionally in `us-central1`? The model pages list pay-as-you-go
+   serving only on `global`, `us` and `eu`. #65 pinned `gemini-3.8-flash` and `gemini-4-argon`, and the
+   owner's probe result in `vertex-ai-governance.md` closes this item.
 4. Do STT data-logging controls apply to Speech-to-Text V2 / Chirp 3?
 5. Are Speech-to-Text, Chirp 3 and Gemini-TTS "Generative AI Services" under ToS §4.3?
 6. Is the Google Cloud Data Processing Addendum auto-accepted for online-terms customers?
@@ -102,6 +107,14 @@ documents themselves.
   evidence. For Vertex, one support case or a Master Agreement. See "Status by provider".
 - **2026-11-22: #19 split.** #19 covers recording the terms status and documenting the settings. The
   follow-up Issue, #115, covers the Vertex confirmation, the applied settings and the final verdict for each row.
+- **2026-11-22: #65 and #115 split.** "#65 owns Vertex 1–8 (Recommended)". #65 owns the model choice,
+  region, IAM, governance record and Vertex settings 1–8. #115 keeps the support case, speech settings
+  9–12 and the final verdicts.
+- **2026-11-22: OD-2.** Personas use `gemini-3.8-flash` and the grader uses `gemini-4-argon`. Neither is
+  an SST §34 Frontier model. `vertex-ai-governance.md` records the decision.
+- **2026-11-22: Anthropic recorded before use.** "Add a Pending row now (Recommended)". The Anthropic
+  row above is the ARCHITECTURE §8 zero-retention record for calibration drafting. It stays Pending,
+  and nothing calls Anthropic, until #47 fills in the access path and terms.
 - **2026-11-22: OpenAI dropped** as a speech candidate. Google, Deepgram (#101) and Azure (#102) remain.
   Plan line 204 (OpenAI and Google adapters) and the CD-1 swap target still name OpenAI. They need a
   follow-up update.
