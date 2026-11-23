@@ -88,7 +88,7 @@ plan must pass the same image variables, or it fails validation.
 is deployed in the accounts service, the session service and the Firestore rules. Until then, deploy
 only the digest-pinned `hello` placeholder, because without #72 an unapproved account could start
 sessions. Stop and ask the owner if #72 is not deployed. Separately, before a real grading image
-runs, resolve security review S1 (#104): grading's project-wide create permission could also write
+runs, resolve security review S12 (#104): grading's project-wide create permission could also write
 deletion markers.
 
 ## 4. Add the session routes to the gateway
