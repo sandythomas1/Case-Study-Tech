@@ -28,7 +28,7 @@ A row turns **Confirmed** only once its condition is met and the evidence is rec
 
 | Provider and use | Published terms allow RC-05? | Written confirmation | Settings applied | Verdict |
 |---|---|---|---|---|
-| Vertex AI Gemini, personas and grader (`us` multi-region) | **Only with caching disabled (setting 1) and an abuse-monitoring exemption.** Implicit caching is on by default and includes a durable at-rest tier. No training (SST §18). No storage past output (SST §20(h)). But on the online Cloud terms, Google may keep prompts its safety classifiers flag for up to 90 days, with human review (ToS §4.3). Master Agreement customers are exempt by default. | Not requested | Settings 1, 2, 3, 7 and 8 verified 2026-11-23; setting 2's console screenshot is still due. Settings 4–6 are code rules with no caller yet (`vertex-ai-governance.md`) | **Pending**. Needs the exemption or a Master Agreement in writing. |
+| Vertex AI Gemini, personas and grader (`us` multi-region) | **Only with caching disabled (setting 1) and an abuse-monitoring exemption.** Implicit caching is on by default and includes a durable at-rest tier. No training (SST §18). No storage past output (SST §20(h)). But on the online Cloud terms, Google may keep prompts its safety classifiers flag for up to 90 days, with human review (ToS §4.3). Master Agreement customers are exempt by default. | Not requested | Settings 1, 2, 3, 7 and 8 verified 2026-11-23. Settings 4–6 are code rules with no caller yet (`vertex-ai-governance.md`) | **Pending**. Needs the exemption or a Master Agreement in writing. |
 | Vertex AI Frontier models (SST §34: Gemini 4 Carbon, Gemini 4 Carbon for cyber, Gemini 4 Argon Cyber Permissive) | No. Prompts and responses are logged for up to 30 days (SST §34). | n/a | n/a | **Rejected** for session content. #65 must not pick them. |
 | Partner models on Vertex Model Garden (OpenAI, Anthropic and other "Advanced AI" models) | No, unless the partner's own ZDR is approved. Otherwise prompts are logged for 30 days. | n/a | n/a | **Rejected** for session content |
 | Gemini Live / native audio on Vertex (speech path option) | Same as Vertex AI above, plus session resumption caches for up to 24 h if enabled | Not requested | No | **Pending**, same as Vertex AI |
@@ -48,7 +48,7 @@ evidence or signed terms are stored. #115 tracks that.
 The owner applies these now that the GCP baseline (#18) exists. Settings 1–8 belong to #65, and their
 evidence is recorded in `vertex-ai-governance.md`. Settings 9–12 belong to #115 and are recorded here.
 Each one needs evidence: API output or a dated console screenshot. Settings 1, 2, 3, 7 and 8 have it
-(2026-11-23); setting 2 still needs its console screenshot. Settings 9–12 are not applied yet.
+(2026-11-23). Settings 9–12 are not applied yet.
 
 **Vertex AI (project-wide)**
 1. Turn off implicit caching: `PATCH https://aiplatform.googleapis.com/v1/projects/<PROJECT_ID>/cacheConfig`
