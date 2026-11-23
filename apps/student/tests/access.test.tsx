@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
+import { EDUCATIONAL_BOUNDARY } from '../src/auth/SignInPanel';
 import { ApiError } from '../src/auth/transport';
 import {
   copy,
@@ -58,6 +59,29 @@ describe('protected routes when signed out', () => {
     await renderRouter('./src/app', { initialUrl: '/' });
     expect(screen).toHavePathname('/');
     expect(screen.getByRole('header', { name: 'Welcome' })).toBeVisible();
+  });
+
+  it.each(['/', '/sign-in'])('offers only Continue with Google and states the educational boundary on %s', async (path) => {
+    await renderRouter('./src/app', { initialUrl: path });
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(screen.getByText(EDUCATIONAL_BOUNDARY)).toBeVisible();
+  });
+
+  it('states every ETH-1 limit in the educational boundary', () => {
+    for (const limit of [
+      'real clients', 'diagnose', 'recommend treatment', 'emergency services',
+      'validated suicide-risk assessment', 'certify competence', 'licensed instructor or supervisor',
+    ]) {
+      expect(EDUCATIONAL_BOUNDARY).toContain(limit);
+    }
+  });
+
+  it('signs in from Welcome straight to Library', async () => {
+    await renderRouter('./src/app', { initialUrl: '/' });
+    await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
+    await waitFor(() => expect(screen).toHavePathname('/library'));
   });
 });
 

@@ -2,7 +2,9 @@
 
 Deploys the private `session` and `grading` Cloud Run services from `infra/session-grading/` and
 adds the session routes to the shared gateway in `infra/accounts/` (#18). A human runs every
-`plan`/`apply` and every cloud command below (plan AG-9). Agents never do.
+`plan`/`apply` and every cloud command below (plan AG-9). Agents never do. The 2026-11-22 first
+run of steps 2–4 by an agent was a one-off owner exception that does not carry forward
+(`docs/decisions/ag9-one-off-exceptions.md`).
 
 Project `casestudy-tech-dev-2e03d0`, region `us-central1`, synthetic data only (AD-5). Commands run
 from the repository root in PowerShell. They set no gcloud defaults.
@@ -12,7 +14,9 @@ Phase 5 build real images, two service identities and three custom roles, the `p
 repository and the `session-state-signing-key` secret. It stores no transcript, audio or session
 state.
 
-Follow-up Issue (owner decision 2026-11-18, not built here): encrypted transcript storage with app-layer Cloud KMS, where the grader encrypts and the accounts service decrypts.
+Encrypted transcript storage (owner decision 2026-11-18; POLICY DAT-1 and ARCHITECTURE §7–§8 as
+amended in `docs/decisions/transcript-storage.md`) is a follow-up Issue and is not built here: app-layer
+Cloud KMS, where the grader encrypts and the accounts service decrypts.
 
 ## Prerequisites
 
@@ -79,6 +83,13 @@ Once reviewed images exist in `us-central1-docker.pkg.dev/casestudy-tech-dev-2e0
 `-var=session_image=...@sha256:VERIFIED_DIGEST` and `-var=grading_image=...@sha256:VERIFIED_DIGEST`.
 Add `-var=inject_state_signing_key=true` only with the reviewed #31 session image. Every later
 plan must pass the same image variables, or it fails validation.
+
+**Hard precondition for any real image or `inject_state_signing_key=true`:** the #72 approval check
+is deployed in the accounts service, the session service and the Firestore rules. Until then, deploy
+only the digest-pinned `hello` placeholder, because without #72 an unapproved account could start
+sessions. Stop and ask the owner if #72 is not deployed. Separately, before a real grading image
+runs, resolve security review S1 (#104): grading's project-wide create permission could also write
+deletion markers.
 
 ## 4. Add the session routes to the gateway
 

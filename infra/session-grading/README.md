@@ -2,8 +2,10 @@
 
 This module owns the private `session` and `grading` Cloud Run services (#18), their dedicated
 identities, the `practice` image repository, and the empty `session-state-signing-key` secret. It
-adds no transcript, audio or session store (ARCHITECTURE §7, §8). Encrypted transcript storage
-with Cloud KMS is a separate follow-up Issue (owner decision 2026-11-18). The shared API
+adds no transcript, audio or session store. Encrypted transcript storage with Cloud KMS (owner
+decision 2026-11-18; POLICY DAT-1 and ARCHITECTURE §7–§8 as amended in
+`docs/decisions/transcript-storage.md`) is a separate follow-up Issue. No real image runs here until
+the #72 approval check is deployed (runbook step 3). The shared API
 Gateway stays in `infra/accounts` (AD-4) and renders the session routes from this module's
 `session_service_url` output.
 

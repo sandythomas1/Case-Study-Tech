@@ -23,13 +23,19 @@ export function PreviewLink({ href, children, replace = false }: { href: Href; c
   );
 }
 
+export function PreviewNotice() {
+  return (
+    <View style={pageStyles.notice}>
+      <Text style={pageStyles.noticeTitle}>Preview</Text>
+      <BodyText>Practice sessions and scores aren&apos;t available yet. Signing in, signing out, and deleting your account work now.</BodyText>
+    </View>
+  );
+}
+
 export function PreviewScreen({ title, children, actions }: { title: string; children: string; actions?: ReactNode }) {
   return (
     <PageFrame title={title}>
-      <View style={pageStyles.notice}>
-        <Text style={pageStyles.noticeTitle}>Preview</Text>
-        <BodyText>Practice sessions and scores aren&apos;t available yet. Signing in, signing out, and deleting your account work now.</BodyText>
-      </View>
+      <PreviewNotice />
       <BodyText>{children}</BodyText>
       {actions && <View style={pageStyles.actions}>{actions}</View>}
     </PageFrame>

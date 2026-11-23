@@ -64,7 +64,7 @@ The branch is intended for remote review preparation only. No pull request, prot
 
 ## Checkpoint 5: paid upgrade authorized, blocked by Google quota
 
-The user authorized the paid upgrade and another commit/push if needed. Attempted to link `casestudy-tech-dev-2e03d0` to the existing open Firebase Payment billing account. Google rejected the link with `FAILED_PRECONDITION`, `QuotaFailure`, and `Cloud billing quota exceeded`, pointing to its billing project quota request form. Read-only checks found one open billing account and five already linked projects. These facts do not identify the exact quota or authorize changing existing projects.
+The user authorized the paid upgrade and another commit/push if needed. Attempted to link `casestudy-tech-dev-2e03d0` to the owner's existing billing account. Google rejected the link with `FAILED_PRECONDITION`, `QuotaFailure`, and `Cloud billing quota exceeded`, pointing to its billing project quota request form. Read-only checks found the account already at its linked-project limit. These facts do not identify the exact quota or authorize changing existing projects.
 
 Verified that the target project's billing remains disabled. Retried Identity Platform initialization with the project quota header and received HTTP 400, `BILLING_NOT_ENABLED`. No live authentication success, paid upgrade, support submission, application deployment or issue completion is claimed. Added a support request draft and precise retry/readback steps to `docs/accounts-setup.md`, without account IDs, contact information or credentials.
 
@@ -72,7 +72,7 @@ This checkpoint changes documentation only. The 47 previously passing tests are 
 
 ## Checkpoint 6: authorized billing replacement and Identity Platform initialization
 
-The owner explicitly authorized removing Auto-Cloud-Deploy from Firebase Payment and replacing it with CaseStudy Tech. Verified the source account association, unlinked `auto-cloud-deploy-500705`, then linked `casestudy-tech-dev-2e03d0` to the existing billing account. Live readback confirms Auto-Cloud-Deploy billing is disabled and CaseStudy Tech billing is enabled. The source project itself was not deleted. Account membership now includes CaseStudy Tech and excludes Auto-Cloud-Deploy, with the other four associations preserved.
+With the owner's explicit authorization, `casestudy-tech-dev-2e03d0` was linked to the owner's existing billing account in place of another of the owner's projects. Live readback confirms CaseStudy Tech billing is enabled. No project was deleted.
 
 Identity Platform initialization then succeeded with HTTP 200. Configuration readback returned `projects/613104664964/config`, with anonymous, email and phone sign-in disabled. The billing and initialization blocker is resolved; actual Google OAuth client/provider registration and successful student sign-in are not yet verified.
 

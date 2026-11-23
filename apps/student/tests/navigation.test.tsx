@@ -13,24 +13,9 @@ beforeEach(async () => {
 });
 
 describe('student navigation preview before sign-in', () => {
-  it('keeps the Welcome link readable, large enough to tap, and visibly focused', async () => {
-    await renderRouter('./src/app', { initialUrl: '/' });
-    const link = screen.getByRole('link', { name: 'Sign in to explore' });
-    expect(link).toHaveStyle({ minHeight: 48, backgroundColor: '#214f88' });
-    await fireEvent(link, 'focus');
-    expect(link).toHaveStyle({ outlineStyle: 'solid', outlineWidth: 3 });
-    await fireEvent(link, 'pressIn');
-    expect(link).toHaveStyle({ backgroundColor: '#17375e' });
-    await fireEvent(link, 'pressOut');
-    await fireEvent(link, 'blur');
-    expect(link).toHaveStyle({ backgroundColor: '#214f88' });
-  });
-
   it('signs in from Welcome, explores the practice path, and returns to Library without creating a result', async () => {
     await renderRouter('./src/app', { initialUrl: '/' });
     expect(screen.getByRole('header', { name: 'Welcome' })).toBeVisible();
-    await fireEvent.press(screen.getByRole('link', { name: 'Sign in to explore' }));
-    expect(screen).toHavePathname('/sign-in');
     await fireEvent.press(screen.getByRole('button', { name: 'Continue with Google' }));
     await waitFor(() => expect(screen).toHavePathname('/library'));
     for (const [label, path] of [
@@ -51,8 +36,12 @@ describe('student navigation preview before sign-in', () => {
     expect(screen.getByRole('header', { name: 'Welcome' })).toBeVisible();
     expect(screen.getByText('Preview')).toBeVisible();
     expect(screen.getByText(previewNotice)).toBeVisible();
-    expect(screen.getByText('Explore the planned counseling practice screens.')).toBeVisible();
     expect(screen.queryByRole('textbox')).toBeNull();
+  });
+
+  it('keeps the preview notice off Sign in', async () => {
+    await renderRouter('./src/app', { initialUrl: '/sign-in' });
+    expect(screen.queryByText('Preview')).toBeNull();
   });
 });
 

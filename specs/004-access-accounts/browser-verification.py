@@ -1,7 +1,8 @@
 """Browser checks for issue #4 account access; requires Python Playwright/Chromium.
 
-Signed-out checks use the production web export with no Google client ID:
-    (apps/student) npm run export:web
+Signed-out checks use the production web export with no Google client ID. Build it
+with env files ignored, so a local .env from a dev deploy can't add one:
+    (apps/student) EXPO_NO_DOTENV=1 npm run export:web
 
 Signed-in checks need real Google sign-in, which needs registered OAuth clients.
 Until then they run against the development server pointed at a local fake
@@ -42,6 +43,10 @@ DELETION_NOTICE = ('We received your request to delete your account. Your accoun
 EXPIRED_NOT_DELETED = ('Your sign-in expired, so your account was not deleted. '
                        'Sign in again to request deletion.')
 BEING_DELETED = "This account is being deleted, so you can't sign in to it."
+EDUCATIONAL_BOUNDARY = (
+    "For education and practice only. Case-Study-Tech doesn't serve real clients, diagnose, recommend "
+    "treatment, or provide emergency services. It doesn't conduct a validated suicide-risk assessment, "
+    'certify competence, or replace a licensed instructor or supervisor.')
 
 # Stand-in for Google Identity Services: renders one button that hands back a fake credential.
 GSI_STUB = """
@@ -188,7 +193,9 @@ class SignedOutProductionExport(BrowserCase):
         self.page.goto(self.origin + '/', wait_until='networkidle')
         expect(self.page).to_have_url(self.origin + '/')
         expect(self.heading('Welcome')).to_be_visible()
-        expect(self.page.get_by_role('link', name='Sign in to explore', exact=True)).to_be_visible()
+        expect(self.page.get_by_text(EDUCATIONAL_BOUNDARY, exact=True)).to_be_visible()
+        expect(self.page.get_by_role('link')).to_have_count(0)
+        expect(self.page.get_by_role('textbox')).to_have_count(0)
         self.page.screenshot(path=str(SHOTS / 'web-welcome-signed-out.png'))
 
     def test_sign_in_without_client_id_offers_no_other_method(self):
@@ -265,6 +272,17 @@ class StubbedSignIn(BrowserCase):
         self.heading('Delete your account?').evaluate(
             "e => new Promise(done => { const check = () => { for (let n = e; n; n = n.parentElement)"
             " if (getComputedStyle(n).opacity !== '1') return requestAnimationFrame(check); done(); }; check(); })")
+
+    def test_welcome_offers_one_google_action_that_signs_in(self):
+        self.page.goto(self.origin + '/', wait_until='networkidle')
+        expect(self.heading('Welcome')).to_be_visible()
+        expect(self.page.get_by_text(EDUCATIONAL_BOUNDARY, exact=True)).to_be_visible()
+        expect(self.page.get_by_role('button')).to_have_count(1)
+        expect(self.page.get_by_role('link')).to_have_count(0)
+        self.page.screenshot(path=str(SHOTS / 'web-welcome-google-stub.png'))
+        self.page.get_by_role('button', name='Continue with Google (QA stand-in)').click()
+        expect(self.page).to_have_url(self.origin + '/library')
+        expect(self.heading('Library')).to_be_visible()
 
     def test_signed_in_library_and_account(self):
         self.sign_in()
