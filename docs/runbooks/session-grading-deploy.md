@@ -38,14 +38,22 @@ Do not echo the token. The state prefix is separate from `accounts/development`.
 Cloud Run will not start a revision whose secret has no version, so this runs in two stages, as the
 accounts module does. Inspect the saved plan before applying it.
 
+Quote every `-out=`, `-target=` and `-var=` argument. Windows PowerShell 5.1 splits an unquoted
+`-name=value` at a dot before passing it on (`-out=bootstrap.tfplan` arrives as `-out=bootstrap` and
+`.tfplan`), and Terraform stops with "Too many command line arguments".
+
+A targeted plan still needs both image variables (step 3 explains the digest pin). Without them,
+Terraform stops at an `Enter a value:` prompt and holds the state lock until that process exits.
+
 ```powershell
-terraform -chdir=infra/session-grading plan -out=bootstrap.tfplan `
-  -target=google_project_service.required -target=google_service_account.identity `
-  -target=google_project_iam_custom_role.vertex_invoke -target=google_project_iam_custom_role.session `
-  -target=google_project_iam_custom_role.grading -target=google_project_iam_member.vertex `
-  -target=google_project_iam_member.runtime -target=google_artifact_registry_repository.practice `
-  -target=google_artifact_registry_repository_iam_member.build `
-  -target=google_secret_manager_secret.state_signing -target=google_secret_manager_secret_iam_binding.session
+$hello = "us-docker.pkg.dev/cloudrun/container/hello@" + (gcloud.cmd artifacts docker images describe us-docker.pkg.dev/cloudrun/container/hello:latest --format="value(image_summary.digest)")
+terraform -chdir=infra/session-grading plan "-out=bootstrap.tfplan" "-var=session_image=$hello" "-var=grading_image=$hello" `
+  "-target=google_project_service.required" "-target=google_service_account.identity" `
+  "-target=google_project_iam_custom_role.vertex_invoke" "-target=google_project_iam_custom_role.session" `
+  "-target=google_project_iam_custom_role.grading" "-target=google_project_iam_member.vertex" `
+  "-target=google_project_iam_member.runtime" "-target=google_artifact_registry_repository.practice" `
+  "-target=google_artifact_registry_repository_iam_member.build" `
+  "-target=google_secret_manager_secret.state_signing" "-target=google_secret_manager_secret_iam_binding.session"
 terraform -chdir=infra/session-grading apply bootstrap.tfplan
 python infra/session-grading/bootstrap_signing_key.py
 ```
@@ -61,8 +69,7 @@ Leave `inject_state_signing_key` at its default of `false`, so the signing key n
 third-party image.
 
 ```powershell
-$hello = "us-docker.pkg.dev/cloudrun/container/hello@" + (gcloud.cmd artifacts docker images describe us-docker.pkg.dev/cloudrun/container/hello:latest --format="value(image_summary.digest)")
-terraform -chdir=infra/session-grading plan -out=services.tfplan -var=session_image=$hello -var=grading_image=$hello
+terraform -chdir=infra/session-grading plan "-out=services.tfplan" "-var=session_image=$hello" "-var=grading_image=$hello"
 terraform -chdir=infra/session-grading apply services.tfplan
 $sessionUrl = terraform -chdir=infra/session-grading output -raw session_service_url
 $gradingUrl = terraform -chdir=infra/session-grading output -raw grading_service_url
@@ -76,9 +83,9 @@ plan must pass the same image variables, or it fails validation.
 ## 4. Add the session routes to the gateway
 
 ```powershell
-terraform -chdir=infra/accounts plan -out=gateway.tfplan `
-  -var=image=us-central1-docker.pkg.dev/casestudy-tech-dev-2e03d0/accounts/accounts@sha256:CURRENT_ACCOUNTS_DIGEST `
-  -var=session_service_url=$sessionUrl
+terraform -chdir=infra/accounts plan "-out=gateway.tfplan" `
+  "-var=image=us-central1-docker.pkg.dev/casestudy-tech-dev-2e03d0/accounts/accounts@sha256:CURRENT_ACCOUNTS_DIGEST" `
+  "-var=session_service_url=$sessionUrl"
 terraform -chdir=infra/accounts apply gateway.tfplan
 ```
 
@@ -104,7 +111,7 @@ function Get-Status($uri, $method = "GET", $headers = @()) {
 | 1 | Session refuses unauthenticated callers | `Get-Status "$sessionUrl/health"` | 403 |
 | 2 | Grading refuses unauthenticated callers | `Get-Status "$gradingUrl/health"` | 403 |
 | 3 | The gateway reaches session | `Get-Status "$gw/v1/sessions/health"` | 200 |
-| 4 | Protected session routes need a Firebase JWT | `Get-Status "$gw/v1/sessions/end" "POST"` and `Get-Status "$gw/v1/sessions/turns" "POST" @("-H","Authorization: Bearer invalid")` | 401, 401 |
+| 4 | Protected session routes need a Firebase JWT | `Get-Status "$gw/v1/sessions/end" "POST" @("-H","Content-Type: application/json","--data","{}")` and `Get-Status "$gw/v1/sessions/turns" "POST" @("-H","Content-Type: application/json","--data","{}","-H","Authorization: Bearer invalid")` | 401, 401. A POST with no body gets 411 from Google's front end before the JWT check runs. |
 | 5 | The gateway has no route to grading | `Get-Status "$gw/v1/grading/health"` | 404 |
 | 6 | Grading's only invoker is the session identity | `gcloud.cmd run services get-iam-policy grading --region=us-central1 --project=casestudy-tech-dev-2e03d0` | one `roles/run.invoker` binding, member `cst-session@...` only |
 | 7 | Session's only invoker is the gateway identity | `gcloud.cmd run services get-iam-policy session --region=us-central1 --project=casestudy-tech-dev-2e03d0` | one `roles/run.invoker` binding, member `cst-gateway@...` only |

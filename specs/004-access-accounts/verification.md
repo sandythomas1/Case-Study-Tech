@@ -36,6 +36,37 @@ Harness changes in this round, copy only where it changed on purpose: the deleti
 
 Keyboard check (U6), in Chromium via `test_keyboard_deletion_dialog_focus`: focus "Delete account" and press Enter. The dialog opens and focus is on Cancel. A stray Enter activates Cancel, the dialog closes, no `/v1/account/deletion` request is sent, and focus returns to "Delete account". The same holds for Escape. PASS.
 
+## #18: Google Cloud baseline (live, 2026-11-22)
+
+Applied by the agent under the owner's one-off AG-9 exception (build log, "finish and merge PR #62"), following `docs/runbooks/session-grading-deploy.md` steps 2–4 in `casestudy-tech-dev-2e03d0`. Both services run the Cloud Run `hello` placeholder pinned at `sha256:04e460afdf4c4c8e615b809d3b41249f89af11ef5358a81fc62b3f09a70c6169`, and `inject_state_signing_key` is false.
+
+| Step | Plan | Result |
+| --- | --- | --- |
+| 2. Bootstrap (targeted) | 19 to add, 0 to change, 0 to destroy | Applied. Signing key version 1 was added to Secret Manager; no value was printed. |
+| 3. Services | 4 to add (2 services, 2 invoker bindings), 0 to destroy | Applied. `https://session-447ob3nwoa-uc.a.run.app`, `https://grading-447ob3nwoa-uc.a.run.app`, both with deletion protection on. |
+| 4. Gateway routes | 1 to add, 1 to change, 1 to destroy: the immutable API config was replaced (`create_before_destroy`), superseding config `accounts-20261022171434854700000001` | Applied after the owner approved the replacement. The accounts service, its job and its IAM were not in the plan. |
+| Drift | Full `plan` in both modules | "No changes" in both |
+
+| # | Check | Expect | Result |
+| --- | --- | --- | --- |
+| 1 | Session `/health` unauthenticated | 403 | 403 |
+| 2 | Grading `/health` unauthenticated | 403 | 403 |
+| 3 | Gateway `/v1/sessions/health` | 200 | 200 (placeholder image) |
+| 4 | `POST /v1/sessions/end` with no JWT; `POST /v1/sessions/turns` with an invalid JWT | 401, 401 | 401, 401. The first run sent no body and got 411 from Google's front end; the runbook command now sends `{}`. |
+| 5 | Gateway `/v1/grading/health` | 404 | 404 |
+| 6 | Grading invokers | `cst-session` only | `roles/run.invoker`: `cst-session` only |
+| 7 | Session invokers | `cst-gateway` only | `roles/run.invoker`: `cst-gateway` only |
+| 8 | `cst-gateway` project roles | none | none |
+| 9 | Grading `/health` with the owner's identity token | 200 | 200 |
+| 10 | Runtime roles | custom roles only | `cstGrading` (grading), `cstSessionIdentity` (session), `cstVertexInvoke` (both). No Owner, Editor or Viewer. |
+| 11 | Signing key accessors | `cst-session` only | `secretAccessor`: `cst-session` only |
+| + | Accounts `/v1/me` with no token, after the gateway change | 401 | 401 |
+
+#18 acceptance criteria:
+- **AC1 (deploy, session health through the gateway, grading health only for an authorized identity): PASS** on the placeholder, from checks 2, 3, 5 and 9. The runbook requires all eleven checks to be rerun after the first real image deploy (#31, Phase 5).
+- **AC2 (least privilege, reviewed): PASS**, from checks 6, 7, 8, 10 and 11. The security reviewer reviews it in PR #62.
+- **AC3 (recreatable from the repo): PASS.** Both modules report no changes against the repo, and every step above is the runbook run as written.
+
 Requirements cross-check: R1 (scaffold tests still pass), R2, R4 and R6 as above; R3 native and web GoogleButton paths tested, real native and GIS behaviour pending manual proof; R7 Jest only and `npm ci` passes with npm 11.19.1, hosted CI not re-run locally.
 
 ## Screenshots
