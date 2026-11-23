@@ -1,7 +1,8 @@
 # Continuous integration
 
 All pull-request checks live in one workflow, `.github/workflows/ci.yml` (Issue #51). Deploys are
-a separate workflow, tracked in #105.
+a separate workflow, `.github/workflows/deploy.yml` (#105), that runs only on pushes to `staging`
+and `main`. See [the deploy runbook](runbooks/ci-deploy.md).
 
 ## When it runs
 
@@ -25,8 +26,9 @@ progress. Runs for pushes to `dev` are never cancelled, so every merge gets a re
 | Workflow lint (zizmor) | zizmor, offline, over `.github/workflows`, any composite action and `.github/dependabot.yml`, including files listed in `.gitignore` | Any finding, such as template injection, broad permissions, an action not pinned by SHA or checkout that keeps credentials. Ignore comments and config files are not honored. A file that does not parse also fails. |
 | CI gate | Collects every job result | Any job did not succeed. Python jobs may be skipped only when no service exists. |
 
-Python services have no package "build" step. Their container build and image scan come with the
-deploy workflow in #105.
+Python services have no package "build" step here. The deploy workflow builds the accounts image
+on a push to `staging`, after this workflow passed on the pull request. No container image scan
+runs yet.
 
 The workflow uses no secrets. The token is read-only (`contents: read`), checkout does not keep
 credentials, and every action is pinned to a full commit SHA. Every `run` step uses bash with
@@ -41,6 +43,7 @@ credentials, and every action is pinned to a full commit SHA. Every `run` step u
 | setup-uv and uv | action by commit SHA; uv 0.13.8 with sha256 | [ci-tool-setup-uv.md](decisions/ci-tool-setup-uv.md) |
 | zizmor | 1.32.0, hashed requirements file | [ci-tool-zizmor.md](decisions/ci-tool-zizmor.md) |
 | Dependabot version updates | GitHub service; config in `.github/dependabot.yml` | [ci-tool-dependabot.md](decisions/ci-tool-dependabot.md) |
+| google-github-actions/auth (deploy only) | v3.0.0 by commit SHA | [ci-tool-google-github-actions-auth.md](decisions/ci-tool-google-github-actions-auth.md) |
 
 A new CI tool is judged by the data it sees. It needs an owner decision (ARCHITECTURE §8) and a
 record in `docs/decisions/`.

@@ -140,7 +140,7 @@ Do not replace these without an owner decision and a new decision record.
 | Models | Hosted Vertex AI with a prompt harness; no fine-tuning or self-hosting | DD-01, SDD §2.3 |
 | Speech | Replaceable interface; vendor chosen by the Phase 2 ADR | RC-16, PA-2 |
 | Data | Firestore: score records, saved transcripts encrypted at the application layer with a Cloud KMS key, and one access record per account (POLICY DAT-1 and DAT-2 exceptions) | DD-03, RC-04, PA-12, owner decision 2026-11-18 (`docs/decisions/transcript-storage.md`) |
-| Infrastructure | Terraform under `infra/`; gateway config generated from a template | PA-11 |
+| Infrastructure | Terraform under `infra/`; gateway config generated from a template. After bootstrap, the deploy workflow rolls images and gateway configs with gcloud (owner decision 2026-11-22, #105; `docs/runbooks/ci-deploy.md` "Who owns what") | PA-11 |
 | Report export | PDF built on the device; no server render endpoint | PA-6 |
 | iOS | TestFlight or internal distribution only. Builds use Expo Application Services (EAS) for internal iOS builds only; EAS never sees session content or student data | RC-15, owner decision 2026-11-22 |
 | Web hosting | Firebase Hosting serves the static web export (development project today) | Owner decision 2026-11-22 |
@@ -193,6 +193,15 @@ Cloud Run (plan IR-5).
   the accounts and session services. Only the session service account invokes the grader.
 - Every deploy needs a human's approval. No agent triggers a deploy (plan AG-9). One-off owner
   exceptions are listed in `docs/decisions/ag9-one-off-exceptions.md` and never carry forward.
+- Deploys run from GitHub Actions (`.github/workflows/deploy.yml`, #105). The owner's merge into
+  `staging` is the approval for a development deploy. A push to `main` waits for the owner's
+  approval on the `production` environment. The workflow signs in with Workload Identity
+  Federation as `cst-deploy`. It cannot create Cloud Run services, change Cloud Run or project
+  IAM, or read Terraform state or secrets. It can update any setting of an existing service or the
+  job, and holds `roles/apigateway.admin` (owner decision 2026-11-22), so workflow review, not IAM,
+  keeps it to images and gateway configs. No Google Cloud key exists. After bootstrap, CI owns the
+  running images and the served gateway config; Terraform owns everything else
+  (`docs/runbooks/ci-deploy.md`).
 - The web app is a static export on Firebase Hosting. Native iOS builds run on EAS for internal
   distribution only.
 - Real students use the system only after the release gate review (#70): written zero-retention

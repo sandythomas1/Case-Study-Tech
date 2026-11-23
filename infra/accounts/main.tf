@@ -177,6 +177,9 @@ resource "google_cloud_run_v2_service" "accounts" {
       }
     }
   }
+  # The deploy workflow sets the image after bootstrap (#105, docs/runbooks/ci-deploy.md);
+  # var.image only seeds the first revision. gcloud also stamps client fields on each update.
+  lifecycle { ignore_changes = [template[0].containers[0].image, client, client_version] }
   depends_on = [google_project_iam_member.runtime, google_secret_manager_secret_iam_member.runtime]
 }
 # Authoritative invoker policy: only the gateway identity; no allUsers binding.
@@ -219,6 +222,8 @@ resource "google_cloud_run_v2_job" "deletion" {
       }
     }
   }
+  # Set by the deploy workflow after bootstrap, like the service above (#105).
+  lifecycle { ignore_changes = [template[0].template[0].containers[0].image, client, client_version] }
   depends_on = [google_project_iam_member.runtime, google_secret_manager_secret_iam_member.runtime]
 }
 resource "google_cloud_run_v2_job_iam_binding" "scheduler" {
@@ -269,7 +274,13 @@ resource "google_api_gateway_api_config" "accounts" {
   gateway_config {
     backend_config { google_service_account = google_service_account.identity["gateway"].email }
   }
-  lifecycle { create_before_destroy = true }
+  # This is the bootstrap config only. After the first deploy, the deploy workflow renders the
+  # template and rolls a new config when it changes (#105, AD-4), so Terraform must neither
+  # replace this one nor point the gateway back at it.
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes        = [openapi_documents]
+  }
   depends_on = [google_cloud_run_v2_service_iam_binding.gateway]
 }
 resource "google_api_gateway_gateway" "accounts" {
@@ -277,6 +288,7 @@ resource "google_api_gateway_gateway" "accounts" {
   gateway_id = "accounts"
   region     = var.region
   api_config = google_api_gateway_api_config.accounts.id
+  lifecycle { ignore_changes = [api_config] }
 }
 resource "google_logging_metric" "sweeps" {
   name   = "account_deletion_sweeps"

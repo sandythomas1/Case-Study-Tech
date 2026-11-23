@@ -1,0 +1,192 @@
+# Deploys the Cloud Run services (#105). See docs/runbooks/ci-deploy.md.
+# A push to staging deploys to the development project. Only the owner can merge into staging
+# (Rulesets), so that merge is the approval (owner decision 2026-11-22, AG-9). A push to main
+# waits for the owner's approval on the production environment.
+name: Deploy
+
+on:
+  push:
+    branches: [staging, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  # One deploy per branch at a time. Never cancel a deploy halfway through a rollout.
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    # An explicit bash shell runs with -eo pipefail, so a failing pipe stage fails the step.
+    shell: bash
+
+jobs:
+  development:
+    name: Deploy to development
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # The Workload Identity provider accepts only the first attempt of a push to refs/heads/staging
+    # in this repository, running this workflow file in this environment (infra/ci-deploy). So a
+    # re-run cannot sign in, and only the owner's merge into staging deploys.
+    environment: development
+    permissions:
+      contents: read
+      id-token: write # mints the short-lived OIDC token that Workload Identity Federation exchanges
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Validate the deploy config
+        id: config
+        run: python3 -I scripts/ci/deploy/deploy_config.py infra/environments/development.json >> "$GITHUB_OUTPUT"
+
+      # Keyless: no service-account key exists. The credential file lives outside every docker
+      # build context and the action's post step deletes it (docs/decisions/ci-tool-google-github-actions-auth.md).
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ steps.config.outputs.wif_provider }}
+          service_account: ${{ steps.config.outputs.deploy_service_account }}
+
+      - name: Build and push the accounts image
+        id: accounts_image
+        env:
+          REGION: ${{ steps.config.outputs.region }}
+          REPOSITORY: ${{ steps.config.outputs.accounts_repository }}
+        run: |
+          # The tag is the git tree of services/accounts, so the same source maps to the same
+          # image on every branch and an unchanged service is not rebuilt.
+          tree="$(git rev-parse HEAD:services/accounts)"
+          tagged="$REPOSITORY:src-$tree"
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          digest="$(gcloud artifacts docker images describe "$tagged" --format='value(image_summary.digest)' 2>/dev/null || true)"
+          if [ -z "$digest" ]; then
+            docker build --pull --tag "$tagged" services/accounts
+            docker push "$tagged"
+            digest="$(gcloud artifacts docker images describe "$tagged" --format='value(image_summary.digest)')"
+          else
+            echo "The image for this source already exists; reusing it."
+          fi
+          if ! [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::Could not read the accounts image digest."
+            exit 1
+          fi
+          echo "image=$REPOSITORY@$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Roll out grading, session and accounts
+        env:
+          PROJECT_ID: ${{ steps.config.outputs.project_id }}
+          REGION: ${{ steps.config.outputs.region }}
+          GRADING_IMAGE: ${{ steps.config.outputs.grading_image }}
+          SESSION_IMAGE: ${{ steps.config.outputs.session_image }}
+          ACCOUNTS_IMAGE: ${{ steps.accounts_image.outputs.image }}
+        run: |
+          where=(--project="$PROJECT_ID" --region="$REGION" --quiet)
+          # A new revision only when the image changed, then all traffic to the newest revision.
+          # That also undoes a manual rollback that pinned traffic (docs/runbooks/ci-deploy.md).
+          roll_service() {
+            local name="$1" image="$2" current
+            current="$(gcloud run services describe "$name" "${where[@]}" --format='value(spec.template.spec.containers[0].image)')"
+            if [ "$current" = "$image" ]; then
+              echo "$name already runs the pinned image."
+            else
+              gcloud run services update "$name" --image="$image" "${where[@]}"
+            fi
+            gcloud run services update-traffic "$name" --to-latest "${where[@]}"
+          }
+          # Callee first: session calls grading, the gateway calls session and accounts.
+          roll_service grading "$GRADING_IMAGE"
+          roll_service session "$SESSION_IMAGE"
+          roll_service accounts "$ACCOUNTS_IMAGE"
+          current="$(gcloud run jobs describe account-deletion "${where[@]}" --format='value(spec.template.spec.template.spec.containers[0].image)')"
+          if [ "$current" = "$ACCOUNTS_IMAGE" ]; then
+            echo "account-deletion already runs the pinned image."
+          else
+            gcloud run jobs update account-deletion --image="$ACCOUNTS_IMAGE" "${where[@]}"
+          fi
+
+      - name: Roll the gateway config if it changed (AD-4)
+        env:
+          PROJECT_ID: ${{ steps.config.outputs.project_id }}
+          REGION: ${{ steps.config.outputs.region }}
+          ACCOUNTS_URL: ${{ steps.config.outputs.private_accounts_service_url }}
+        run: |
+          # Both backends come from this project's own services, never from a file, so the gateway
+          # can only forward users' tokens to them.
+          accounts_url="$(gcloud run services describe accounts --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')"
+          session_url="$(gcloud run services describe session --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')"
+          if [ "$accounts_url" != "$ACCOUNTS_URL" ]; then
+            echo "::error::The live accounts URL differs from privateAccountsServiceUrl in development.json."
+            exit 1
+          fi
+          work="$RUNNER_TEMP/gateway"
+          mkdir -p "$work"
+          python3 -I scripts/ci/deploy/gateway_config.py render --template infra/gateway.yaml.template \
+            --out "$work/accounts.yaml" --project-id "$PROJECT_ID" \
+            --accounts-url "$accounts_url" --session-url "$session_url"
+          live="$(gcloud api-gateway gateways describe accounts --project="$PROJECT_ID" --location="$REGION" --format='value(apiConfig)')"
+          gcloud api-gateway api-configs describe "${live##*/}" --api=accounts --project="$PROJECT_ID" \
+            --view=FULL --format=json > "$work/live.json"
+          result="$(python3 -I scripts/ci/deploy/gateway_config.py changed --rendered "$work/accounts.yaml" --live-json "$work/live.json")"
+          if [ "$result" != "changed=true" ]; then
+            echo "The live gateway config already matches the template."
+            exit 0
+          fi
+          # Content-addressed ID, so a re-run reuses the config instead of creating another.
+          config_id="accounts-ci-$(sha256sum "$work/accounts.yaml" | cut -c1-12)"
+          if ! gcloud api-gateway api-configs describe "$config_id" --api=accounts --project="$PROJECT_ID" >/dev/null 2>&1; then
+            (cd "$work" && gcloud api-gateway api-configs create "$config_id" --api=accounts \
+              --openapi-spec=accounts.yaml --project="$PROJECT_ID" \
+              --backend-auth-service-account="cst-gateway@$PROJECT_ID.iam.gserviceaccount.com")
+          fi
+          gcloud api-gateway gateways update accounts --api=accounts --api-config="$config_id" \
+            --project="$PROJECT_ID" --location="$REGION"
+          echo "The gateway now serves $config_id."
+
+      - name: Health check
+        env:
+          PROJECT_ID: ${{ steps.config.outputs.project_id }}
+          REGION: ${{ steps.config.outputs.region }}
+          GATEWAY_URL: ${{ steps.config.outputs.accounts_gateway_url }}
+          GRADING_IMAGE: ${{ steps.config.outputs.grading_image }}
+          SESSION_IMAGE: ${{ steps.config.outputs.session_image }}
+          ACCOUNTS_IMAGE: ${{ steps.accounts_image.outputs.image }}
+        run: |
+          work="$RUNNER_TEMP/health"
+          mkdir -p "$work"
+          for name in grading session accounts; do
+            gcloud run services describe "$name" --project="$PROJECT_ID" --region="$REGION" --format=json > "$work/$name.json"
+          done
+          # Write the summary whether the check passes or fails, then fail with its exit code.
+          status=0
+          python3 -I scripts/ci/deploy/check_health.py \
+            --gateway-url "$GATEWAY_URL" \
+            --service "grading=$work/grading.json=$GRADING_IMAGE" \
+            --service "session=$work/session.json=$SESSION_IMAGE" \
+            --service "accounts=$work/accounts.json=$ACCOUNTS_IMAGE" | tee "$work/result.txt" || status=$?
+          {
+            echo "### Development deploy"
+            echo '```'
+            cat "$work/result.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+  production:
+    name: Deploy to production
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The environment requires the owner's approval before this job starts (AGT-6).
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      # The production project does not exist yet (#77), so there is no target and no
+      # credential. #77 adds the production provider, identity and the same rollout as above.
+      - name: Record the approval
+        run: |
+          echo "::notice::Approved. No production project exists yet (#77), so nothing was deployed."
+          echo "### Production deploy: approved, nothing deployed (no project until #77)" >> "$GITHUB_STEP_SUMMARY"

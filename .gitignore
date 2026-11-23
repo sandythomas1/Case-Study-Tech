@@ -23,6 +23,7 @@ venv/
 *.tfstate.*
 *.tfvars
 *service-account*.json
+gha-creds-*.json
 .claude/settings.local.json
 
 # Scratch working files (scripts, style-evidence JSON, page renders)
