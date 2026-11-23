@@ -1,0 +1,18 @@
+// Optional local Windows build configuration, verified with a short checkout
+// path and Ninja 1.13.2. Does not edit the shared SDK or generated Android files.
+def ninjaPath = System.getenv("CST_NINJA_PATH")
+if (!ninjaPath || !new File(ninjaPath).isFile()) {
+    throw new GradleException("Set CST_NINJA_PATH to an installed Ninja 1.12+ binary.")
+}
+gradle.beforeProject { project ->
+    ["com.android.application", "com.android.library"].each { pluginId ->
+        project.plugins.withId(pluginId) {
+            project.android.defaultConfig.externalNativeBuild.cmake.arguments.add(
+                ("-DCMAKE_MAKE_PROGRAM=" + ninjaPath.replace('\\', '/')).toString()
+            )
+            project.android.defaultConfig.externalNativeBuild.cmake.arguments.add(
+                "-DCMAKE_OBJECT_PATH_MAX=240"
+            )
+        }
+    }
+}

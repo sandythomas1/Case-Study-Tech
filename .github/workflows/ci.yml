@@ -1,0 +1,227 @@
+# Pull-request checks for every app and service. See docs/CI.md.
+# "CI gate" is the single required status check; deploys are a separate workflow (#105).
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, staging, main]
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+# No path filters: every job always reports, so the required check never sits pending.
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # Cancel superseded PR runs; keep every push to dev so each merge has a result.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    # An explicit bash shell runs with -eo pipefail, so a failing pipe stage fails the step.
+    shell: bash
+
+jobs:
+  student:
+    name: Student app
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: apps/student
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/student/package-lock.json
+      - name: Dependency audit of the lockfile (fails on high or critical)
+        run: npm audit --audit-level=high
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx expo install --check
+      - run: npm run export:web
+      - run: npm run export:android
+      - run: npm run export:ios
+      - name: Install gitleaks
+        run: bash "$GITHUB_WORKSPACE/scripts/ci/install-gitleaks.sh"
+      - name: Secret scan of the exported client bundles
+        run: bash "$GITHUB_WORKSPACE/scripts/ci/run-gitleaks.sh" dir "$GITHUB_WORKSPACE/apps/student/dist"
+
+  discover-services:
+    name: Discover Python services
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      services: ${{ steps.find.outputs.services }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - id: find
+        name: List services/* directories (each must have a pyproject.toml)
+        run: |
+          shopt -s nullglob
+          found=()
+          missing=()
+          for dir in services/*/; do
+            dir="${dir%/}"
+            if [ -f "$dir/pyproject.toml" ]; then
+              found+=("$dir")
+            else
+              missing+=("$dir")
+            fi
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::No pyproject.toml in: ${missing[*]}. Every services/* directory must be a Python project so CI checks it."
+            exit 1
+          fi
+          services="$(printf '%s\n' "${found[@]}" \
+            | jq --raw-input --slurp --compact-output 'split("\n") | map(select(length > 0))')"
+          echo "Python services: ${services}"
+          echo "services=${services}" >> "$GITHUB_OUTPUT"
+
+  python:
+    name: Python (${{ matrix.service }})
+    needs: discover-services
+    if: needs.discover-services.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.discover-services.outputs.services) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.8'
+          # sha256 of uv-x86_64-unknown-linux-gnu.tar.gz for 0.13.8 (docs/decisions/ci-tool-setup-uv.md).
+          checksum: '5acfd9177cfecf0bf87578f059728215ccc884388988f55f7a65041b57387d91'
+          enable-cache: true
+          cache-dependency-glob: ${{ matrix.service }}/uv.lock
+      - run: uv sync --locked --python 3.12
+      - run: uv run --frozen ruff check .
+      - run: uv run --frozen mypy .
+      - run: uv run --frozen pytest
+      # UV_NO_CONFIG and --no-build: a planted uv.toml cannot redirect the index or force a source
+      # build, so only the hashed wheels install (docs/decisions/ci-tool-setup-uv.md).
+      - name: Install pinned pip-audit into a throwaway venv
+        working-directory: .
+        env:
+          UV_NO_CONFIG: '1'
+        run: |
+          uv venv --python 3.12 "$RUNNER_TEMP/pip-audit-venv"
+          uv pip install --python "$RUNNER_TEMP/pip-audit-venv" --require-hashes --no-build \
+            -r scripts/ci/pip-audit.requirements.txt
+      - name: Dependency audit of the locked dependencies
+        run: |
+          requirements="$RUNNER_TEMP/requirements.txt"
+          uv export --frozen --all-groups --no-emit-project --format requirements-txt \
+            --quiet --output-file "$requirements"
+          "$RUNNER_TEMP/pip-audit-venv/bin/pip-audit" --strict --disable-pip --require-hashes \
+            --cache-dir "$RUNNER_TEMP/pip-audit-cache" -r "$requirements"
+
+  secret-scan:
+    name: Secret scan (history and tree)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install gitleaks
+        run: bash scripts/ci/install-gitleaks.sh
+      - name: Scan every commit reachable from the checked-out ref
+        run: bash scripts/ci/run-gitleaks.sh git "$GITHUB_WORKSPACE"
+      - name: Scan the checked-out tree (covers merge results)
+        run: bash scripts/ci/run-gitleaks.sh dir "$GITHUB_WORKSPACE"
+
+  fixtures:
+    name: Synthetic-fixture check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+      - name: Unit tests for the checker
+        run: python -m unittest discover -s scripts/ci/tests -v
+      - name: Check tracked files for session content
+        run: python scripts/ci/check_synthetic_fixtures.py
+
+  workflow-lint:
+    name: Workflow lint (zizmor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # A planted uv.toml or pyproject.toml [tool.uv] cannot redirect the zizmor install.
+      UV_NO_CONFIG: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.8'
+          # sha256 of uv-x86_64-unknown-linux-gnu.tar.gz for 0.13.8 (docs/decisions/ci-tool-setup-uv.md).
+          checksum: '5acfd9177cfecf0bf87578f059728215ccc884388988f55f7a65041b57387d91'
+          enable-cache: false
+      - name: Install pinned zizmor into a throwaway venv
+        run: |
+          uv venv --python 3.12 "$RUNNER_TEMP/zizmor-venv"
+          uv pip install --python "$RUNNER_TEMP/zizmor-venv" --require-hashes --no-build \
+            -r scripts/ci/zizmor.requirements.txt
+      # Offline: no token and no network. --no-config and --no-ignores stop a planted zizmor.yml
+      # or an inline "zizmor: ignore" comment from hiding a finding. --collect=all also ignores
+      # .gitignore, which would otherwise hide a tracked workflow (docs/decisions/ci-tool-zizmor.md).
+      - name: Lint the workflows, actions and Dependabot config
+        run: |
+          "$RUNNER_TEMP/zizmor-venv/bin/zizmor" --offline --no-config --no-ignores \
+            --strict-collection --persona=pedantic --collect=all --color=always .
+
+  ci-gate:
+    name: CI gate
+    needs: [student, discover-services, python, secret-scan, fixtures, workflow-lint]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every job to pass
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          SERVICES: ${{ needs.discover-services.outputs.services }}
+        run: |
+          failed=0
+          for job in student discover-services python secret-scan fixtures workflow-lint; do
+            result="$(jq --raw-output --arg job "$job" '.[$job].result' <<<"$RESULTS")"
+            if [ "$job" = python ] && [ "$result" = skipped ] && [ "$SERVICES" = '[]' ]; then
+              echo "python: skipped (no Python services found)"
+              continue
+            fi
+            echo "${job}: ${result}"
+            if [ "$result" != success ]; then
+              failed=1
+            fi
+          done
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::CI gate failed: at least one required job did not succeed."
+            exit 1
+          fi

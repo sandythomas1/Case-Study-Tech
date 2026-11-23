@@ -12,11 +12,12 @@ Authority, highest first: SDD v1.0 (`output/CSCI_5520_CaseStudy_Tech_Software_De
 
 ## 1. At a glance
 
-CaseStudy Tech is a practice tool. A counseling student holds a timed, voice-first conversation
-with a simulated client. When the conversation ends, a separate grader turns the complete
-transcript into a developmental report. The report goes to the device. The server keeps only the
-scores. The backend is a headless, stateless API: any instance can serve any request, and web, iOS
-and Android share one contract.
+CaseStudy Tech is a practice tool. A counseling student holds a timed, voice-first conversation with
+a simulated client. When the conversation ends, a separate grader turns the complete transcript into
+a developmental report. The report goes to the device. The server keeps the scores and, unless the
+student opts out, one encrypted transcript per completed session for the student's own review
+(POLICY DAT-1). The backend is a headless, stateless API: any instance can serve any request, and
+web, iOS and Android share one contract.
 
 ```text
 Student device (Expo app: web / iOS / Android) — holds the signed conversation state
@@ -56,7 +57,7 @@ file differ, this file records the decisions and the code as built (plan PA-11).
 | Accounts service | Server-side Google token exchange and refresh, current student, own scores read, account deletion; access requests, the approval check and admin decisions (POLICY ACC-4 to ACC-9) | `services/accounts` | Built in PR #62; access approval is #72, #73 |
 | Session service | Verifies and signs conversation state, persona turns, speech calls, time limit, conduct safeguard, end of session, grader call | `services/session` | Speech interface only (#64); the rest is Phase 3–4 |
 | Grading service | Private. Accepts only complete transcripts from the session service, scores against the anchor spec, validates evidence, writes scores, returns the report | not yet | Phase 5 |
-| Vertex AI | Persona inference and grader inference, as separate calls with separate prompts | — | Models open (OD-2) |
+| Vertex AI | Persona inference and grader inference, as separate calls with separate prompts | — | `gemini-3.8-flash` for personas, `gemini-4-argon` for the grader (OD-2, settled 2026-11-22 in `docs/decisions/vertex-ai-governance.md`) |
 | Speech provider | Speech-to-text and text-to-speech behind a replaceable interface | `services/session/cst_session/speech` | Interface and fake built (#64); vendor and adapter open (Phase 2 ADR, #20) |
 | Firestore | `students/{uid}/scores/{scoreId}`, `account_deletions/{uid}` and one server-only access record per account | `infra/firestore.rules` | Built in PR #62; access record is #72 |
 | Email provider | Sends the owner one email per access request (name and Google email only) | not yet | Vendor open (OD-3, #74) |
@@ -133,21 +134,23 @@ Do not replace these without an owner decision and a new decision record.
 | Client | Expo (React Native + react-native-web), one codebase, Expo Router, custom dev builds (Expo Go cannot do native Google sign-in) | DD-06, RC-14, PA-7, ADR 0001 |
 | Backend | Python 3.12, FastAPI, one private Cloud Run service per responsibility | PA-7, DD-09 |
 | Session state | Client-held, server-signed; no server-side session store | AD-1, AD-2 |
-| Cloud | GCP, `us-central1`, managed services only; development and production projects | DD-09, AD-5 |
+| Cloud | GCP, `us-central1`, managed services only; development and production projects. Two exceptions run in the `us` multi-region, because Google doesn't serve them in `us-central1`: Google Speech-to-Text Chirp 3, if used (Google serves it only in `us` and `eu`), and Vertex AI, only for models that Google's data-residency table lists under "US multi-region" (both pinned models returned HTTP 404 on `us-central1` in the #65 probe). Data stays in the US; for Vertex AI that rests on Google's documented ML-processing boundary for those models, not on a contract. Vertex AI never uses `global`, which may process a request anywhere. | DD-09, AD-5, owner decisions 2026-11-22 (`docs/decisions/provider-zero-retention.md`, `docs/decisions/vertex-ai-governance.md`) |
 | Edge | One API Gateway config, per-route backends | AD-4 |
 | Identity | Identity Platform with Google sign-in only; server-side token exchange | RC-01, DD-05, ADR 0001 |
 | Models | Hosted Vertex AI with a prompt harness; no fine-tuning or self-hosting | DD-01, SDD §2.3 |
 | Speech | Replaceable interface; vendor chosen by the Phase 2 ADR | RC-16, PA-2 |
-| Data | Firestore: score records and one access record per account (POLICY DAT-2 exception) | DD-03, RC-04, PA-12 |
-| Infrastructure | Terraform under `infra/`; gateway config generated from a template | PA-11 |
+| Data | Firestore: score records, saved transcripts encrypted at the application layer with a Cloud KMS key, and one access record per account (POLICY DAT-1 and DAT-2 exceptions) | DD-03, RC-04, PA-12, owner decision 2026-11-18 (`docs/decisions/transcript-storage.md`) |
+| Infrastructure | Terraform under `infra/`; gateway config generated from a template. After bootstrap, the deploy workflow rolls images and gateway configs with gcloud (owner decision 2026-11-22, #105; `docs/runbooks/ci-deploy.md` "Who owns what") | PA-11 |
 | Report export | PDF built on the device; no server render endpoint | PA-6 |
-| iOS | TestFlight or internal distribution only | RC-15 |
+| iOS | TestFlight or internal distribution only. Builds use Expo Application Services (EAS) for internal iOS builds only; EAS never sees session content or student data | RC-15, owner decision 2026-11-22 |
+| Web hosting | Firebase Hosting serves the static web export (development project today) | Owner decision 2026-11-22 |
 
 ## 7. Trust and data boundaries
 
 | Data | May exist in | Must never reach |
 |---|---|---|
-| Audio, transcript, excerpts, narrative feedback | App memory during the session and report view, including the signed state; request bodies in transit; service memory while processing; the speech provider and Vertex AI under written zero-retention terms | Firestore, any database or cache, logs, analytics, crash reports, test fixtures, an external session store, device storage |
+| Audio, transcript, excerpts, narrative feedback | App memory during the session and report view, including the signed state; request bodies in transit; service memory while processing; the speech provider and Vertex AI under written zero-retention terms | Firestore (except the saved transcript in the next row), any database or cache, logs, analytics, crash reports, test fixtures, an external session store, device storage |
+| Saved transcript of a completed session (POLICY DAT-1) | Firestore under the owner's UID, encrypted by the grading service with a Cloud KMS key; decrypted only by the accounts service for its owner; the app while the student reviews it; a file the student chooses to export | Any other student, the admin or any human principal, any model or vendor, an eval or calibration set, logs, the development project (as real data) |
 | Score record: overall and category scores, completion time, crisis safety result | Firestore under the owner's UID; the app | Any other student; the admin |
 | Access record: display name, Google email, state, times | Firestore (server-only); the admin queue; the owner's email (name and email only) | Logs; any account other than its owner and the admin |
 | Firebase ID token | App memory; request headers | Disk on any platform, logs |
@@ -161,8 +164,11 @@ Cloud Run (plan IR-5).
 
 ## 8. Invariants
 
-- **Never** persist session content anywhere (RC-03). State loss takes the lost-content path; it is
-  never patched with storage.
+- **Never** persist session content anywhere (RC-03), except the saved transcript of a completed
+  session, which only the grading service writes, encrypted (POLICY DAT-1). Audio, excerpts and
+  narrative feedback are never persisted. State loss takes the lost-content path; it is never
+  patched with storage, and recovery never reads a saved transcript.
+- **Never** let a human principal decrypt a saved transcript in production.
 - **Never** process a turn or grade a transcript whose signed state fails verification, belongs to
   another UID or is past its time limit.
 - **Never** produce a score from an incomplete transcript or an unvalidated grader result (RC-09,
@@ -185,7 +191,19 @@ Cloud Run (plan IR-5).
 
 - Cloud Run services are private (no unauthenticated invoke). The gateway service account invokes
   the accounts and session services. Only the session service account invokes the grader.
-- Every deploy needs a human's approval. No agent triggers a deploy (plan AG-9).
+- Every deploy needs a human's approval. No agent triggers a deploy (plan AG-9). One-off owner
+  exceptions are listed in `docs/decisions/ag9-one-off-exceptions.md` and never carry forward.
+- Deploys run from GitHub Actions (`.github/workflows/deploy.yml`, #105). The owner's merge into
+  `staging` is the approval for a development deploy. A push to `main` waits for the owner's
+  approval on the `production` environment. The workflow signs in with Workload Identity
+  Federation as `cst-deploy`. It cannot create Cloud Run services, change Cloud Run or project
+  IAM, or read Terraform state or secrets. It can update any setting of an existing service or the
+  job, and holds `roles/apigateway.admin` (owner decision 2026-11-22), so workflow review, not IAM,
+  keeps it to images and gateway configs. No Google Cloud key exists. After bootstrap, CI owns the
+  running images and the served gateway config; Terraform owns everything else
+  (`docs/runbooks/ci-deploy.md`).
+- The web app is a static export on Firebase Hosting. Native iOS builds run on EAS for internal
+  distribution only.
 - Real students use the system only after the release gate review (#70): written zero-retention
   terms (PA-3) and the calibration and safeguard gates (PA-10).
 
@@ -193,7 +211,6 @@ Cloud Run (plan IR-5).
 
 | ID | Question | Blocks | Settled by |
 |---|---|---|---|
-| OD-2 | Which Vertex AI models run the personas and the grader | Persona harness, grader, calibration drafting | Phase 2 governance record (#65) |
 | OQ-01 | Speech vendor and turn transport (one request per turn, or streaming) | Voice session work | Phase 2 ADR (#20) |
 | OD-3 | Which email provider sends the owner's access-request emails | Owner notification email (#74) | Owner decision with a data-use record (POLICY DAT-5) |
 

@@ -11,6 +11,8 @@ Authority, highest first: SDD v1.0 (`output/CSCI_5520_CaseStudy_Tech_Software_De
 → Implementation Plan (`docs/lab3/implementation-plan.md`) → this file → code. System structure
 lives in `docs/ARCHITECTURE.md`, phase order in `docs/ROADMAP.md`, and task detail in GitHub Issues.
 If an Issue conflicts with a rule here, stop and ask. Never settle the conflict in code.
+The transcript-storage amendment to DAT-1 departs from SDD v1.0 RC-03 and RC-04. It takes effect with
+the owner's SDD change note (`docs/decisions/transcript-storage.md`).
 
 ## 1. Roles
 
@@ -129,14 +131,20 @@ or technical jargon (SDD §6.3).
 - DAT-1. Session content exists only in app memory and in transient processing, long enough to run
   the session and build the report. It never reaches a database, cache, log, analytics, crash
   report, test fixture or device storage, and it is gone after the report or an abandoned attempt
-  (RC-03). The one exception is the report PDF the student chooses to export (REP-1). Where it may
-  live in transit is fixed in `docs/ARCHITECTURE.md` §7.
-- DAT-2. The server keeps only two things per student: score records (§2) and one access request
-  holding the Google display name, Google email, state, and request and decision times
-  (**owner, 2026-10-31**). Both stay until account deletion. These are recorded exceptions to
-  RC-04's "scores only".
+  (RC-03). Two exceptions: the report PDF the student chooses to export (REP-1), and the saved
+  transcript of a completed (graded) session (**owner, 2026-11-17/18**;
+  `docs/decisions/transcript-storage.md`). The grading service stores that transcript once,
+  encrypted at the application layer with Cloud KMS, for the student's own review. It expires after
+  180 days, and the student can delete it at any time. Audio, excerpts and narrative feedback are
+  never stored on the server. A session the student marks "don't save" is never stored. Where
+  session content may live is fixed in `docs/ARCHITECTURE.md` §7.
+- DAT-2. The server keeps only these per student: score records (§2), saved transcripts (DAT-1), and
+  one access request holding the Google display name, Google email, state, and request and decision
+  times (**owner, 2026-10-31**). Each stays until it expires or the account is deleted. During a
+  deletion, a marker keyed by UID holds only the request, deadline and progress times. It is removed
+  two hours after the deletion completes. These are recorded exceptions to RC-04's "scores only".
 - DAT-3. Account deletion needs explicit confirmation. Access ends as soon as it is confirmed, and
-  the account, score records and access request are gone within 30 days (RC-04).
+  the account, score records, saved transcripts and access request are gone within 30 days (RC-04).
 - DAT-4. A speech or AI provider may process session content only under written terms and settings
   that forbid retention and training. Without them the provider is rejected (RC-05, DD-04). This
   outranks quality and cost.
@@ -204,8 +212,10 @@ These expand plan §6.4 (AG-1 to AG-9).
 - AGT-2. Never edit calibration labels, safeguard test cases or RC-17 weights to make a test pass.
 - AGT-3. Never make an owner decision (§1). Report it on the Issue and stop. When a contingency
   trigger (plan §6.2) appears, report it and stop; the owner invokes the rule.
-- AGT-4. Start only Issues that are Ready with Human Review = Reviewed. Never set Reviewed. A change
-  to an Issue's scope or acceptance criteria resets it to Pending.
+- AGT-4. Start only Issues that are Ready with Human Review = Reviewed. Never set Reviewed on your
+  own judgment. An agent may set it only on the owner's explicit instruction for named Issues, and
+  must quote that instruction in a comment on each Issue (**owner, 2026-11-22**). A change to an
+  Issue's scope or acceptance criteria resets it to Pending.
 - AGT-5. Build from the prototype's figures and states, never its markup (PA-8).
 - AGT-6. No deploys, no merges past `dev`, no access approvals and no real-student enablement
   (plan AG-9).
@@ -213,9 +223,10 @@ These expand plan §6.4 (AG-1 to AG-9).
 ## 9. Not in the MVP — do not build
 
 Instructor, cohort or reporting tools; scenario, persona, rubric or weight editing; live coaching;
-storage or replay of session content; model training or fine-tuning on sessions, or self-hosted
-models; real clients, diagnosis, treatment advice, risk assessment or emergency contact; SSO, LMS or
-EHR integration, billing or payments; other disciplines and languages (SDD §2.3).
+server storage of audio, excerpts or narrative feedback; replay of a session; any access to a saved
+transcript by anyone other than its student (DAT-1); model training or fine-tuning on sessions, or
+self-hosted models; real clients, diagnosis, treatment advice, risk assessment or emergency contact;
+SSO, LMS or EHR integration, billing or payments; other disciplines and languages (SDD §2.3).
 
 ## 10. Accepted risks — do not "fix" without an owner decision
 
@@ -224,3 +235,4 @@ EHR integration, billing or payments; other disciplines and languages (SDD §2.3
 | A student may resend an older signed state and undo a turn or reset the conduct warning | `docs/ARCHITECTURE.md` AD-2 | Before any instructor or cohort feature |
 | A student's own real distress goes undetected | ETH-3 | Before institutional use |
 | Name and email are kept beyond RC-04's "scores only" | DAT-2 | At the FERPA review (ETH-6) |
+| A saved transcript may record a student's own real distress (ETH-3) | DAT-1 | Before real students' transcripts are stored |
