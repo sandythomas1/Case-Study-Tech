@@ -32,6 +32,7 @@ HEALTHY: dict[str, Any] = {
         "latestCreatedRevisionName": "session-00003-abc",
         "latestReadyRevisionName": "session-00003-abc",
         "traffic": [{"latestRevision": True, "percent": 100}],
+        "url": "https://session-613104664964.us-central1.run.app",
     },
 }
 
@@ -77,16 +78,34 @@ class ServiceProblemsTest(unittest.TestCase):
 
 
 class HttpChecksTest(unittest.TestCase):
-    def test_checks_cover_both_gateway_routes_and_the_private_url(self) -> None:
-        checks = check_health.http_checks("https://g.gateway.dev", "https://a.a.run.app")
+    def test_checks_cover_both_gateway_routes_and_every_private_url(self) -> None:
+        checks = check_health.http_checks(
+            "https://g.gateway.dev",
+            [("grading", "https://grading-1.us-central1.run.app"), ("accounts", "https://a-x.a.run.app")],
+        )
         self.assertEqual(
-            [(c.url, c.expected) for c in checks],
+            [(c.name, c.url, c.expected) for c in checks],
             [
-                ("https://g.gateway.dev/health", 200),
-                ("https://g.gateway.dev/v1/sessions/health", 200),
-                ("https://a.a.run.app/health", 403),
+                ("accounts through the gateway", "https://g.gateway.dev/health", 200),
+                ("session through the gateway", "https://g.gateway.dev/v1/sessions/health", 200),
+                ("grading refuses anonymous callers", "https://grading-1.us-central1.run.app/health", 403),
+                ("accounts refuses anonymous callers", "https://a-x.a.run.app/health", 403),
             ],
         )
+
+    def test_private_url_accepts_only_run_app_urls(self) -> None:
+        for url, expected in {
+            "https://session-613104664964.us-central1.run.app": True,
+            "https://session-447ob3nwoa-uc.a.run.app": True,
+            "https://evil.example/x.run.app": False,
+            "http://session-1.us-central1.run.app": False,
+            "https://session.run.app.evil.example": False,
+        }.items():
+            with self.subTest(url):
+                found = check_health.private_url({"status": {"url": url}})
+                self.assertEqual(found == url, expected)
+        self.assertIsNone(check_health.private_url({"status": {}}))
+        self.assertIsNone(check_health.private_url([1]))
 
     def test_retries_until_the_expected_status(self) -> None:
         responses = iter([404, 503, 200])
@@ -117,31 +136,44 @@ class HttpChecksTest(unittest.TestCase):
 
 
 class MainTest(unittest.TestCase):
-    def call(self, describe: str, http_failures: list[str]) -> tuple[int, str]:
+    def call(self, describe: str, http_failures: list[str]) -> tuple[int, str, list[str]]:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "session.json"
             path.write_text(describe, encoding="utf-8")
             out = io.StringIO()
-            with mock.patch.object(check_health, "run_http_checks", return_value=http_failures),                     redirect_stdout(out), io.StringIO() as err, mock.patch("sys.stderr", err):
+            with (
+                mock.patch.object(check_health, "run_http_checks", return_value=http_failures) as run,
+                redirect_stdout(out),
+                mock.patch("sys.stderr", io.StringIO()),
+            ):
                 code = check_health.main([
                     "check_health.py", "--gateway-url", "https://g.example",
-                    "--private-accounts-url", "https://a.run.app",
                     "--service", f"session={path}={IMAGE}",
                 ])
-            return code, out.getvalue()
+            urls = [c.url for c in run.call_args.args[0]]
+            return code, out.getvalue(), urls
 
     def test_healthy_run_passes(self) -> None:
-        code, out = self.call(json.dumps(HEALTHY), [])
+        code, out, urls = self.call(json.dumps(HEALTHY), [])
         self.assertEqual(code, 0)
         self.assertIn("session: healthy (revision session-00003-abc)", out)
+        self.assertIn(f"{HEALTHY['status']['url']}/health", urls)
+
+    def test_a_service_without_a_run_app_url_fails_and_is_not_probed(self) -> None:
+        describe = json.loads(json.dumps(HEALTHY))
+        describe["status"]["url"] = "https://evil.example"
+        code, out, urls = self.call(json.dumps(describe), [])
+        self.assertEqual(code, 1)
+        self.assertIn("the service has no Cloud Run URL", out)
+        self.assertNotIn("https://evil.example/health", urls)
 
     def test_http_failure_fails_the_run(self) -> None:
-        self.assertEqual(self.call(json.dumps(HEALTHY), ["private"])[0], 1)
+        self.assertEqual(self.call(json.dumps(HEALTHY), ["session refuses anonymous callers"])[0], 1)
 
     def test_unreadable_or_odd_describe_output_fails_without_crashing(self) -> None:
         for label, describe in {"not JSON": "{", "a list": "[1]", "null status": '{"status": null}'}.items():
             with self.subTest(label):
-                code, out = self.call(describe, [])
+                code, out, _urls = self.call(describe, [])
                 self.assertEqual(code, 1)
                 self.assertIn("(revision -)", out)
 

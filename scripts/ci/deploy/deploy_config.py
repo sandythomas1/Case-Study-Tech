@@ -28,10 +28,12 @@ WIF_PROVIDER = re.compile(
     r"/providers/[a-z0-9-]{4,32}$"
 )
 
-# Session and grading may run only Google's public hello placeholder or an image from this
-# project's own practice repository. Switching to a real image is a reviewed change to the
-# environment file, and the runbook's #72 precondition still applies before it.
+# Session and grading may run only Google's public hello placeholder, digest-pinned (owner
+# decision 2026-11-22, #105). A real image needs #72's approval check deployed and S12 (#104)
+# resolved first (docs/runbooks/session-grading-deploy.md step 3). The pull request that ships
+# one relaxes this check here, where CODEOWNERS requests the owner's review.
 PLACEHOLDER_REPOSITORY = "us-docker.pkg.dev/cloudrun/container/hello"
+PLACEHOLDER_IMAGE = re.compile(rf"^{re.escape(PLACEHOLDER_REPOSITORY)}{DIGEST}$")
 
 
 class ConfigError(ValueError):
@@ -73,12 +75,6 @@ def _field(data: dict[str, Any], name: str, pattern: re.Pattern[str]) -> str:
     return value
 
 
-def _practice_image(project_id: str, region: str, service: str) -> re.Pattern[str]:
-    repository = re.escape(f"{region}-docker.pkg.dev/{project_id}/practice/{service}")
-    placeholder = re.escape(PLACEHOLDER_REPOSITORY)
-    return re.compile(rf"^(?:{placeholder}|{repository}){DIGEST}$")
-
-
 def parse(data: Any) -> DeployConfig:
     if not isinstance(data, dict):
         raise ConfigError("the environment file must hold a JSON object")
@@ -102,8 +98,8 @@ def parse(data: Any) -> DeployConfig:
         accounts_gateway_url=_field(data, "accountsGatewayUrl", GATEWAY_URL),
         private_accounts_service_url=_field(data, "privateAccountsServiceUrl", RUN_URL),
         accounts_repository=f"{region}-docker.pkg.dev/{project_id}/accounts/accounts",
-        session_image=_field(data, "sessionImage", _practice_image(project_id, region, "session")),
-        grading_image=_field(data, "gradingImage", _practice_image(project_id, region, "grading")),
+        session_image=_field(data, "sessionImage", PLACEHOLDER_IMAGE),
+        grading_image=_field(data, "gradingImage", PLACEHOLDER_IMAGE),
     )
 
 

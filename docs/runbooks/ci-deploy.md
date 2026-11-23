@@ -7,7 +7,8 @@ test the rollback once.
 
 Only the owner merges into `staging` and `main` (Rulesets, POLICY AGT-6). That merge is the
 approval for a development deploy (owner decision 2026-11-22, plan AG-9). No agent merges into
-those branches, re-runs the workflow or runs any cloud command below.
+those branches or runs any cloud command below. Re-running a Deploy run cannot deploy: the
+provider issues a token only to a run's first attempt.
 
 Project `casestudy-tech-dev-2e03d0`, region `us-central1`, synthetic data only (AD-5). Commands run
 from the repository root in PowerShell and set no gcloud defaults.
@@ -25,10 +26,11 @@ Pushes to the same branch queue. A deploy that has started is never cancelled ha
 
 1. **Validates `infra/environments/development.json`** (`scripts/ci/deploy/deploy_config.py`).
    A malformed project, provider, URL or image stops the run before it signs in. Session and
-   grading images must be the digest-pinned Cloud Run `hello` placeholder or
-   `…/practice/<service>@sha256:<digest>`.
-2. **Signs in** as `cst-deploy` with a short-lived token. The provider accepts only this
-   repository (by numeric ID), `refs/heads/staging` and the `development` environment.
+   grading images must be the digest-pinned Cloud Run `hello` placeholder until #72 and S12
+   (#104) are cleared (see below).
+2. **Signs in** as `cst-deploy` with a short-lived token. The provider accepts only the first
+   attempt of a `push` to `refs/heads/staging` in this repository (by numeric ID), running
+   `.github/workflows/deploy.yml` in the `development` environment.
 3. **Builds the accounts image** from `services/accounts` and pushes it as
    `…/accounts/accounts:src-<git tree of services/accounts>`. If that tag already exists, it reuses
    the image, so unchanged source is never rebuilt. The CI gate already ran the accounts tests on
@@ -42,7 +44,8 @@ Pushes to the same branch queue. A deploy that has started is never cancelled ha
    reused if a re-run renders the same content.
 6. **Checks health** (`scripts/ci/deploy/check_health.py`): each service is Ready, runs exactly the
    target image and serves all traffic from its newest revision. Then gateway `/health` and
-   `/v1/sessions/health` must return 200 and the private accounts URL must return 403. The HTTP
+   `/v1/sessions/health` must return 200, and each service's own run.app URL must refuse an
+   anonymous caller with 403, so the deploy made none of them public. The HTTP
    checks retry for up to 2.5 minutes while a new gateway config starts serving. The job summary
    lists status codes and revision names only.
 
@@ -65,8 +68,10 @@ reaches the gateway on the next deploy, not through `terraform apply`.
 
 **Before `sessionImage` or `gradingImage` points at a real image:** the preconditions in
 `docs/runbooks/session-grading-deploy.md` step 3 still apply. #72's approval check must be deployed
-and security finding S12 (#104) resolved first. A pull request that changes either field must say
-how both are met.
+and security finding S12 (#104) resolved first. Until then the validator rejects anything but the
+placeholder (owner decision 2026-11-22). The pull request that ships a real image relaxes it in
+`scripts/ci/deploy/deploy_config.py`, which CODEOWNERS sends to the owner, and says how both
+preconditions are met.
 
 ## One-time owner setup
 
@@ -112,7 +117,9 @@ stop: the branch is not the one this runbook describes.
 
 ### 3. Create the GitHub environments
 
-In **Settings → Environments**:
+Create both before this change is promoted to `staging`. GitHub creates a missing environment on
+first use with no protection rules, so a `production` run that arrives first would not wait for
+approval. In **Settings → Environments**:
 
 | Environment | Required reviewers | Deployment branches | Secrets and variables |
 |---|---|---|---|
@@ -138,6 +145,8 @@ without the `development` environment, cannot get a token even if this setting i
    accounts: healthy (revision accounts-00004-ghi)
    accounts through the gateway: HTTP 200 (expected 200)
    session through the gateway: HTTP 200 (expected 200)
+   grading refuses anonymous callers: HTTP 403 (expected 403)
+   session refuses anonymous callers: HTTP 403 (expected 403)
    accounts refuses anonymous callers: HTTP 403 (expected 403)
    All services are healthy.
    ```
@@ -193,6 +202,16 @@ For accounts, reverted source has the old git tree, so the deploy reuses the old
 revision instead of rebuilding. For session and grading, revert `sessionImage` or `gradingImage`.
 For the gateway, revert the template; the deploy reuses the old content-addressed config.
 
+Once the session service mounts the signing key (`inject_state_signing_key=true`), never roll it
+back to the `hello` placeholder: that would hand the key to a third-party image. Apply
+`inject_state_signing_key=false` first, or roll back to the previous reviewed session image.
+
+## Prove the production gate (AC2)
+
+After the environments exist, merge `staging` into `main`. The **Deploy to production** run must
+stop at **Waiting for review** with the owner as the required reviewer. Screenshot that, approve
+it, and post both on #105. The approved run deploys nothing until #77.
+
 ## Test the rollback once (AC4)
 
 Run this on development after the first deploy, while the services still run the placeholders or
@@ -205,7 +224,7 @@ other synthetic builds. It needs at least two accounts revisions, which the firs
 4. Check that it still serves: `python infra/accounts/check_gateway.py` passes, and the private URL
    still returns 403.
 5. Restore: `gcloud.cmd run services update-traffic accounts --to-latest @where`, and check step 1
-   again. Re-running the Deploy workflow also restores it.
+   again.
 6. Post the revision names and the results of steps 3–5 on #105. Tick AC4 only then.
 
 ## Clean up old gateway configs
@@ -227,7 +246,7 @@ makes the next accounts plan recreate it.
 | Symptom in the log | Cause | Fix |
 |---|---|---|
 | `Deploy config rejected: <field> is missing or malformed` | `development.json` changed | Fix the field in a pull request. Never weaken the validator to pass. |
-| Auth fails with `unauthorized_client` or an attribute condition error | The run is not on `staging`, not in the `development` environment, or the repository ID changed | Deploy only through a `staging` merge. Re-read the ID with `gh api repos/sandythomas1/Case-Study-Tech --jq .id`. |
+| Auth fails with `unauthorized_client` or an attribute condition error | The run is a re-run, not a push to `staging`, not from `deploy.yml`, not in the `development` environment, or the repository ID changed | Re-runs never deploy. To retry a failed deploy, merge a fix (or an empty change) into `staging` through a pull request. Re-read the ID with `gh api repos/sandythomas1/Case-Study-Tech --jq .id`. |
 | `iam.serviceAccounts.actAs` denied | A service runs as an identity the deploy cannot act as | Add the identity to `runtime_identities` in `infra/ci-deploy/main.tf` in a reviewed change |
 | `run.services.update` denied on a new service | `cstDeploy` updates services; it cannot create them | Create the service with Terraform first |
 | Health check `the revision does not run the image this deploy set` | A revision failed to start, or someone deployed by hand | Read the revision's logs. Fix forward or roll back as above. |

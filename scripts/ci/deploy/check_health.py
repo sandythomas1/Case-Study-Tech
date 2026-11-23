@@ -6,13 +6,14 @@ Two kinds of evidence, neither of which needs a credential:
   newest revision is the one serving, that revision runs the image this deploy set, and it gets
   all the traffic. This is grading's only health check, because cst-session stays its only
   invoker (ARCHITECTURE §9) and the deploy identity never gets to call it.
-- Anonymous HTTP through the gateway: accounts and session answer /health with 200, and the
-  private accounts URL refuses an anonymous caller with 403, so the deploy didn't make it public.
+- Anonymous HTTP: accounts and session answer /health with 200 through the gateway, and every
+  service's own run.app URL refuses an anonymous caller with 403, so the deploy made none of them
+  public.
 
 It prints status codes and revision names only, never a response body. Standard library only.
 
 Usage (from the repository root):
-    python scripts/ci/deploy/check_health.py --gateway-url G --private-accounts-url A \
+    python scripts/ci/deploy/check_health.py --gateway-url G \
         --service accounts=accounts.json=IMAGE --service session=session.json=IMAGE ...
 """
 
@@ -20,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -30,6 +32,8 @@ from pathlib import Path
 from typing import Any
 
 Fetch = Callable[[str], int]
+
+RUN_URL = re.compile(r"^https://[a-z0-9-]+(\.[a-z0-9-]+)*\.run\.app$")
 
 
 @dataclass(frozen=True)
@@ -62,12 +66,23 @@ def service_problems(describe: Any, expected_image: str) -> list[str]:
     return problems
 
 
-def http_checks(gateway_url: str, private_accounts_url: str) -> list[HttpCheck]:
-    return [
+def private_url(describe: Any) -> str | None:
+    """The service's own run.app URL, or None if the describe output has no valid one."""
+    status = describe.get("status") if isinstance(describe, dict) else None
+    url = (status or {}).get("url")
+    return url if isinstance(url, str) and RUN_URL.fullmatch(url) else None
+
+
+def http_checks(gateway_url: str, private_urls: list[tuple[str, str]]) -> list[HttpCheck]:
+    checks = [
         HttpCheck("accounts through the gateway", f"{gateway_url}/health", 200),
         HttpCheck("session through the gateway", f"{gateway_url}/v1/sessions/health", 200),
-        HttpCheck("accounts refuses anonymous callers", f"{private_accounts_url}/health", 403),
     ]
+    checks += [
+        HttpCheck(f"{name} refuses anonymous callers", f"{url}/health", 403)
+        for name, url in private_urls
+    ]
+    return checks
 
 
 def fetch_status(url: str) -> int:
@@ -112,21 +127,26 @@ def _parse_service(value: str) -> tuple[str, Path, str]:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--gateway-url", required=True)
-    parser.add_argument("--private-accounts-url", required=True)
     parser.add_argument("--service", action="append", type=_parse_service, required=True)
     args = parser.parse_args(argv[1:])
     failed = False
+    private_urls: list[tuple[str, str]] = []
     for name, path, image in args.service:
         try:
             describe = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             describe = None
         problems = service_problems(describe, image)
+        url = private_url(describe)
+        if url is None:
+            problems.append("the service has no Cloud Run URL")
+        else:
+            private_urls.append((name, url))
         status = describe.get("status") if isinstance(describe, dict) else None
         revision = (status or {}).get("latestReadyRevisionName") or "-"
         print(f"{name}: {'healthy' if not problems else '; '.join(problems)} (revision {revision})")
         failed = failed or bool(problems)
-    failures = run_http_checks(http_checks(args.gateway_url, args.private_accounts_url))
+    failures = run_http_checks(http_checks(args.gateway_url, private_urls))
     if failed or failures:
         print("::error::Post-deploy health check failed.", file=sys.stderr)
         return 1

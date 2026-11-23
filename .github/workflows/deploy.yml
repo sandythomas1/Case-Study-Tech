@@ -27,8 +27,9 @@ jobs:
     if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    # The Workload Identity provider accepts only this repository, refs/heads/staging and this
-    # environment (infra/ci-deploy). The environment allows deployments from staging only.
+    # The Workload Identity provider accepts only the first attempt of a push to refs/heads/staging
+    # in this repository, running this workflow file in this environment (infra/ci-deploy). So a
+    # re-run cannot sign in, and only the owner's merge into staging deploys.
     environment: development
     permissions:
       contents: read
@@ -112,12 +113,19 @@ jobs:
           REGION: ${{ steps.config.outputs.region }}
           ACCOUNTS_URL: ${{ steps.config.outputs.private_accounts_service_url }}
         run: |
+          # Both backends come from this project's own services, never from a file, so the gateway
+          # can only forward users' tokens to them.
+          accounts_url="$(gcloud run services describe accounts --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')"
           session_url="$(gcloud run services describe session --project="$PROJECT_ID" --region="$REGION" --format='value(status.url)')"
+          if [ "$accounts_url" != "$ACCOUNTS_URL" ]; then
+            echo "::error::The live accounts URL differs from privateAccountsServiceUrl in development.json."
+            exit 1
+          fi
           work="$RUNNER_TEMP/gateway"
           mkdir -p "$work"
           python3 -I scripts/ci/deploy/gateway_config.py render --template infra/gateway.yaml.template \
             --out "$work/accounts.yaml" --project-id "$PROJECT_ID" \
-            --accounts-url "$ACCOUNTS_URL" --session-url "$session_url"
+            --accounts-url "$accounts_url" --session-url "$session_url"
           live="$(gcloud api-gateway gateways describe accounts --project="$PROJECT_ID" --location="$REGION" --format='value(apiConfig)')"
           gcloud api-gateway api-configs describe "${live##*/}" --api=accounts --project="$PROJECT_ID" \
             --view=FULL --format=json > "$work/live.json"
@@ -142,7 +150,6 @@ jobs:
           PROJECT_ID: ${{ steps.config.outputs.project_id }}
           REGION: ${{ steps.config.outputs.region }}
           GATEWAY_URL: ${{ steps.config.outputs.accounts_gateway_url }}
-          ACCOUNTS_URL: ${{ steps.config.outputs.private_accounts_service_url }}
           GRADING_IMAGE: ${{ steps.config.outputs.grading_image }}
           SESSION_IMAGE: ${{ steps.config.outputs.session_image }}
           ACCOUNTS_IMAGE: ${{ steps.accounts_image.outputs.image }}
@@ -152,17 +159,20 @@ jobs:
           for name in grading session accounts; do
             gcloud run services describe "$name" --project="$PROJECT_ID" --region="$REGION" --format=json > "$work/$name.json"
           done
+          # Write the summary whether the check passes or fails, then fail with its exit code.
+          status=0
           python3 -I scripts/ci/deploy/check_health.py \
-            --gateway-url "$GATEWAY_URL" --private-accounts-url "$ACCOUNTS_URL" \
+            --gateway-url "$GATEWAY_URL" \
             --service "grading=$work/grading.json=$GRADING_IMAGE" \
             --service "session=$work/session.json=$SESSION_IMAGE" \
-            --service "accounts=$work/accounts.json=$ACCOUNTS_IMAGE" | tee "$work/result.txt"
+            --service "accounts=$work/accounts.json=$ACCOUNTS_IMAGE" | tee "$work/result.txt" || status=$?
           {
             echo "### Development deploy"
             echo '```'
             cat "$work/result.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
 
   production:
     name: Deploy to production

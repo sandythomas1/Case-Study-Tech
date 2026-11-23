@@ -56,10 +56,16 @@ resource "google_iam_workload_identity_pool_provider" "repository" {
     "attribute.ref"           = "assertion.ref"
     "attribute.environment"   = "assertion.environment"
   }
+  # Only the first attempt of a push to staging, running this repository's deploy workflow in the
+  # development environment, gets a token. Another workflow on staging, a pull_request_target run
+  # or a re-run of any run (anyone with Write can re-run) cannot (owner decision 2026-11-22).
   attribute_condition = join(" && ", [
     "assertion.repository_id == '${var.github_repository_id}'",
     "assertion.ref == 'refs/heads/staging'",
     "assertion.environment == '${local.environment}'",
+    "assertion.event_name == 'push'",
+    "assertion.run_attempt == '1'",
+    "assertion.job_workflow_ref == '${var.github_repository}/.github/workflows/deploy.yml@refs/heads/staging'",
   ])
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"

@@ -83,7 +83,9 @@ The image variables seed the first deploy only. Terraform ignores later image ch
 the deploy workflow owns the running images (#105, `docs/runbooks/ci-deploy.md`). To run a reviewed
 image from `us-central1-docker.pkg.dev/casestudy-tech-dev-2e03d0/practice`, change `sessionImage` or
 `gradingImage` in `infra/environments/development.json` in a pull request; the next `staging`
-deploy rolls it. Every plan must still pass valid image variables, or it fails validation. Add
+deploy rolls it. Until the hard precondition below is met, the deploy validator accepts only the
+placeholder, and that pull request also relaxes `scripts/ci/deploy/deploy_config.py`. Every plan
+must still pass valid image variables, or it fails validation. Add
 `-var=inject_state_signing_key=true` only with the reviewed #31 session image already running.
 
 **Hard precondition for any real image or `inject_state_signing_key=true`:** the #72 approval check
@@ -95,23 +97,11 @@ deletion markers.
 
 ## 4. Add the session routes to the gateway
 
-On an environment where `infra/ci-deploy` is applied, skip this step: every deploy renders the
-session routes from the live `session` URL and rolls the gateway when they change. This step is
-for a new environment only, before its first CI deploy.
-
-```powershell
-terraform -chdir=infra/accounts plan "-out=gateway.tfplan" `
-  "-var=image=us-central1-docker.pkg.dev/casestudy-tech-dev-2e03d0/accounts/accounts@sha256:CURRENT_ACCOUNTS_DIGEST" `
-  "-var=session_service_url=$sessionUrl"
-terraform -chdir=infra/accounts apply gateway.tfplan
-```
-
-Use the accounts image that is live now
-(`gcloud.cmd run services describe accounts --region=us-central1 --project=casestudy-tech-dev-2e03d0 --format="value(spec.template.spec.containers[0].image)"`).
-The plan should show only a new `google_api_gateway_api_config` and an in-place update to the
-gateway. Stop if it touches the accounts service, its job or its IAM. A new gateway config can take
-several minutes to serve. Pass `session_service_url` on every later accounts apply, or that apply
-removes the session routes.
+The first CI deploy adds them (`docs/runbooks/ci-deploy.md`). It renders
+`infra/gateway.yaml.template` with the live `session` URL and rolls a new gateway config. Terraform
+no longer can: its gateway config is the bootstrap config, and it ignores template changes (#105).
+So apply `infra/ci-deploy`, create the GitHub environments, and merge into `staging`. A new gateway
+config can take several minutes to serve; the deploy's health check waits for it.
 
 ## 5. Verify private access
 
@@ -154,7 +144,10 @@ Finish with a full `terraform plan` in both modules. Each must report no changes
   afterwards.
 - **Signing key:** rotation invalidates every signed state in flight. Those sessions take the
   lost-content path (ARCHITECTURE flow 8). To rotate, run `bootstrap_signing_key.py`, then roll a
-  new session revision, because Cloud Run resolves `latest` when an instance starts. Disable the old
+  new session revision, because Cloud Run resolves `latest` when an instance starts:
+  `gcloud.cmd run services update session --update-labels=key-rotation=YYYYMMDD --region=us-central1 --project=casestudy-tech-dev-2e03d0`.
+  A deploy will not do it, because it rolls only a changed image. The next `infra/session-grading`
+  plan shows that label's removal; apply it or leave it. Disable the old
   version once the longest session time limit has passed.
 - **Removing the services:** both services have `deletion_protection = true`. Set it to false in a
   reviewed change and apply that first, then destroy. A deleted custom role ID can't be reused for

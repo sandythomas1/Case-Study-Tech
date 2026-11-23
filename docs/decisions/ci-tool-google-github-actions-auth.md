@@ -30,13 +30,23 @@ The token is only as strong as the conditions on it, and those live in Google Cl
 workflow (`infra/ci-deploy/main.tf`):
 
 - The provider accepts a token only when `repository_id` is this repository's numeric ID, `ref` is
-  `refs/heads/staging` and `environment` is `development`. A fork, another branch, a pull request
-  or a job without the environment cannot get a Google token.
+  `refs/heads/staging`, `environment` is `development`, `event_name` is `push`, `run_attempt` is
+  `1` and `job_workflow_ref` is `.github/workflows/deploy.yml` on `staging`. A fork, another
+  branch, a pull request (including `pull_request_target`), another workflow file, a job without
+  the environment or a re-run cannot get a Google token. The re-run rule (owner decision
+  2026-11-22) means repository Write, which can re-run jobs, cannot deploy.
 - Only the subject `repo:sandythomas1/Case-Study-Tech:environment:development` may act as
   `cst-deploy`.
-- `cst-deploy` can update existing Cloud Run services and the job, manage API Gateway configs,
-  push to the `accounts` image repository and act as the five runtime identities. It cannot read
-  Terraform state, secrets or Firestore, create or delete a service, or change IAM.
+- `cst-deploy` can update existing Cloud Run services and the job, push to the `accounts` image
+  repository and act as the five runtime identities. It cannot read Terraform state, secrets or
+  Firestore, create or delete a Cloud Run service, or change Cloud Run or project IAM.
+- Two grants are broader than the workflow uses. `run.services.update` with act-as covers every
+  setting of an existing service: environment, secret references, ingress and its runtime
+  identity among them. `roles/apigateway.admin` (owner decision 2026-11-22) also covers creating
+  and deleting API Gateway APIs and gateways and their IAM policies. Review of `deploy.yml`
+  (CODEOWNERS) keeps the workflow to images and gateway configs; IAM does not. The owner kept
+  the role for development (synthetic data) on 2026-11-22; a custom role replaces it before
+  production (#77).
 - Each Google access token gcloud gets through the credential file lasts one hour.
 
 ## Data it sees

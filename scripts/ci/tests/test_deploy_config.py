@@ -61,13 +61,6 @@ class ParseTest(unittest.TestCase):
         self.assertTrue(config.session_image.startswith(deploy_config.PLACEHOLDER_REPOSITORY))
         self.assertTrue(config.grading_image.startswith(deploy_config.PLACEHOLDER_REPOSITORY))
 
-    def test_project_practice_images_are_allowed(self) -> None:
-        image = (
-            "us-central1-docker.pkg.dev/casestudy-tech-dev-2e03d0/practice/session@sha256:"
-            + "b" * 64
-        )
-        self.assertEqual(deploy_config.parse(with_value("sessionImage", image)).session_image, image)
-
     def test_rejected_images(self) -> None:
         cases = {
             "tag instead of digest": "us-docker.pkg.dev/cloudrun/container/hello:latest",
@@ -75,14 +68,16 @@ class ParseTest(unittest.TestCase):
             "another registry": "docker.io/library/nginx@sha256:" + "a" * 64,
             "another project": "us-central1-docker.pkg.dev/other-project-123/practice/session@sha256:"
             + "a" * 64,
-            "wrong service in practice": "us-central1-docker.pkg.dev/casestudy-tech-dev-2e03d0/"
-            "practice/grading@sha256:" + "a" * 64,
+            # Real images wait for #72 and S12 (#104), even from this project's own repository.
+            "this project's practice image": "us-central1-docker.pkg.dev/casestudy-tech-dev-2e03d0/"
+            "practice/session@sha256:" + "b" * 64,
             "shell metacharacters": HELLO + "; echo pwned",
             "newline injection": HELLO + "\nproject_id=evil",
         }
         for label, image in cases.items():
-            with self.subTest(label), self.assertRaises(deploy_config.ConfigError):
-                deploy_config.parse(with_value("sessionImage", image))
+            for field in ("sessionImage", "gradingImage"):
+                with self.subTest(label, field=field), self.assertRaises(deploy_config.ConfigError):
+                    deploy_config.parse(with_value(field, image))
 
     def test_rejected_identity_values(self) -> None:
         cases = {
