@@ -1,0 +1,176 @@
+# iOS simulator proof for #103: sign-in, all eight screens, tab selection, backward links,
+# sign-out and the signed-out guard. Run it against the `npx expo run:ios` debug build with
+# Metro serving the same source as web and Android. See verification.md "iOS runtime".
+#
+#   maestro --device <simulator-udid> test specs/017-cross-platform-scaffold/ios-verification.yaml
+#
+# Google doesn't keep its web session between sign-ins on the iOS 26.2 simulator, so the tester
+# signs the Google test account in by hand when the flow reaches Google's page; the flow waits up
+# to 5 minutes. If Google shows an account chooser instead, the flow taps the first entry that
+# shows an email address (override with -e GOOGLE_ACCOUNT="<regex>"). If Google asks for a
+# passkey, which the simulator can't provide, choose "Try another way" and the password. Never
+# put the account address, a password or a token in this file, and cut the Google pages out of
+# any recording.
+#
+# Screen titles also appear as tab labels, so each screen is identified by its body text.
+# iOS can ask "Open in Case-Study-Tech?" before it follows a link from outside the app (it did on
+# the first run on a fresh simulator), so every openLink is followed by an optional tap on Open.
+appId: com.casestudytech.student
+env:
+  GOOGLE_ACCOUNT: ".*@.*"
+  # The debug build includes expo-dev-client, so a fresh launch shows its launcher. This is the
+  # link `expo run:ios` opens: it loads the bundle from local Metro and skips the dev-menu intro.
+  METRO_LINK: exp+case-study-tech-student://?__expo_url=http%3A%2F%2Flocalhost%3A8081&__expo_disable_fab=1&__expo_disable_auto_launch=1&__expo_disable_onboarding=1
+---
+# Start signed out. clearState resets the app's data. The flow doesn't use clearKeychain: that
+# resets the whole simulator keychain and drops Google's off-camera session too. The run ends
+# signed out, and Welcome below would fail if a session survived.
+- launchApp:
+    clearState: true
+- openLink: ${METRO_LINK}
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Continue with Google"
+    timeout: 60000
+- assertVisible: "Welcome"
+- takeScreenshot: screenshots/ios-welcome
+
+# A protected deep link while signed out must land on Sign in, not Library.
+- openLink: casestudytech://library
+- tapOn:
+    text: "Open"
+    optional: true
+- assertVisible: "Sign in"
+- assertNotVisible: ".*find counseling practice cases.*"
+- takeScreenshot: screenshots/ios-sign-in
+
+# Native Google sign-in. iOS asks before opening google.com.
+- tapOn: "Continue with Google"
+- tapOn:
+    text: "Continue"
+    optional: true
+- extendedWaitUntil:
+    visible: ".*accounts.google.com.*"
+    timeout: 20000
+- runFlow:
+    when:
+      visible: ${GOOGLE_ACCOUNT}
+    commands:
+      - tapOn: ${GOOGLE_ACCOUNT}
+      # Google can show its own consent step after the chooser.
+      - tapOn:
+          text: "Continue"
+          optional: true
+
+# A valid sign-in opens the protected Library with its tab selected. The long timeout covers a
+# sign-in typed by hand.
+- extendedWaitUntil:
+    visible: ".*find counseling practice cases.*"
+    timeout: 300000
+- assertVisible:
+    text: "Library"
+    selected: true
+- takeScreenshot: screenshots/ios-library
+
+# Forward through the practice preview.
+- tapOn: "Preview Preparation"
+- assertVisible: ".*prepare for a practice session.*"
+- takeScreenshot: screenshots/ios-preparation
+- tapOn: "Preview Session"
+- assertVisible: ".*practice counseling with a simulated client.*"
+- takeScreenshot: screenshots/ios-session
+- tapOn: "Preview Report"
+- assertVisible: ".*review feedback after a practice session.*"
+- takeScreenshot: screenshots/ios-report
+
+# Backward links return to the expected screen.
+- tapOn: "Back to Session"
+- assertVisible: ".*practice counseling with a simulated client.*"
+- tapOn: "Back to Preparation"
+- assertVisible: ".*prepare for a practice session.*"
+- tapOn: "Back to Library"
+- assertVisible: ".*find counseling practice cases.*"
+- tapOn: "Preview Preparation"
+- tapOn: "Preview Session"
+- tapOn: "Preview Report"
+- tapOn: "Return to Library"
+- assertVisible: ".*find counseling practice cases.*"
+
+# Tabs show their selected state.
+- tapOn:
+    text: "Score history"
+    selected: false
+- assertVisible: ".*review scores from past practice sessions.*"
+- assertVisible:
+    text: "Score history"
+    selected: true
+- assertNotVisible:
+    text: "Library"
+    selected: true
+- takeScreenshot: screenshots/ios-score-history
+- tapOn:
+    text: "Account"
+    selected: false
+- assertVisible: ".*signed in with your Google account.*"
+- assertVisible:
+    text: "Account"
+    selected: true
+- assertNotVisible:
+    text: "Score history"
+    selected: true
+- takeScreenshot: screenshots/ios-account
+- tapOn:
+    text: "Library"
+    selected: false
+- assertVisible: ".*find counseling practice cases.*"
+- assertVisible:
+    text: "Library"
+    selected: true
+
+# Sign out, then every protected screen stays unreachable.
+- tapOn:
+    text: "Account"
+    selected: false
+- tapOn: "Sign out"
+- extendedWaitUntil:
+    visible: "Continue with Google"
+    timeout: 15000
+- assertNotVisible: ".*signed in with your Google account.*"
+- openLink: casestudytech://library
+- tapOn:
+    text: "Open"
+    optional: true
+- assertVisible: "Continue with Google"
+- assertNotVisible: ".*find counseling practice cases.*"
+- openLink: casestudytech://library/report
+- tapOn:
+    text: "Open"
+    optional: true
+- assertVisible: "Continue with Google"
+- assertNotVisible: ".*review feedback after a practice session.*"
+- openLink: casestudytech://history
+- tapOn:
+    text: "Open"
+    optional: true
+- assertVisible: "Continue with Google"
+- assertNotVisible: ".*review scores from past practice sessions.*"
+- openLink: casestudytech://account
+- tapOn:
+    text: "Open"
+    optional: true
+- assertVisible: "Continue with Google"
+- assertNotVisible: ".*signed in with your Google account.*"
+
+# A cold restart must not restore the ended session.
+- stopApp
+- launchApp
+- openLink: ${METRO_LINK}
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Continue with Google"
+    timeout: 60000
+- assertNotVisible: ".*find counseling practice cases.*"
