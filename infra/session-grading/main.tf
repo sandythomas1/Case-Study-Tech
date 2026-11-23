@@ -178,6 +178,8 @@ resource "google_cloud_run_v2_service" "grading" {
       }
     }
   }
+  # The deploy workflow sets the image after bootstrap (#105); gcloud stamps the client fields.
+  lifecycle { ignore_changes = [template[0].containers[0].image, client, client_version] }
   depends_on = [google_project_iam_member.runtime, google_project_iam_member.vertex]
 }
 # Authoritative: only the session identity may invoke the grader (AD-3).
@@ -245,6 +247,8 @@ resource "google_cloud_run_v2_service" "session" {
       }
     }
   }
+  # The deploy workflow sets the image after bootstrap (#105); gcloud stamps the client fields.
+  lifecycle { ignore_changes = [template[0].containers[0].image, client, client_version] }
   depends_on = [
     google_project_iam_member.runtime,
     google_project_iam_member.vertex,

@@ -193,6 +193,13 @@ Cloud Run (plan IR-5).
   the accounts and session services. Only the session service account invokes the grader.
 - Every deploy needs a human's approval. No agent triggers a deploy (plan AG-9). One-off owner
   exceptions are listed in `docs/decisions/ag9-one-off-exceptions.md` and never carry forward.
+- Deploys run from GitHub Actions (`.github/workflows/deploy.yml`, #105). The owner's merge into
+  `staging` is the approval for a development deploy. A push to `main` waits for the owner's
+  approval on the `production` environment. The workflow signs in with Workload Identity
+  Federation as `cst-deploy`, which can roll images and gateway configs but cannot create
+  services, change IAM or read Terraform state. No Google Cloud key exists. After bootstrap, CI
+  owns the running images and the served gateway config; Terraform owns everything else
+  (`docs/runbooks/ci-deploy.md`).
 - The web app is a static export on Firebase Hosting. Native iOS builds run on EAS for internal
   distribution only.
 - Real students use the system only after the release gate review (#70): written zero-retention

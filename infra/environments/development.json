@@ -9,7 +9,10 @@
   "firebaseIosAppId": "1:613104664964:ios:ca6ab7a9e5c7f984baddd1",
   "accountsGatewayUrl": "https://accounts-7tnmor5w.uc.gateway.dev",
   "privateAccountsServiceUrl": "https://accounts-447ob3nwoa-uc.a.run.app",
-  "accountsImageDigest": "sha256:8c6e9150426a4ee7af19542c75d1e00547d4e80d004c17f16dd7f6500105411c",
+  "workloadIdentityProvider": "projects/613104664964/locations/global/workloadIdentityPools/github/providers/case-study-tech",
+  "deployServiceAccount": "cst-deploy@casestudy-tech-dev-2e03d0.iam.gserviceaccount.com",
+  "sessionImage": "us-docker.pkg.dev/cloudrun/container/hello@sha256:04e460afdf4c4c8e615b809d3b41249f89af11ef5358a81fc62b3f09a70c6169",
+  "gradingImage": "us-docker.pkg.dev/cloudrun/container/hello@sha256:04e460afdf4c4c8e615b809d3b41249f89af11ef5358a81fc62b3f09a70c6169",
   "iosBundleIdentifier": "com.casestudytech.student",
   "androidPackage": "com.casestudytech.student"
 }

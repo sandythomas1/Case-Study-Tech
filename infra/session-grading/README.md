@@ -6,10 +6,15 @@ adds no transcript, audio or session store. Encrypted transcript storage with Cl
 decision 2026-11-18; POLICY DAT-1 and ARCHITECTURE §7–§8 as amended in
 `docs/decisions/transcript-storage.md`) is a separate follow-up Issue. No real image runs here until
 the #72 approval check is deployed (runbook step 3). The shared API
-Gateway stays in `infra/accounts` (AD-4) and renders the session routes from this module's
-`session_service_url` output.
+Gateway stays in `infra/accounts` (AD-4). The deploy workflow renders its session routes from the
+live `session` URL.
 
-Deploy, verify and roll back with [the runbook](../../docs/runbooks/session-grading-deploy.md).
+Bootstrap and verify with [the runbook](../../docs/runbooks/session-grading-deploy.md). After
+bootstrap, the deploy workflow rolls both images from `sessionImage` and `gradingImage` in
+`infra/environments/development.json`, and Terraform ignores image changes. Roll back with
+[the CI deploy runbook](../../docs/runbooks/ci-deploy.md#rollback). `cst-deploy` (from
+`infra/ci-deploy`) can act as `cst-session` and `cst-grading` to roll a revision; it holds no role
+in the table below.
 
 ## IAM
 

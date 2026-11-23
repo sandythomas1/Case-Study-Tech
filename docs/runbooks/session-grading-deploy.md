@@ -79,10 +79,12 @@ $sessionUrl = terraform -chdir=infra/session-grading output -raw session_service
 $gradingUrl = terraform -chdir=infra/session-grading output -raw grading_service_url
 ```
 
-Once reviewed images exist in `us-central1-docker.pkg.dev/casestudy-tech-dev-2e03d0/practice`, pass
-`-var=session_image=...@sha256:VERIFIED_DIGEST` and `-var=grading_image=...@sha256:VERIFIED_DIGEST`.
-Add `-var=inject_state_signing_key=true` only with the reviewed #31 session image. Every later
-plan must pass the same image variables, or it fails validation.
+The image variables seed the first deploy only. Terraform ignores later image changes, because
+the deploy workflow owns the running images (#105, `docs/runbooks/ci-deploy.md`). To run a reviewed
+image from `us-central1-docker.pkg.dev/casestudy-tech-dev-2e03d0/practice`, change `sessionImage` or
+`gradingImage` in `infra/environments/development.json` in a pull request; the next `staging`
+deploy rolls it. Every plan must still pass valid image variables, or it fails validation. Add
+`-var=inject_state_signing_key=true` only with the reviewed #31 session image already running.
 
 **Hard precondition for any real image or `inject_state_signing_key=true`:** the #72 approval check
 is deployed in the accounts service, the session service and the Firestore rules. Until then, deploy
@@ -93,6 +95,10 @@ deletion markers.
 
 ## 4. Add the session routes to the gateway
 
+On an environment where `infra/ci-deploy` is applied, skip this step: every deploy renders the
+session routes from the live `session` URL and rolls the gateway when they change. This step is
+for a new environment only, before its first CI deploy.
+
 ```powershell
 terraform -chdir=infra/accounts plan "-out=gateway.tfplan" `
   "-var=image=us-central1-docker.pkg.dev/casestudy-tech-dev-2e03d0/accounts/accounts@sha256:CURRENT_ACCOUNTS_DIGEST" `
@@ -100,7 +106,8 @@ terraform -chdir=infra/accounts plan "-out=gateway.tfplan" `
 terraform -chdir=infra/accounts apply gateway.tfplan
 ```
 
-Use the accounts digest that is live now (`infra/environments/development.json`, `accountsImageDigest`).
+Use the accounts image that is live now
+(`gcloud.cmd run services describe accounts --region=us-central1 --project=casestudy-tech-dev-2e03d0 --format="value(spec.template.spec.containers[0].image)"`).
 The plan should show only a new `google_api_gateway_api_config` and an in-place update to the
 gateway. Stop if it touches the accounts service, its job or its IAM. A new gateway config can take
 several minutes to serve. Pass `session_service_url` on every later accounts apply, or that apply
@@ -142,10 +149,9 @@ Finish with a full `terraform plan` in both modules. Each must report no changes
 
 ## Rollback
 
-- **Gateway routes:** rerun step 4 without `-var=session_service_url`. The gateway goes back to
-  the accounts-only config. Its routes were unchanged by this work.
-- **A bad image:** plan and apply `infra/session-grading` with the previous verified digest, then
-  rerun the checks.
+- **Gateway routes or a bad image:** follow [the CI deploy runbook](ci-deploy.md#rollback).
+  Terraform no longer changes the running image or the served gateway config. Rerun the checks
+  afterwards.
 - **Signing key:** rotation invalidates every signed state in flight. Those sessions take the
   lost-content path (ARCHITECTURE flow 8). To rotate, run `bootstrap_signing_key.py`, then roll a
   new session revision, because Cloud Run resolves `latest` when an instance starts. Disable the old
