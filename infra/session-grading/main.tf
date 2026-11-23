@@ -39,9 +39,11 @@ locals {
   # Pinned by owner decision OD-2 (2026-11-22, #65). docs/decisions/vertex-ai-governance.md records why.
   # These are locals, not variables, so no tfvars file or -var flag can swap a model or region at
   # apply time. A change needs a reviewed diff, a new owner decision and an updated record.
-  # Never "global": it may route a request outside the US (ARCHITECTURE §6).
+  # Location is the `us` multi-region: us-central1 returned 404 for both models in the #65 probe, so
+  # the owner's fallback applies (ARCHITECTURE §6 exception). Never "global": it may route a request
+  # outside the US.
   vertex = {
-    location      = "us-central1"
+    location      = "us"
     persona_model = "gemini-3.8-flash"
     grader_model  = "gemini-4-argon"
   }

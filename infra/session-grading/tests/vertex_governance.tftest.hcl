@@ -22,8 +22,8 @@ run "vertex_pins_match_the_governance_record" {
   command = plan
 
   assert {
-    condition     = local.vertex.location == "us-central1"
-    error_message = "Vertex location must be us-central1 unless the governance record approves the us multi-region."
+    condition     = local.vertex.location == "us"
+    error_message = "Vertex location must be the us multi-region recorded in docs/decisions/vertex-ai-governance.md."
   }
   assert {
     condition     = local.vertex.location != "global"
@@ -61,7 +61,7 @@ run "each_service_gets_only_its_own_model" {
   assert {
     condition = alltrue([
       for service in [google_cloud_run_v2_service.session, google_cloud_run_v2_service.grading] :
-      contains([for e in service.template[0].containers[0].env : e.value if e.name == "CST_VERTEX_LOCATION"], "us-central1")
+      contains([for e in service.template[0].containers[0].env : e.value if e.name == "CST_VERTEX_LOCATION"], "us")
     ])
     error_message = "Both services must receive the pinned Vertex location."
   }

@@ -1,12 +1,12 @@
-﻿"""Apply and verify the Vertex AI zero-retention settings that Terraform can't express (#65).
+"""Apply and verify the Vertex AI zero-retention settings that Terraform can't express (#65).
 
 The owner runs this script: changing the live project is owner work, like a deploy (AG-9).
 Authentication uses the current gcloud principal, so no service-account key is involved. The owner's account needs roles/aiplatform.admin
 for `disable-cache`; the read-only commands need only read access.
 
     python vertex_governance.py disable-cache   # setting 1: PATCH cacheConfig, then verify it
-    python vertex_governance.py check           # settings 1 and 3: read-only evidence
-    python vertex_governance.py probe           # region pin: one synthetic call per pinned model
+    python vertex_governance.py check           # settings 1, 2 and 3: read-only evidence
+    python vertex_governance.py probe           # location pin: one synthetic call per pinned model
 
 It prints PASS/FAIL lines and a UTC timestamp to paste into docs/decisions/vertex-ai-governance.md.
 It never prints a model response, a request header or a token. The probe prompt is a fixed
@@ -30,8 +30,11 @@ from typing import Any
 
 PROJECT = "casestudy-tech-dev-2e03d0"
 # Must match `local.vertex` in main.tf; test_vertex_governance.py fails if they drift.
-LOCATION = "us-central1"
-ALLOWED_LOCATIONS = frozenset({LOCATION})
+LOCATION = "us"
+# The `us` multi-region needs its `.rep.` host (Google's Vertex AI locations page). us-central1
+# returned 404 for both models on 2026-11-23, so the owner's fallback applies (ARCHITECTURE §6).
+ENDPOINTS = {"us": "https://aiplatform.us.rep.googleapis.com"}
+ALLOWED_LOCATIONS = frozenset(ENDPOINTS)
 CONFIG_BASE = "https://aiplatform.googleapis.com/v1"
 MODELS = {"persona": "gemini-3.8-flash", "grader": "gemini-4-argon"}
 PROBE_PROMPT = "Reply with the single word OK."
@@ -52,13 +55,13 @@ class Result:
         return f"{'PASS' if self.passed else 'FAIL'}  {self.check}: {self.detail}"
 
 
-def regional_base(location: str = LOCATION) -> str:
-    # An allowlist, not a "global" denylist. The `us` fallback needs its own reviewed host.
+def endpoint_base(location: str = LOCATION, version: str = "v1") -> str:
+    # An allowlist, not a "global" denylist: a new location needs its own reviewed host.
     if location not in ALLOWED_LOCATIONS:
         raise ValueError(
             f"Location {location!r} is not allowed. Never global (ARCHITECTURE §6)."
         )
-    return f"https://{location}-aiplatform.googleapis.com/v1"
+    return f"{ENDPOINTS[location]}/{version}"
 
 
 def describe(status: int) -> str:
@@ -71,13 +74,30 @@ def cache_config_url(project: str = PROJECT) -> str:
 
 
 def cached_contents_url(project: str = PROJECT, location: str = LOCATION) -> str:
-    return f"{regional_base(location)}/projects/{project}/locations/{location}/cachedContents"
+    return f"{endpoint_base(location)}/projects/{project}/locations/{location}/cachedContents"
+
+
+def model_path(model: str, project: str, location: str) -> str:
+    return f"projects/{project}/locations/{location}/publishers/google/models/{model}"
 
 
 def generate_url(model: str, project: str = PROJECT, location: str = LOCATION) -> str:
+    return f"{endpoint_base(location)}/{model_path(model, project, location)}:generateContent"
+
+
+def logging_config_url(
+    model: str, project: str = PROJECT, location: str = LOCATION
+) -> str:
+    # Request-response logging config exists only in v1beta1, one per model and location.
+    base = endpoint_base(location, version="v1beta1")
+    return f"{base}/{model_path(model, project, location)}:fetchPublisherModelConfig"
+
+
+def model_read_url(model: str, location: str = LOCATION) -> str:
+    # Control read for setting 2: a 200 proves the host, API version and model ID resolve, so a 404
+    # from fetchPublisherModelConfig can only mean "never configured".
     return (
-        f"{regional_base(location)}/projects/{project}/locations/{location}"
-        f"/publishers/google/models/{model}:generateContent"
+        f"{endpoint_base(location, version='v1beta1')}/publishers/google/models/{model}"
     )
 
 
@@ -114,22 +134,53 @@ def evaluate_cached_contents(status: int, body: Json) -> Result:
     return Result("setting 3, no explicit context caches", count == 0, f"{count} found")
 
 
+def evaluate_logging_config(
+    model: str, status: int, body: Json, model_read_status: int
+) -> Result:
+    check = f"setting 2, request-response logging off for {model}"
+    if status == 404:
+        # A wrong host, version or model ID also returns 404, so the control read must succeed.
+        if model_read_status != 200:
+            return Result(
+                check,
+                False,
+                f"HTTP 404, but the model read got {describe(model_read_status)}, so it proves nothing",
+            )
+        # Google: no PublisherModelConfig exists, and logging is off until one does.
+        return Result(
+            check,
+            True,
+            "HTTP 404, never configured (off by default); model read HTTP 200",
+        )
+    if status != 200:
+        return Result(check, False, describe(status))
+    enabled = body.get("loggingConfig", {}).get("enabled", False)
+    if enabled is False:
+        return Result(check, True, "loggingConfig.enabled: false")
+    return Result(check, False, "loggingConfig.enabled: true")
+
+
 def evaluate_probe(role: str, model: str, status: int) -> Result:
-    check = f"region, {role} model {model} served in {LOCATION}"
+    check = f"location, {role} model {model} served in {LOCATION}"
     if status == 200:
         return Result(check, True, "HTTP 200")
-    # 404 means the model isn't served on this regional endpoint; 400 can say the same.
-    hint = (
-        " (not served here: use the us multi-region fallback)"
-        if status in (400, 404)
-        else ""
-    )
+    # 404 means the model isn't served on this endpoint; 400 can say the same.
+    hint = " (not served on this endpoint)" if status in (400, 404) else ""
     return Result(check, False, describe(status) + hint)
 
 
 def check(send: Send) -> list[Result]:
+    logging = [
+        evaluate_logging_config(
+            model,
+            *send("GET", logging_config_url(model), None),
+            send("GET", model_read_url(model), None)[0],
+        )
+        for model in MODELS.values()
+    ]
     return [
         evaluate_cache_config(*send("GET", cache_config_url(), None)),
+        *logging,
         evaluate_cached_contents(*send("GET", cached_contents_url(), None)),
     ]
 

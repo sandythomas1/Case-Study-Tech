@@ -49,13 +49,15 @@ model:
 
 | Service | Env var | Value |
 |---|---|---|
-| `session`, `grading` | `CST_VERTEX_LOCATION` | `us-central1` (never `global`) |
+| `session`, `grading` | `CST_VERTEX_LOCATION` | `us`, the multi-region (never `global`) |
 | `session` | `CST_PERSONA_MODEL` | `gemini-3.8-flash` |
 | `grading` | `CST_GRADER_MODEL` | `gemini-4-argon` |
 
-They are locals, so no tfvars or `-var` flag can change them. The project-wide Vertex settings that
-Terraform can't express are applied and checked by the owner with `vertex_governance.py`
-(`disable-cache`, `check`, `probe`). It uses the owner's gcloud session and prints only PASS/FAIL lines.
+They are locals, so no tfvars or `-var` flag can change them. Neither model is served on
+`us-central1` (HTTP 404), so a Vertex client must call the `us` multi-region host
+`https://aiplatform.us.rep.googleapis.com` (ARCHITECTURE §6 exception). The project-wide Vertex
+settings that Terraform can't express are applied and checked by the owner with `vertex_governance.py`:
+`disable-cache` sets setting 1, `check` reads settings 1–3 (setting 2 counts a 404 only after a control read of the same model succeeds) and `probe` checks the location. It uses the owner's gcloud session and prints only PASS/FAIL lines.
 `docs/decisions/vertex-ai-governance.md` lists the steps and holds the evidence.
 
 Checks, offline:

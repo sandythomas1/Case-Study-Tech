@@ -45,6 +45,12 @@ class FakeSender:
 Answers = dict[tuple[str, str], tuple[int, dict[str, Any]]]
 CACHE_OFF: Answers = {("GET", "/cacheConfig"): (200, {"disableCache": True})}
 NO_CACHES: Answers = {("GET", "/cachedContents"): (200, {})}
+NO_LOGGING: Answers = {("GET", ":fetchPublisherModelConfig"): (404, {})}
+MODEL_READS: Answers = {
+    ("GET", f"/publishers/google/models/{model}"): (200, {})
+    for model in ("gemini-3.8-flash", "gemini-4-argon")
+}
+US_HOST = "https://aiplatform.us.rep.googleapis.com/"
 
 
 class PinsMatchTerraform(unittest.TestCase):
@@ -59,11 +65,13 @@ class PinsMatchTerraform(unittest.TestCase):
 
 
 class Urls(unittest.TestCase):
-    def test_every_model_and_cache_url_uses_the_regional_endpoint(self) -> None:
+    def test_every_model_and_cache_url_uses_the_us_multi_region_host(self) -> None:
         for url in (vg.cached_contents_url(), vg.generate_url("m")):
-            self.assertTrue(
-                url.startswith("https://us-central1-aiplatform.googleapis.com/v1/")
-            )
+            self.assertTrue(url.startswith(US_HOST + "v1/projects/"), url)
+        self.assertTrue(vg.logging_config_url("m").startswith(US_HOST + "v1beta1/"))
+        self.assertEqual(
+            vg.model_read_url("m"), US_HOST + "v1beta1/publishers/google/models/m"
+        )
 
     def test_cache_config_uses_the_documented_project_host(self) -> None:
         self.assertEqual(
@@ -72,14 +80,21 @@ class Urls(unittest.TestCase):
         )
 
     def test_only_allowlisted_locations_are_accepted(self) -> None:
-        for location in ("global", "Global", "", "us", "europe-west4"):
+        for location in ("global", "Global", "", "us-central1", "eu", "europe-west4"):
             with self.subTest(location=location), self.assertRaises(ValueError):
                 vg.generate_url("m", location=location)
 
     def test_generate_url_names_the_publisher_model(self) -> None:
         self.assertTrue(
             vg.generate_url("gemini-4-argon").endswith(
-                "/locations/us-central1/publishers/google/models/gemini-4-argon:generateContent"
+                "/locations/us/publishers/google/models/gemini-4-argon:generateContent"
+            )
+        )
+
+    def test_logging_config_url_names_the_publisher_model(self) -> None:
+        self.assertTrue(
+            vg.logging_config_url("gemini-4-argon").endswith(
+                "/locations/us/publishers/google/models/gemini-4-argon:fetchPublisherModelConfig"
             )
         )
 
@@ -121,13 +136,88 @@ class CachedContents(unittest.TestCase):
         self.assertFalse(vg.evaluate_cached_contents(500, {}).passed)
 
 
+class LoggingConfig(unittest.TestCase):
+    def test_never_configured_passes_when_the_model_read_succeeds(self) -> None:
+        result = vg.evaluate_logging_config("m", 404, {}, 200)
+        self.assertTrue(result.passed)
+        self.assertIn("never configured", result.detail)
+        self.assertIn("model read HTTP 200", result.detail)
+
+    def test_404_fails_when_the_model_read_also_fails(self) -> None:
+        # A wrong host, version or model ID: the 404 says nothing about logging.
+        for model_read_status in (404, 403, 0):
+            result = vg.evaluate_logging_config("m", 404, {}, model_read_status)
+            self.assertFalse(result.passed, model_read_status)
+            self.assertIn("proves nothing", result.detail)
+
+    def test_explicitly_disabled_passes(self) -> None:
+        body = {"loggingConfig": {"enabled": False}}
+        self.assertTrue(vg.evaluate_logging_config("m", 200, body, 200).passed)
+
+    def test_sharing_only_config_with_empty_logging_passes(self) -> None:
+        body = {"loggingConfig": {}, "dataSharingEnabledProvider": "NONE"}
+        self.assertTrue(vg.evaluate_logging_config("m", 200, body, 200).passed)
+
+    def test_enabled_logging_fails(self) -> None:
+        body = {"loggingConfig": {"enabled": True, "samplingRate": 1}}
+        result = vg.evaluate_logging_config("m", 200, body, 200)
+        self.assertFalse(result.passed)
+        self.assertEqual(result.detail, "loggingConfig.enabled: true")
+
+    def test_permission_or_network_error_fails(self) -> None:
+        self.assertFalse(vg.evaluate_logging_config("m", 403, {}, 200).passed)
+        self.assertFalse(vg.evaluate_logging_config("m", 0, {}, 200).passed)
+
+
 class Commands(unittest.TestCase):
-    def test_check_reads_both_settings_without_writing(self) -> None:
-        send = FakeSender({**CACHE_OFF, **NO_CACHES})
+    def test_check_reads_settings_1_to_3_without_writing(self) -> None:
+        send = FakeSender({**CACHE_OFF, **NO_LOGGING, **MODEL_READS, **NO_CACHES})
         report, passed = vg.run("check", send, NOW)
         self.assertTrue(passed)
-        self.assertEqual([call[0] for call in send.calls], ["GET", "GET"])
+        self.assertEqual({call[0] for call in send.calls}, {"GET"})
+        self.assertEqual(len(send.calls), 2 + 2 * len(vg.MODELS))
+        for model in vg.MODELS.values():
+            self.assertIn(
+                f"setting 2, request-response logging off for {model}", report
+            )
         self.assertIn("2026-11-22T12:00:00Z", report)
+
+    def test_check_fails_when_any_model_logs_requests(self) -> None:
+        logging_on = {"loggingConfig": {"enabled": True}}
+        send = FakeSender(
+            {
+                **CACHE_OFF,
+                ("GET", "gemini-4-argon:fetchPublisherModelConfig"): (200, logging_on),
+                **NO_LOGGING,
+                **MODEL_READS,
+                **NO_CACHES,
+            }
+        )
+        report, passed = vg.run("check", send, NOW)
+        self.assertFalse(passed)
+        self.assertIn(
+            "FAIL  setting 2, request-response logging off for gemini-4-argon", report
+        )
+
+    def test_check_fails_when_the_model_read_misses(self) -> None:
+        send = FakeSender(
+            {
+                **CACHE_OFF,
+                **NO_LOGGING,
+                **MODEL_READS,
+                # Later keys replace the 200 answer for this one model.
+                ("GET", "/publishers/google/models/gemini-3.8-flash"): (404, {}),
+                **NO_CACHES,
+            }
+        )
+        report, passed = vg.run("check", send, NOW)
+        self.assertFalse(passed)
+        self.assertIn(
+            "FAIL  setting 2, request-response logging off for gemini-3.8-flash", report
+        )
+        self.assertIn(
+            "PASS  setting 2, request-response logging off for gemini-4-argon", report
+        )
 
     def test_disable_cache_patches_then_reads_back(self) -> None:
         send = FakeSender(
@@ -168,9 +258,9 @@ class Commands(unittest.TestCase):
         )
         report, passed = vg.run("probe", send, NOW)
         self.assertFalse(passed)
-        self.assertIn("PASS  region, persona model gemini-3.8-flash", report)
-        self.assertIn("FAIL  region, grader model gemini-4-argon", report)
-        self.assertIn("us multi-region fallback", report)
+        self.assertIn("PASS  location, persona model gemini-3.8-flash", report)
+        self.assertIn("FAIL  location, grader model gemini-4-argon", report)
+        self.assertIn("not served on this endpoint", report)
         for _, _, body in send.calls:
             assert body is not None
             self.assertEqual(body["contents"][0]["parts"][0]["text"], vg.PROBE_PROMPT)

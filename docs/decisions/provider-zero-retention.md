@@ -28,7 +28,7 @@ A row turns **Confirmed** only once its condition is met and the evidence is rec
 
 | Provider and use | Published terms allow RC-05? | Written confirmation | Settings applied | Verdict |
 |---|---|---|---|---|
-| Vertex AI Gemini, personas and grader (`us-central1`) | **Only with caching disabled (setting 1) and an abuse-monitoring exemption.** Implicit caching is on by default and includes a durable at-rest tier. No training (SST §18). No storage past output (SST §20(h)). But on the online Cloud terms, Google may keep prompts its safety classifiers flag for up to 90 days, with human review (ToS §4.3). Master Agreement customers are exempt by default. | Not requested | Not yet. #65 wrote the steps for settings 1–8 and the owner runs them (`vertex-ai-governance.md`) | **Pending**. Needs the exemption or a Master Agreement in writing. |
+| Vertex AI Gemini, personas and grader (`us` multi-region) | **Only with caching disabled (setting 1) and an abuse-monitoring exemption.** Implicit caching is on by default and includes a durable at-rest tier. No training (SST §18). No storage past output (SST §20(h)). But on the online Cloud terms, Google may keep prompts its safety classifiers flag for up to 90 days, with human review (ToS §4.3). Master Agreement customers are exempt by default. | Not requested | Settings 1, 3 and 8 verified 2026-11-23. Setting 2 waits for the owner's `check` and console screenshot, setting 7 for the `us` apply. Settings 4–6 are code rules with no caller yet (`vertex-ai-governance.md`) | **Pending**. Needs the exemption or a Master Agreement in writing. |
 | Vertex AI Frontier models (SST §34: Gemini 4 Carbon, Gemini 4 Carbon for cyber, Gemini 4 Argon Cyber Permissive) | No. Prompts and responses are logged for up to 30 days (SST §34). | n/a | n/a | **Rejected** for session content. #65 must not pick them. |
 | Partner models on Vertex Model Garden (OpenAI, Anthropic and other "Advanced AI" models) | No, unless the partner's own ZDR is approved. Otherwise prompts are logged for 30 days. | n/a | n/a | **Rejected** for session content |
 | Gemini Live / native audio on Vertex (speech path option) | Same as Vertex AI above, plus session resumption caches for up to 24 h if enabled | Not requested | No | **Pending**, same as Vertex AI |
@@ -47,7 +47,8 @@ evidence or signed terms are stored. #115 tracks that.
 
 The owner applies these now that the GCP baseline (#18) exists. Settings 1–8 belong to #65, and their
 evidence is recorded in `vertex-ai-governance.md`. Settings 9–12 belong to #115 and are recorded here.
-None has been applied yet. Each one needs evidence: API output or a dated console screenshot.
+Each one needs evidence: API output or a dated console screenshot. Settings 1, 3 and 8 have it
+(2026-11-23); settings 2 and 7 wait for the owner's run. Settings 9–12 are not applied yet.
 
 **Vertex AI (project-wide)**
 1. Turn off implicit caching: `PATCH https://aiplatform.googleapis.com/v1/projects/<PROJECT_ID>/cacheConfig`
@@ -59,8 +60,9 @@ None has been applied yet. Each one needs evidence: API output or a dated consol
 4. Use no Grounding with Google Search or Google Maps. Their logs can't be turned off.
 5. Send `store=false` on any Interactions API call, because the default is `true`.
 6. Don't turn on Live API session resumption.
-7. Call the `us-central1` regional endpoint, not `global`. If the #65 probe shows a pinned model isn't
-   served there, use the `us` multi-region instead (owner decision 2026-11-22, `vertex-ai-governance.md`).
+7. Call the `us` multi-region endpoint, `https://aiplatform.us.rep.googleapis.com`, never `global`. The
+   #65 probe found neither pinned model on `us-central1` (HTTP 404), so the owner's fallback applies
+   (owner decision 2026-11-22, `vertex-ai-governance.md`, ARCHITECTURE §6 exception).
 8. Keep session content out of batch prediction. Its inputs and outputs persist in our buckets (RC-03).
 
 **Speech-to-Text and Text-to-Speech**
@@ -68,8 +70,8 @@ None has been applied yet. Each one needs evidence: API output or a dated consol
    console screenshot is the only evidence available.
 10. Use only streaming or sync recognition, never `BatchRecognize`.
 11. Use standard or Chirp 3 HD voices, not Gemini-TTS, until it is confirmed.
-12. If Chirp 3 is used, call the `us` multi-region endpoint (ARCHITECTURE §6 exception). Everything else
-    stays in `us-central1`.
+12. If Chirp 3 is used, call the `us` multi-region endpoint (ARCHITECTURE §6 exception). Vertex AI also
+    uses `us` (setting 7). Everything else stays in `us-central1`.
 
 **Deepgram**
 13. Send `mip_opt_out=true` on every `/v2/listen` and `/v1/speak` request. The adapter adds it to every URL
@@ -94,9 +96,9 @@ documents themselves.
 1. Can online-terms customers still ask for the Vertex abuse-monitoring exemption? The public pages no
    longer say. This decides whether CD-2 holds the release.
 2. Is the project's Google Cloud account on the online terms or a Master Agreement? Only the owner knows.
-3. Which current GA Gemini models serve regionally in `us-central1`? The model pages list pay-as-you-go
-   serving only on `global`, `us` and `eu`. #65 pinned `gemini-3.8-flash` and `gemini-4-argon`, and the
-   owner's probe result in `vertex-ai-governance.md` closes this item.
+3. **Closed 2026-11-23 (#65).** Which current GA Gemini models serve regionally in `us-central1`? Neither
+   pinned model does: the probe got HTTP 404 on `us-central1` and HTTP 200 on `us`. Vertex AI uses the
+   `us` multi-region (`vertex-ai-governance.md`, "Region probe").
 4. Do STT data-logging controls apply to Speech-to-Text V2 / Chirp 3?
 5. Are Speech-to-Text, Chirp 3 and Gemini-TTS "Generative AI Services" under ToS §4.3?
 6. Is the Google Cloud Data Processing Addendum auto-accepted for online-terms customers?
@@ -123,3 +125,6 @@ documents themselves.
   record for it. Real session content waits for written terms (#101 AC4) and a Confirmed row.
 - **2026-11-22: Chirp 3 region.** If Chirp 3 is used, it runs in the `us` multi-region. ARCHITECTURE §6
   records this exception.
+- **2026-11-22: Vertex AI region.** "Probe, then fall back to us (Recommended)". The probe failed on
+  `us-central1` (2026-11-23), so Vertex AI runs in the `us` multi-region. ARCHITECTURE §6 records this
+  exception too.
