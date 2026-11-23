@@ -26,7 +26,9 @@ evidence: the field value or the blocker's number and state. Never fix a failed 
    may not pick up changed instructions, Skills or agents. Gitignored files such as
    `.claude/settings.local.json` don't count.
 1. Read the Issue body, then its gates with "Check an Issue's gates" in `docs/PROJECT_BOARD.md`.
-2. **Human Review is Reviewed.** If it is Pending, refuse. Only the owner sets Reviewed.
+2. **Human Review is Reviewed.** If it is Pending, refuse. Only the owner decides Reviewed. Set it
+   yourself only on the owner's explicit instruction naming the Issue, and quote that instruction in
+   a comment on the Issue (POLICY AGT-4).
 3. **Status is Ready.** Backlog means it is not refined. In Progress or later means someone else may
    own it.
 4. **Every blocker is clear.** Each blocked-by Issue is closed or has Status Agent Review or later.

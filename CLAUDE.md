@@ -31,7 +31,8 @@ conflict, stop and ask. Never pick one quietly.
 - A reviewed GitHub Issue defines the task, and its acceptance criteria define the scope.
 - `docs/ROADMAP.md` is direction only. It is never a substitute for an Issue.
 - Start or ship an Issue only through the `issue-workflow` Skill. It never starts one unless Status
-  is Ready and Human Review is Reviewed, and only the owner sets Reviewed.
+  is Ready and Human Review is Reviewed. Only the owner decides Reviewed: an agent sets it only on
+  the owner's explicit instruction for named Issues and quotes it on each Issue (POLICY AGT-4).
 - An agent that changes an Issue's scope or acceptance criteria resets Human Review to Pending.
 - Search before creating an Issue. Work on one Issue per branch.
 - Exception: course lab configuration and documents need no Issue when the owner says so. They use a

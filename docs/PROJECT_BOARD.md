@@ -43,8 +43,9 @@ Rules:
 - Never set a status ahead of reality. Unverified work is never Done in Dev or later.
 - If review sends work back, move it from Agent Review to In Progress.
 - If work is blocked, keep its status and post a comment explaining the blocker.
-- **Start an Issue only when Status is Ready and Human Review is Reviewed.** Only the human sets
-  Reviewed. An agent that changes an Issue's scope or acceptance criteria resets it to Pending.
+- **Start an Issue only when Status is Ready and Human Review is Reviewed.** Only the human decides
+  Reviewed. An agent sets it only on the owner's explicit instruction for named Issues and quotes
+  that instruction on each Issue (POLICY AGT-4). An agent that changes an Issue's scope or acceptance criteria resets it to Pending.
 - When a merge unblocks an Issue, move it from Backlog to Ready and comment which merge did it.
 
 ### 3. Post progress every time code is changed
