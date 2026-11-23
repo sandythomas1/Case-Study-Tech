@@ -260,7 +260,7 @@ read; **UNVERIFIED**).
 ### Google Cloud (Vertex AI / Agent Platform, Speech-to-Text, Text-to-Speech)
 Send via Google Cloud Support case (Billing/Account or Technical) or the account team.
 
-> We use Gemini on Agent Platform (Vertex AI) in `us-central1` for real-time role-play and grading,
+> We use Gemini on Agent Platform (Vertex AI) in the `us` multi-region for real-time role-play and grading,
 > and Cloud Speech-to-Text V2 (Chirp 3, `us` multi-region, streaming) and Cloud Text-to-Speech
 > (non-Gemini voices) for speech. Our content is sensitive educational session content. Please
 > confirm in writing, for project number [PROJECT_NUMBER]:

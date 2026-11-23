@@ -57,7 +57,7 @@ file differ, this file records the decisions and the code as built (plan PA-11).
 | Accounts service | Server-side Google token exchange and refresh, current student, own scores read, account deletion; access requests, the approval check and admin decisions (POLICY ACC-4 to ACC-9) | `services/accounts` | Built in PR #62; access approval is #72, #73 |
 | Session service | Verifies and signs conversation state, persona turns, speech calls, time limit, conduct safeguard, end of session, grader call | `services/session` | Speech interface only (#64); the rest is Phase 3–4 |
 | Grading service | Private. Accepts only complete transcripts from the session service, scores against the anchor spec, validates evidence, writes scores, returns the report | not yet | Phase 5 |
-| Vertex AI | Persona inference and grader inference, as separate calls with separate prompts | — | Models open (OD-2) |
+| Vertex AI | Persona inference and grader inference, as separate calls with separate prompts | — | `gemini-3.8-flash` for personas, `gemini-4-argon` for the grader (OD-2, settled 2026-11-22 in `docs/decisions/vertex-ai-governance.md`) |
 | Speech provider | Speech-to-text and text-to-speech behind a replaceable interface | `services/session/cst_session/speech` | Interface and fake built (#64); vendor and adapter open (Phase 2 ADR, #20) |
 | Firestore | `students/{uid}/scores/{scoreId}`, `account_deletions/{uid}` and one server-only access record per account | `infra/firestore.rules` | Built in PR #62; access record is #72 |
 | Email provider | Sends the owner one email per access request (name and Google email only) | not yet | Vendor open (OD-3, #74) |
@@ -134,7 +134,7 @@ Do not replace these without an owner decision and a new decision record.
 | Client | Expo (React Native + react-native-web), one codebase, Expo Router, custom dev builds (Expo Go cannot do native Google sign-in) | DD-06, RC-14, PA-7, ADR 0001 |
 | Backend | Python 3.12, FastAPI, one private Cloud Run service per responsibility | PA-7, DD-09 |
 | Session state | Client-held, server-signed; no server-side session store | AD-1, AD-2 |
-| Cloud | GCP, `us-central1`, managed services only; development and production projects. One exception: if Google Speech-to-Text Chirp 3 is used, it runs in the `us` multi-region, because Google serves Chirp 3 only in `us` and `eu`. Data stays in the US. | DD-09, AD-5, owner decision 2026-11-22 (`docs/decisions/provider-zero-retention.md`) |
+| Cloud | GCP, `us-central1`, managed services only; development and production projects. Two exceptions run in the `us` multi-region, because Google doesn't serve them in `us-central1`: Google Speech-to-Text Chirp 3, if used (Google serves it only in `us` and `eu`), and Vertex AI, only for models that Google's data-residency table lists under "US multi-region" (both pinned models returned HTTP 404 on `us-central1` in the #65 probe). Data stays in the US; for Vertex AI that rests on Google's documented ML-processing boundary for those models, not on a contract. Vertex AI never uses `global`, which may process a request anywhere. | DD-09, AD-5, owner decisions 2026-11-22 (`docs/decisions/provider-zero-retention.md`, `docs/decisions/vertex-ai-governance.md`) |
 | Edge | One API Gateway config, per-route backends | AD-4 |
 | Identity | Identity Platform with Google sign-in only; server-side token exchange | RC-01, DD-05, ADR 0001 |
 | Models | Hosted Vertex AI with a prompt harness; no fine-tuning or self-hosting | DD-01, SDD §2.3 |
@@ -211,7 +211,6 @@ Cloud Run (plan IR-5).
 
 | ID | Question | Blocks | Settled by |
 |---|---|---|---|
-| OD-2 | Which Vertex AI models run the personas and the grader | Persona harness, grader, calibration drafting | Phase 2 governance record (#65) |
 | OQ-01 | Speech vendor and turn transport (one request per turn, or streaming) | Voice session work | Phase 2 ADR (#20) |
 | OD-3 | Which email provider sends the owner's access-request emails | Owner notification email (#74) | Owner decision with a data-use record (POLICY DAT-5) |
 
