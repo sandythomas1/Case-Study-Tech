@@ -56,8 +56,10 @@ uv run mypy .
 
 The library and preparation screens read `Catalogue.library()`. Session start must call
 `Catalogue.startable(scenario_id)` and refuse on `ScenarioUnavailable`, which is raised the same way
-for an unknown id and an unreleased one, so a scenario held back under CD-3 can't be probed. Load
+for an unknown id and an unreleased one, so a scenario held back under CD-3 can't be probed. `startable()`
+checks only the release flag. Session start must also refuse a scenario with `requires_opt_in`
+unless the student's explicit opt-in arrives with the request, checked on the server (SES-2). Load
 the catalogue once at startup: a malformed config raises `CatalogueError` and stops the service.
 The time limit comes from `time_limit_minutes`, which is 10 for every scenario (PA-5). The owner
-approves every change to `released` (POLICY §1). The ids match `rubric/anchor-spec.v1.json`, and the
+approves the release flags (POLICY §1). The ids match `rubric/anchor-spec.v1.json`, and the
 logging helper accepts only these three as `scenario_id`.

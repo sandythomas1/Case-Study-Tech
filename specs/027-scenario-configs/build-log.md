@@ -30,3 +30,8 @@
 - L1 lead built T1–T3: session 252 passed; accounts 204 passed / 5 skipped; ruff, format and mypy clean.
 - D1 PENDING qa-tester (verify). Routing: an independent mutation proof that each AC test fails when its behavior breaks, plus the demo transcript.
 - D2 PENDING policy-reviewer. Routing: CLAUDE.md requires it, because the diff touches a service, logging (the scenario_id shape) and user-visible scenario wording against POLICY SES-1–SES-4, RC-22 and AG-6.
+- D2 DONE policy-reviewer: ESCALATE (non-blocking). POLICY §1 says the owner approves release flags, so all three `released = true` need owner approval. Non-blocking: the §1 paraphrase narrowed the rule (reworded in README and spec); SES-2 hand-off (#31 must enforce opt-in on the server; added to README); the wording provenance is for the owner to check against Fig. 3/4; add "Refs #63" to the PR.
+- Sandy's decision on the D2 ESCALATE, verbatim: "Approve now, record on PR (Recommended)". All three released = true are owner-approved; quote it on #27 and in the PR body.
+- D1 DONE qa-tester (after one turn-limit continuation): PASS 4/4 plus FR-8. 17 mutations, all killed. Added test_scenario_config_edges.py (CRLF, BOM fails closed, TOML tables/arrays rejected). F1 LOW: U+2028/U+2029 accepted in text fields.
+- L0 lead fixed F1 (`_breaks_the_line` rejects Zl/Zp, 2 cases that fail first). Session 260 passed; clean. Demo re-recorded on the final tree.
+- review.md written: no blocking finding open.

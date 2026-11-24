@@ -183,6 +183,18 @@ def test_every_scenario_id_and_version_is_kept_by_the_logging_helper(
         (
             "routine_intake",
             'title = "Routine intake"',
+            'title = "Routine\\u2028intake"',
+            "title",
+        ),
+        (
+            "routine_intake",
+            'title = "Routine intake"',
+            'title = "Routine\\u2029intake"',
+            "title",
+        ),
+        (
+            "routine_intake",
+            'title = "Routine intake"',
             f'title = "{"a" * 301}"',
             "title",
         ),

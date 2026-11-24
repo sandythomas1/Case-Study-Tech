@@ -1,6 +1,6 @@
 # Tasks: Three vetted scenario configurations (#27)
 
-Status: building · Branch: `feature/27-scenario-configs` from origin/dev becffd3
+Status: done · Branch: `feature/27-scenario-configs` from origin/dev becffd3
 
 ## @lead
 - [x] T1 (FR-1–FR-7, AC1–AC4) `cst_session/scenarios/`: the `Scenario` model, a strict loader,

@@ -42,4 +42,4 @@ in the product can create or edit a scenario.
 
 ## Release flags
 All three start released. The plan says the flag "hides a scenario held back under §6 CD-3", and
-none is held back yet. The owner approves any change to a release flag (POLICY §1).
+none is held back yet. The owner approves the release flags (POLICY §1). Owner decision 2026-11-23, verbatim: "Approve now, record on PR (Recommended)". All three ship released.

@@ -167,12 +167,18 @@ def _text(name: str, key: str, value: object) -> str:
         or not value
         or value != value.strip()
         or len(value) > _MAX_TEXT
-        or any(unicodedata.category(char).startswith("C") for char in value)
+        or any(_breaks_the_line(char) for char in value)
     ):
         raise CatalogueError(
             f"{name}: {key} must be one trimmed line of 1 to {_MAX_TEXT} characters"
         )
     return value
+
+
+def _breaks_the_line(char: str) -> bool:
+    """Control and format characters (C*), and line or paragraph separators."""
+    category = unicodedata.category(char)
+    return category.startswith("C") or category in {"Zl", "Zp"}
 
 
 def _flag(name: str, key: str, value: object) -> bool:
