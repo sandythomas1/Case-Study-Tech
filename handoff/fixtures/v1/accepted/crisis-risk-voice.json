@@ -1,0 +1,62 @@
+{
+  "contract": "cst.completed_session",
+  "contract_version": "1.0.0",
+  "session_id": "00000000-0000-4000-8000-000000000103",
+  "owner_uid": "synthStudent0003",
+  "scenario": {
+    "id": "crisis_risk",
+    "version": "1.0.0"
+  },
+  "modality": "voice",
+  "status": "completed",
+  "ended_by": "student",
+  "duration_ms": 75000,
+  "turns": [
+    {
+      "index": 1,
+      "speaker": "student",
+      "text": "Hello, I'm glad you reached out today. How are you doing?",
+      "at_ms": 0,
+      "input": "speech",
+      "uncertain_recognition": false,
+      "conduct_warning": false
+    },
+    {
+      "index": 2,
+      "speaker": "client",
+      "text": "Synthetic client line: Honestly, things feel pretty hopeless lately.",
+      "at_ms": 8000
+    },
+    {
+      "index": 3,
+      "speaker": "student",
+      "text": "I'm sorry it feels that way. Are you having thoughts of harming yourself?",
+      "at_ms": 20000,
+      "input": "speech",
+      "uncertain_recognition": false,
+      "conduct_warning": false
+    },
+    {
+      "index": 4,
+      "speaker": "client",
+      "text": "Synthetic client line: Sometimes, yes. I haven't made any plan.",
+      "at_ms": 31000
+    },
+    {
+      "index": 5,
+      "speaker": "student",
+      "text": "Thank you for telling me. Let's talk about how to keep you safe.",
+      "at_ms": 45000,
+      "input": "speech",
+      "uncertain_recognition": false,
+      "conduct_warning": false
+    }
+  ],
+  "conduct": {
+    "warnings": 0
+  },
+  "crisis": {
+    "opted_in": true
+  },
+  "save_transcript": true
+}

@@ -1,0 +1,288 @@
+{
+  "$comment": "cst.completed_session 1.0.0 (#66)",
+  "$defs": {
+    "ClientTurn": {
+      "additionalProperties": false,
+      "description": "A turn spoken by the simulated client persona.",
+      "properties": {
+        "at_ms": {
+          "description": "Milliseconds from the session start to the start of the turn.",
+          "maximum": 3600000,
+          "minimum": 0,
+          "title": "At Ms",
+          "type": "integer"
+        },
+        "index": {
+          "description": "1-based position in the conversation.",
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Index",
+          "type": "integer"
+        },
+        "speaker": {
+          "const": "client",
+          "title": "Speaker",
+          "type": "string"
+        },
+        "text": {
+          "description": "What was said, with at least one visible character. No control characters except tab and newline, no bidi controls, no byte-order mark.",
+          "maxLength": 2000,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0b-\\x1f\\x7f-\\x9f\u202a-\u202e\u2066-\u2069\ufeff]*[^\\s\\x00-\\x08\\x0b-\\x1f\\x7f-\\x9f\u202a-\u202e\u2066-\u2069\ufeff\u00ad\u034f\u061c\u115f\u1160\u180e\u200b-\u200f\u2060-\u2064\u2800\u3164\ufe00-\ufe0f\uffa0\ufff9-\ufffc\ud834\udd73-\ud834\udd7a\udb40\udc00-\udb40\udc7f\udb40\udd00-\udb40\uddef][^\\x00-\\x08\\x0b-\\x1f\\x7f-\\x9f\u202a-\u202e\u2066-\u2069\ufeff]*$",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "index",
+        "speaker",
+        "text",
+        "at_ms"
+      ],
+      "title": "ClientTurn",
+      "type": "object"
+    },
+    "Conduct": {
+      "additionalProperties": false,
+      "description": "Conduct safeguards. A completed session has had at most one warning.",
+      "properties": {
+        "warnings": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Warnings",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "warnings"
+      ],
+      "title": "Conduct",
+      "type": "object"
+    },
+    "Crisis": {
+      "additionalProperties": false,
+      "description": "Present only in the crisis scenario, which starts only after opt-in (SES-2).",
+      "properties": {
+        "opted_in": {
+          "const": true,
+          "title": "Opted In",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "opted_in"
+      ],
+      "title": "Crisis",
+      "type": "object"
+    },
+    "Scenario": {
+      "additionalProperties": false,
+      "description": "The vetted scenario and the configuration version the session ran.",
+      "properties": {
+        "id": {
+          "enum": [
+            "routine_intake",
+            "resistant_client",
+            "crisis_risk"
+          ],
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "pattern": "^[0-9]{1,4}\\.[0-9]{1,4}\\.[0-9]{1,4}$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "title": "Scenario",
+      "type": "object"
+    },
+    "StudentTurn": {
+      "additionalProperties": false,
+      "description": "A student turn, with its transcript reliability and conduct flags.",
+      "properties": {
+        "at_ms": {
+          "description": "Milliseconds from the session start to the start of the turn.",
+          "maximum": 3600000,
+          "minimum": 0,
+          "title": "At Ms",
+          "type": "integer"
+        },
+        "conduct_warning": {
+          "description": "This turn drew the session's one conduct warning (POLICY SAF-2).",
+          "title": "Conduct Warning",
+          "type": "boolean"
+        },
+        "index": {
+          "description": "1-based position in the conversation.",
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Index",
+          "type": "integer"
+        },
+        "input": {
+          "description": "How the student gave this turn. A voice session may fall back to text.",
+          "enum": [
+            "text",
+            "speech"
+          ],
+          "title": "Input",
+          "type": "string"
+        },
+        "speaker": {
+          "const": "student",
+          "title": "Speaker",
+          "type": "string"
+        },
+        "text": {
+          "description": "What was said, with at least one visible character. No control characters except tab and newline, no bidi controls, no byte-order mark.",
+          "maxLength": 2000,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x08\\x0b-\\x1f\\x7f-\\x9f\u202a-\u202e\u2066-\u2069\ufeff]*[^\\s\\x00-\\x08\\x0b-\\x1f\\x7f-\\x9f\u202a-\u202e\u2066-\u2069\ufeff\u00ad\u034f\u061c\u115f\u1160\u180e\u200b-\u200f\u2060-\u2064\u2800\u3164\ufe00-\ufe0f\uffa0\ufff9-\ufffc\ud834\udd73-\ud834\udd7a\udb40\udc00-\udb40\udc7f\udb40\udd00-\udb40\uddef][^\\x00-\\x08\\x0b-\\x1f\\x7f-\\x9f\u202a-\u202e\u2066-\u2069\ufeff]*$",
+          "title": "Text",
+          "type": "string"
+        },
+        "uncertain_recognition": {
+          "description": "Speech recognition marked this turn as uncertain. Such a turn is never the only evidence for a level 1 behavior, a harm cap or a crisis critical failure (anchor spec uncertain_recognition_rule).",
+          "title": "Uncertain Recognition",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "index",
+        "speaker",
+        "text",
+        "at_ms",
+        "input",
+        "uncertain_recognition",
+        "conduct_warning"
+      ],
+      "title": "StudentTurn",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The payload the grader accepts: one completed session.",
+  "properties": {
+    "conduct": {
+      "$ref": "#/$defs/Conduct"
+    },
+    "contract": {
+      "const": "cst.completed_session",
+      "title": "Contract",
+      "type": "string"
+    },
+    "contract_version": {
+      "const": "1.0.0",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "crisis": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Crisis"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Required in the crisis scenario and null in the others."
+    },
+    "duration_ms": {
+      "maximum": 3600000,
+      "minimum": 0,
+      "title": "Duration Ms",
+      "type": "integer"
+    },
+    "ended_by": {
+      "enum": [
+        "student",
+        "time_limit"
+      ],
+      "title": "Ended By",
+      "type": "string"
+    },
+    "modality": {
+      "description": "The mode the session started in.",
+      "enum": [
+        "voice",
+        "text"
+      ],
+      "title": "Modality",
+      "type": "string"
+    },
+    "owner_uid": {
+      "description": "The verified Identity Platform UID of the student. Never logged.",
+      "pattern": "^[A-Za-z0-9]{1,128}$",
+      "title": "Owner Uid",
+      "type": "string"
+    },
+    "save_transcript": {
+      "description": "The student's per-session choice. When false the grader never stores the transcript (POLICY DAT-1, transcript-storage D4). It has no default, so a payload without it is rejected.",
+      "title": "Save Transcript",
+      "type": "boolean"
+    },
+    "scenario": {
+      "$ref": "#/$defs/Scenario"
+    },
+    "session_id": {
+      "description": "A canonical lowercase UUID, the same shape the log helper accepts.",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "status": {
+      "const": "completed",
+      "description": "Only completed is accepted. incomplete, content_lost and ended_for_conduct are rejected with that reason.",
+      "title": "Status",
+      "type": "string"
+    },
+    "turns": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "client": "#/$defs/ClientTurn",
+            "student": "#/$defs/StudentTurn"
+          },
+          "propertyName": "speaker"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/StudentTurn"
+          },
+          {
+            "$ref": "#/$defs/ClientTurn"
+          }
+        ]
+      },
+      "maxItems": 500,
+      "minItems": 1,
+      "title": "Turns",
+      "type": "array"
+    }
+  },
+  "required": [
+    "contract",
+    "contract_version",
+    "session_id",
+    "owner_uid",
+    "scenario",
+    "modality",
+    "status",
+    "ended_by",
+    "duration_ms",
+    "turns",
+    "conduct",
+    "crisis",
+    "save_transcript"
+  ],
+  "title": "Completed-session handoff",
+  "type": "object"
+}

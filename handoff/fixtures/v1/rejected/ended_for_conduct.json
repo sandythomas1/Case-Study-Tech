@@ -1,0 +1,75 @@
+{
+  "contract": "cst.completed_session",
+  "contract_version": "1.0.0",
+  "session_id": "00000000-0000-4000-8000-000000000102",
+  "owner_uid": "synthStudent0002",
+  "scenario": {
+    "id": "resistant_client",
+    "version": "1.0.0"
+  },
+  "modality": "voice",
+  "status": "ended_for_conduct",
+  "ended_by": "time_limit",
+  "duration_ms": 600000,
+  "turns": [
+    {
+      "index": 1,
+      "speaker": "student",
+      "text": "Thanks for coming in. I understand this visit wasn't your idea.",
+      "at_ms": 0,
+      "input": "speech",
+      "uncertain_recognition": false,
+      "conduct_warning": false
+    },
+    {
+      "index": 2,
+      "speaker": "client",
+      "text": "Synthetic client line: I don't see why I have to be here at all.",
+      "at_ms": 7000
+    },
+    {
+      "index": 3,
+      "speaker": "student",
+      "text": "It sounds like you feel pushed into this.",
+      "at_ms": 18000,
+      "input": "speech",
+      "uncertain_recognition": true,
+      "conduct_warning": false
+    },
+    {
+      "index": 4,
+      "speaker": "client",
+      "text": "Synthetic client line: Whatever. Ask your questions.",
+      "at_ms": 26000
+    },
+    {
+      "index": 5,
+      "speaker": "student",
+      "text": "Synthetic out-of-bounds remark that drew the warning.",
+      "at_ms": 40000,
+      "input": "speech",
+      "uncertain_recognition": false,
+      "conduct_warning": true
+    },
+    {
+      "index": 6,
+      "speaker": "client",
+      "text": "Synthetic client line: Can we just get this over with?",
+      "at_ms": 47000
+    },
+    {
+      "index": 7,
+      "speaker": "student",
+      "text": "Fair enough. What would make this hour worth your time?",
+      "at_ms": 61000,
+      "input": "text",
+      "uncertain_recognition": false,
+      "conduct_warning": false
+    }
+  ],
+  "conduct": {
+    "warnings": 1
+  },
+  "crisis": null,
+  "save_transcript": false
+}
