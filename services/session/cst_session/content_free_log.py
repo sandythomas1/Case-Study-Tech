@@ -16,8 +16,10 @@ a sentence squashed into one word cannot pass as an id:
 
 - ``request_id``, ``session_id``: a canonical lowercase UUID
   (``8-4-4-4-12`` hex) or 32 lowercase hex characters.
-- ``scenario_id``: a lowercase hyphen slug such as ``resistant-client``, at most
-  64 characters. No underscores or dots.
+- ``scenario_id``: exactly one of the three catalogue ids, ``routine_intake``,
+  ``resistant_client`` or ``crisis_risk`` (the ids in
+  ``rubric/anchor-spec.v1.json``). Any other value is dropped, so no phrase can
+  pass as a scenario id.
 - ``scenario_version``: semantic version ``MAJOR.MINOR.PATCH``, up to four
   digits each.
 
@@ -74,7 +76,7 @@ _OPAQUE_ID = re.compile(
 _IDENTIFIER_FIELDS: dict[str, re.Pattern[str]] = {
     "request_id": _OPAQUE_ID,
     "session_id": _OPAQUE_ID,
-    "scenario_id": re.compile(r"(?=.{1,64}\Z)[a-z0-9]+(-[a-z0-9]+)*", re.ASCII),
+    "scenario_id": re.compile(r"routine_intake|resistant_client|crisis_risk", re.ASCII),
     "scenario_version": re.compile(r"[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}", re.ASCII),
 }
 # Named counts. infra/accounts/main.tf log metrics filter on jsonPayload.failed

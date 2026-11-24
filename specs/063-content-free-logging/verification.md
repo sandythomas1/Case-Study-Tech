@@ -95,3 +95,8 @@ to `test_content_free_log.py`. The demo was re-recorded on this tree.
 Exception groups, the exact-path stream exemption, `os.write`, and nested `sh -c` parsing. Re-run on
 the final tree: accounts 202 passed / 5 skipped, session 199 passed, ruff, format and mypy clean in
 both, copies byte-identical. The demo was re-recorded on this tree.
+
+## After the scenario-id fix (lead re-run, 2026-11-23)
+`scenario_id` now accepts exactly the three catalogue ids in `rubric/anchor-spec.v1.json`, found
+while starting #27. The final tree: accounts 204 passed / 5 skipped, session 199 passed, ruff,
+format and mypy clean, and the copies are byte-identical.

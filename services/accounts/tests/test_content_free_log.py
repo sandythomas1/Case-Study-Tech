@@ -68,7 +68,7 @@ def test_allowed_identifiers_and_counts_are_kept(capsys):
         "session_started",
         request_id=SYNTHETIC_UUID,
         session_id=SYNTHETIC_HEX,
-        scenario_id="resistant-client",
+        scenario_id="resistant_client",
         scenario_version="1.4.0",
         completed=3,
         failed=0,
@@ -78,7 +78,7 @@ def test_allowed_identifiers_and_counts_are_kept(capsys):
     line = only_line(capsys)
     assert line["request_id"] == SYNTHETIC_UUID
     assert line["session_id"] == SYNTHETIC_HEX
-    assert line["scenario_id"] == "resistant-client"
+    assert line["scenario_id"] == "resistant_client"
     assert line["scenario_version"] == "1.4.0"
     assert (line["completed"], line["failed"], line["overdue"]) == (3, 0, 1)
 
@@ -103,12 +103,12 @@ def test_a_uid_slug_or_key_shaped_value_is_dropped_from_every_id_field(
         ("request_id", SYNTHETIC_HEX[:31]),
         ("session_id", SYNTHETIC_UUID + "\n"),
         ("session_id", "{" + SYNTHETIC_UUID + "}"),
-        ("scenario_id", "resistant_client"),
-        ("scenario_id", "resistant.client"),
-        ("scenario_id", "-resistant"),
-        ("scenario_id", "resistant--client"),
-        ("scenario_id", "Resistant"),
-        ("scenario_id", "a" * 65),
+        ("scenario_id", "resistant-client"),
+        ("scenario_id", "Resistant_client"),
+        ("scenario_id", "resistant_client "),
+        ("scenario_id", "resistant_client_v2"),
+        ("scenario_id", "crisis"),
+        ("scenario_id", "anxious_new_student"),  # slug-shaped, not in the catalogue
         ("scenario_version", "v1.4.0"),
         ("scenario_version", "1.4"),
         ("scenario_version", "12345.0.0"),
@@ -122,10 +122,13 @@ def test_an_id_outside_its_exact_shape_is_dropped(capsys, field, value):
     assert field not in only_line(capsys)
 
 
-def test_a_scenario_id_of_exactly_64_characters_is_kept(capsys):
-    log_event("check_id", scenario_id="a" * 64)
+@pytest.mark.parametrize(
+    "scenario_id", ["routine_intake", "resistant_client", "crisis_risk"]
+)
+def test_each_catalogue_scenario_id_is_kept(capsys, scenario_id):
+    log_event("check_id", scenario_id=scenario_id)
 
-    assert only_line(capsys)["scenario_id"] == "a" * 64
+    assert only_line(capsys)["scenario_id"] == scenario_id
 
 
 @pytest.mark.parametrize(
