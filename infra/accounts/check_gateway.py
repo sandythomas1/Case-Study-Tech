@@ -16,6 +16,14 @@ def main() -> None:
         ("GET", "/health", {}, None, 200),
         ("GET", "/v1/me", {}, None, 401),
         ("GET", "/v1/scores", {"Authorization": "Bearer invalid"}, None, 401),
+        ("GET", "/v1/access", {}, None, 401),
+        (
+            "POST",
+            "/v1/access/request",
+            {"Content-Type": "application/json"},
+            b"{}",
+            401,
+        ),
         (
             "POST",
             "/v1/account/deletion",

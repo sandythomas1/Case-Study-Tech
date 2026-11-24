@@ -59,7 +59,7 @@ file differ, this file records the decisions and the code as built (plan PA-11).
 | Grading service | Private. Accepts only complete transcripts from the session service, scores against the anchor spec, validates evidence, writes scores, returns the report | not yet | Phase 5 |
 | Vertex AI | Persona inference and grader inference, as separate calls with separate prompts | — | `gemini-3.8-flash` for personas, `gemini-4-argon` for the grader (OD-2, settled 2026-11-22 in `docs/decisions/vertex-ai-governance.md`) |
 | Speech provider | Speech-to-text and text-to-speech behind a replaceable interface | `services/session/cst_session/speech` | Interface and fake built (#64); vendor and adapter open (Phase 2 ADR, #20) |
-| Firestore | `students/{uid}/scores/{scoreId}`, `account_deletions/{uid}` and one server-only access record per account | `infra/firestore.rules` | Built in PR #62; access record is #72 |
+| Firestore | `students/{uid}/scores/{scoreId}`, `account_deletions/{uid}` and one server-only access record per account (`access/{uid}`) | `infra/firestore.rules` | Built in PR #62; access record and gate built in #72 |
 | Email provider | Sends the owner one email per access request (name and Google email only) | not yet | Vendor open (OD-3, #74) |
 | Secret Manager | Every provider credential, the Identity Platform API key and the state-signing key | `infra/` | Built in PR #62 |
 | Cloud Logging | Operational metadata and errors, never session content | content-free helper | Phase 1 (#63) |

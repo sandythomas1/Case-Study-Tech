@@ -57,7 +57,7 @@ paths:
       responses: { '200': { description: CORS preflight } }
     get:
       operationId: currentStudent
-      responses: { '200': { description: Verified student }, '401': { description: Rejected } }
+      responses: { '200': { description: Verified approved student }, '401': { description: Rejected }, '403': { description: Not approved } }
   /v1/scores:
     options:
       operationId: scoresPreflight
@@ -65,7 +65,25 @@ paths:
       responses: { '200': { description: CORS preflight } }
     get:
       operationId: ownScores
-      responses: { '200': { description: Own score records }, '401': { description: Rejected } }
+      responses: { '200': { description: Own score records }, '401': { description: Rejected }, '403': { description: Not approved } }
+  # Owner approval (#72). Both keep the global firebase security; only the
+  # preflights are open. Reachable before approval (POLICY ACC-4).
+  /v1/access:
+    options:
+      operationId: accessStatePreflight
+      security: []
+      responses: { '200': { description: CORS preflight } }
+    get:
+      operationId: ownAccessState
+      responses: { '200': { description: Own access state }, '401': { description: Rejected } }
+  /v1/access/request:
+    options:
+      operationId: accessRequestPreflight
+      security: []
+      responses: { '200': { description: CORS preflight } }
+    post:
+      operationId: requestAccess
+      responses: { '200': { description: Own access state }, '400': { description: Body not empty }, '401': { description: Rejected }, '403': { description: Denied or unusable profile } }
   /v1/account/deletion:
     options:
       operationId: deletionPreflight
