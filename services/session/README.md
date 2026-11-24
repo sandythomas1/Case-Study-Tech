@@ -1,8 +1,8 @@
 # Session service
 
 Holds the practice-session logic (ARCHITECTURE §3). So far it contains the replaceable speech
-provider interface from #64 and the Deepgram bake-off adapter from #101. The HTTP layer, signed
-state and persona turns come with #31.
+provider interface from #64, the Deepgram bake-off adapter from #101 and the three vetted scenario
+configurations from #27. The HTTP layer, signed state and persona turns come with #31.
 
 ## Layout
 
@@ -14,9 +14,12 @@ state and persona turns come with #31.
 | `cst_session/speech/adapters/` | Vendor adapters. The only place a vendor speech SDK or `websockets` may be imported (`tests/test_speech_import_boundary.py`) |
 | `cst_session/speech/adapters/deepgram.py` | `DeepgramSpeechProvider`: Flux speech-to-text and Aura-2 text-to-speech, a #20 bake-off candidate (#101). Synthetic data only, see `docs/decisions/speech-deepgram.md` |
 | `cst_session/speech/adapters/deepgram_transport.py` | The adapter's network transport, over `websockets` and `httpx` |
+| `cst_session/scenarios/configs/*.toml` | The three vetted scenarios (`routine_intake`, `resistant_client`, `crisis_risk`): version-controlled, synthetic and read-only. Change one only through a reviewed commit (AG-6) |
+| `cst_session/scenarios/catalogue.py` | `load_catalogue()` validates the configs strictly. `Catalogue.library()` lists the released scenarios, and `Catalogue.startable(id)` raises `ScenarioUnavailable` for an unknown or unreleased one |
 | `cst_session/content_free_log.py` | The content-free logging helper. A byte-identical copy of the accounts service's canonical module; see "Logging" |
 | `tests/test_content_free_log_copies.py` | Fails when this copy drifts from `services/accounts/cst_accounts/content_free_log.py` |
 | `tests/test_logging_calls.py` | Fails on a root-logger lookup or a direct `sys.stdout`/`sys.stderr` write outside the helper |
+| `tests/test_scenario_write_paths.py` | Fails when any service declares a non-read route for scenarios, or the scenarios package writes a file |
 | `tests/speech_contract.py` | `SpeechProviderContract`, the suite every adapter must pass |
 | `tests/test_speech_import_boundary.py` | Fails when a vendor speech SDK or `websockets` is imported outside `adapters/`, or a module that handles session content imports logging or storage |
 | `tests/deepgram_fakes.py` | A scripted fake Deepgram network that records every request |
@@ -48,3 +51,13 @@ uv run pytest
 uv run ruff check .
 uv run mypy .
 ```
+
+## Scenarios
+
+The library and preparation screens read `Catalogue.library()`. Session start must call
+`Catalogue.startable(scenario_id)` and refuse on `ScenarioUnavailable`, which is raised the same way
+for an unknown id and an unreleased one, so a scenario held back under CD-3 can't be probed. Load
+the catalogue once at startup: a malformed config raises `CatalogueError` and stops the service.
+The time limit comes from `time_limit_minutes`, which is 10 for every scenario (PA-5). The owner
+approves every change to `released` (POLICY §1). The ids match `rubric/anchor-spec.v1.json`, and the
+logging helper accepts only these three as `scenario_id`.

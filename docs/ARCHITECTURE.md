@@ -55,7 +55,7 @@ file differ, this file records the decisions and the code as built (plan PA-11).
 | Identity Platform | Google sign-in only; issues Firebase ID and refresh tokens | `infra/accounts` | Built in PR #62 |
 | API Gateway | The one public HTTPS entry; validates Firebase JWTs on protected routes; routes per path (AD-4) | `infra/gateway.yaml.template` | Built for accounts only |
 | Accounts service | Server-side Google token exchange and refresh, current student, own scores read, account deletion; access requests, the approval check and admin decisions (POLICY ACC-4 to ACC-9) | `services/accounts` | Built in PR #62; access approval is #72, #73 |
-| Session service | Verifies and signs conversation state, persona turns, speech calls, time limit, conduct safeguard, end of session, grader call | `services/session` | Speech interface only (#64); the rest is Phase 3–4 |
+| Session service | Verifies and signs conversation state, persona turns, speech calls, time limit, conduct safeguard, end of session, grader call | `services/session` | Speech interface (#64) and the three read-only scenario configs (#27); the rest is Phase 3–4 |
 | Grading service | Private. Accepts only complete transcripts from the session service, scores against the anchor spec, validates evidence, writes scores, returns the report | not yet | Phase 5 |
 | Vertex AI | Persona inference and grader inference, as separate calls with separate prompts | — | `gemini-3.8-flash` for personas, `gemini-4-argon` for the grader (OD-2, settled 2026-11-22 in `docs/decisions/vertex-ai-governance.md`) |
 | Speech provider | Speech-to-text and text-to-speech behind a replaceable interface | `services/session/cst_session/speech` | Interface and fake built (#64); vendor and adapter open (Phase 2 ADR, #20) |
