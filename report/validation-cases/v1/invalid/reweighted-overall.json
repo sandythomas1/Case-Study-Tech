@@ -1,0 +1,12 @@
+{
+  "case": "An overall that is not the fixed weighted mean.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/overall/value",
+      "value": 3.5
+    }
+  ],
+  "rejects_because": "SCO-2 weighted mean"
+}

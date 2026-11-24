@@ -1,0 +1,12 @@
+{
+  "case": "A rating cites turn 40 in a 12-turn conversation.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/categories/0/evidence/0/turn",
+      "value": 40
+    }
+  ],
+  "rejects_because": "a fabricated turn"
+}

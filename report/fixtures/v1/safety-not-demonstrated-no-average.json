@@ -1,0 +1,208 @@
+{
+  "contract": "cst.report",
+  "contract_version": "1.0.0",
+  "synthetic": true,
+  "state": "safety_not_demonstrated",
+  "scenario": {
+    "id": "crisis_risk",
+    "version": "1.0.0"
+  },
+  "modality": "voice",
+  "turn_count": 10,
+  "provenance": {
+    "rubric": {
+      "spec_id": "casestudy-tech-rubric-anchors",
+      "spec_version": "1.0.0",
+      "approval_status": "proposed"
+    },
+    "scoring_policy_version": "1.0.0",
+    "grader": {
+      "model": "synthetic-fixture",
+      "prompt_version": "synthetic-1"
+    }
+  },
+  "disclaimer": "This is developmental feedback on a practice conversation. It is not a grade, it is not a validated assessment, and it does not measure clinical competence.",
+  "strengths": [
+    {
+      "text": "Opens warmly and asks what has been keeping the client up.",
+      "evidence": [
+        {
+          "turn": 1,
+          "speaker": "student",
+          "quote": "Hi, I am glad you came in. How have things been this week?"
+        },
+        {
+          "turn": 3,
+          "speaker": "student",
+          "quote": "That sounds exhausting. What has been keeping you up?"
+        }
+      ]
+    }
+  ],
+  "next_steps": [
+    {
+      "text": "When a client hints at suicide, ask about it directly before moving on.",
+      "evidence": [
+        {
+          "turn": 4,
+          "speaker": "client",
+          "quote": "Sometimes I think everyone would be better off without me."
+        },
+        {
+          "turn": 5,
+          "speaker": "student",
+          "quote": "Let's get back to your sleep. What time do you usually go to bed?"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "categories_not_rated",
+    "no_overall_score",
+    "rubric_not_approved",
+    "synthetic_example"
+  ],
+  "scale": {
+    "min": 1,
+    "max": 5,
+    "levels": [
+      {
+        "level": 1,
+        "label": "Beginning"
+      },
+      {
+        "level": 2,
+        "label": "Emerging"
+      },
+      {
+        "level": 3,
+        "label": "Developing"
+      },
+      {
+        "level": 4,
+        "label": "Consistent"
+      },
+      {
+        "level": 5,
+        "label": "Advanced"
+      }
+    ]
+  },
+  "categories": [
+    {
+      "id": "empathic_engagement",
+      "name": "Empathic engagement",
+      "weight_percent": 20,
+      "outcome": "rated",
+      "level": 2,
+      "label": "Emerging",
+      "evidence": [
+        {
+          "turn": 1,
+          "speaker": "student",
+          "quote": "Hi, I am glad you came in. How have things been this week?"
+        },
+        {
+          "turn": 3,
+          "speaker": "student",
+          "quote": "That sounds exhausting. What has been keeping you up?"
+        }
+      ]
+    },
+    {
+      "id": "active_listening_responding",
+      "name": "Active listening and responding",
+      "weight_percent": 20,
+      "outcome": "rated",
+      "level": 2,
+      "label": "Emerging",
+      "evidence": [
+        {
+          "turn": 3,
+          "speaker": "student",
+          "quote": "That sounds exhausting. What has been keeping you up?"
+        },
+        {
+          "turn": 5,
+          "speaker": "student",
+          "quote": "Let's get back to your sleep. What time do you usually go to bed?"
+        }
+      ]
+    },
+    {
+      "id": "questioning_exploration",
+      "name": "Purposeful questioning and exploration",
+      "weight_percent": 15,
+      "outcome": "rated",
+      "level": 3,
+      "label": "Developing",
+      "evidence": [
+        {
+          "turn": 3,
+          "speaker": "student",
+          "quote": "That sounds exhausting. What has been keeping you up?"
+        },
+        {
+          "turn": 7,
+          "speaker": "student",
+          "quote": "Have you tried cutting out caffeine in the afternoon?"
+        }
+      ]
+    },
+    {
+      "id": "collaboration_autonomy_cultural_humility",
+      "name": "Collaboration, autonomy and cultural humility",
+      "weight_percent": 15,
+      "outcome": "abstained",
+      "reason": "no_opportunity"
+    },
+    {
+      "id": "structure_professionalism",
+      "name": "Session structure and professionalism",
+      "weight_percent": 10,
+      "outcome": "abstained",
+      "reason": "too_few_cited_turns"
+    },
+    {
+      "id": "scenario_specific_competence",
+      "name": "Scenario-specific competence",
+      "weight_percent": 20,
+      "outcome": "rated",
+      "level": 1,
+      "label": "Beginning",
+      "evidence": [
+        {
+          "turn": 5,
+          "speaker": "student",
+          "quote": "Let's get back to your sleep. What time do you usually go to bed?"
+        }
+      ]
+    }
+  ],
+  "safety": {
+    "result": "not_demonstrated",
+    "critical_failures": [
+      {
+        "id": "CF-IGNORE",
+        "evidence": [
+          {
+            "turn": 4,
+            "speaker": "client",
+            "quote": "Sometimes I think everyone would be better off without me."
+          },
+          {
+            "turn": 5,
+            "speaker": "student",
+            "quote": "Let's get back to your sleep. What time do you usually go to bed?"
+          }
+        ]
+      }
+    ]
+  },
+  "score_record_saved": false,
+  "actions": [
+    "export",
+    "leave_with_confirmation",
+    "new_practice"
+  ]
+}

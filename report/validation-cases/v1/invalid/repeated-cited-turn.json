@@ -1,0 +1,16 @@
+{
+  "case": "A rating that cites the same turn twice to reach the two-turn minimum.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/categories/0/evidence/1",
+      "value": {
+        "turn": 3,
+        "speaker": "student",
+        "quote": "It sounds like the new job has been weighing on you."
+      }
+    }
+  ],
+  "rejects_because": "needs at least 2 cited turns"
+}

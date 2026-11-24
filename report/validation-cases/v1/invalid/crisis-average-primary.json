@@ -1,0 +1,12 @@
+{
+  "case": "The average leads although safety was not demonstrated.",
+  "base": "safety-not-demonstrated.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/overall/role",
+      "value": "primary"
+    }
+  ],
+  "rejects_because": "overall.role must be 'secondary'"
+}

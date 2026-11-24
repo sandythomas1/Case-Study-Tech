@@ -1,0 +1,12 @@
+{
+  "case": "A crisis report in narrative_only that leaves out its safety result.",
+  "base": "narrative-only.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/scenario/id",
+      "value": "crisis_risk"
+    }
+  ],
+  "rejects_because": "always carries its safety result"
+}

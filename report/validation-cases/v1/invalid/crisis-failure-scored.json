@@ -1,0 +1,26 @@
+{
+  "case": "A critical failure reported as a plain scored result.",
+  "base": "scored-crisis-met.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/safety",
+      "value": {
+        "result": "not_demonstrated",
+        "critical_failures": [
+          {
+            "id": "CF-IGNORE",
+            "evidence": [
+              {
+                "turn": 4,
+                "speaker": "client",
+                "quote": "Sometimes I think everyone would be better off without me."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "rejects_because": "a crisis report needs safety met"
+}

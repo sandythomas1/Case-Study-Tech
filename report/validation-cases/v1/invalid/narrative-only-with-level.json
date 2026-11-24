@@ -1,0 +1,12 @@
+{
+  "case": "A narrative-only report carries categories.",
+  "base": "narrative-only.json",
+  "patch": [
+    {
+      "op": "add",
+      "path": "/categories",
+      "value": []
+    }
+  ],
+  "rejects_because": "forbidden or unknown fields"
+}

@@ -1,0 +1,240 @@
+{
+  "contract": "cst.history",
+  "contract_version": "1.0.0",
+  "synthetic": true,
+  "entries": [
+    {
+      "record_id": "h-0006",
+      "scenario_id": "crisis_risk",
+      "completed_at": "2026-11-20T15:04:05Z",
+      "overall": {
+        "value": 3.75,
+        "display": "3.8"
+      },
+      "categories": [
+        {
+          "id": "empathic_engagement",
+          "level": 4
+        },
+        {
+          "id": "active_listening_responding",
+          "level": 4
+        },
+        {
+          "id": "questioning_exploration",
+          "level": 4
+        },
+        {
+          "id": "collaboration_autonomy_cultural_humility",
+          "level": 3
+        },
+        {
+          "id": "structure_professionalism",
+          "level": 3
+        },
+        {
+          "id": "scenario_specific_competence",
+          "level": 4
+        }
+      ],
+      "provenance": {
+        "rubric_spec_version": "1.0.0",
+        "scoring_policy_version": "1.0.0"
+      },
+      "safety_result": "met"
+    },
+    {
+      "record_id": "h-0005",
+      "scenario_id": "routine_intake",
+      "completed_at": "2026-11-18T10:00:00Z",
+      "overall": {
+        "value": 3.55,
+        "display": "3.6"
+      },
+      "categories": [
+        {
+          "id": "empathic_engagement",
+          "level": 4
+        },
+        {
+          "id": "active_listening_responding",
+          "level": 4
+        },
+        {
+          "id": "questioning_exploration",
+          "level": 3
+        },
+        {
+          "id": "collaboration_autonomy_cultural_humility",
+          "level": 4
+        },
+        {
+          "id": "structure_professionalism",
+          "level": 3
+        },
+        {
+          "id": "scenario_specific_competence",
+          "level": 3
+        }
+      ],
+      "provenance": {
+        "rubric_spec_version": "1.0.0",
+        "scoring_policy_version": "1.0.0"
+      }
+    },
+    {
+      "record_id": "h-0004",
+      "scenario_id": "routine_intake",
+      "completed_at": "2026-11-12T09:30:00Z",
+      "overall": {
+        "value": 3.0,
+        "display": "3.0"
+      },
+      "categories": [
+        {
+          "id": "empathic_engagement",
+          "level": 3
+        },
+        {
+          "id": "active_listening_responding",
+          "level": 3
+        },
+        {
+          "id": "questioning_exploration",
+          "level": 3
+        },
+        {
+          "id": "collaboration_autonomy_cultural_humility",
+          "level": 3
+        },
+        {
+          "id": "structure_professionalism",
+          "level": 3
+        },
+        {
+          "id": "scenario_specific_competence",
+          "level": 3
+        }
+      ],
+      "provenance": {
+        "rubric_spec_version": "1.0.0",
+        "scoring_policy_version": "1.1.0"
+      }
+    },
+    {
+      "record_id": "h-0003",
+      "scenario_id": "crisis_risk",
+      "completed_at": "2026-11-10T14:00:00Z",
+      "overall": {
+        "value": 2.05,
+        "display": "2.1"
+      },
+      "categories": [
+        {
+          "id": "empathic_engagement",
+          "level": 2
+        },
+        {
+          "id": "active_listening_responding",
+          "level": 2
+        },
+        {
+          "id": "questioning_exploration",
+          "level": 3
+        },
+        {
+          "id": "collaboration_autonomy_cultural_humility",
+          "level": 2
+        },
+        {
+          "id": "structure_professionalism",
+          "level": 3
+        },
+        {
+          "id": "scenario_specific_competence",
+          "level": 1
+        }
+      ],
+      "provenance": {
+        "rubric_spec_version": "1.0.0",
+        "scoring_policy_version": "1.0.0"
+      },
+      "safety_result": "not_demonstrated"
+    },
+    {
+      "record_id": "h-0002",
+      "scenario_id": "routine_intake",
+      "completed_at": "2026-11-05T16:45:00Z",
+      "overall": {
+        "value": 2.35,
+        "display": "2.4"
+      },
+      "categories": [
+        {
+          "id": "empathic_engagement",
+          "level": 2
+        },
+        {
+          "id": "active_listening_responding",
+          "level": 3
+        },
+        {
+          "id": "questioning_exploration",
+          "level": 2
+        },
+        {
+          "id": "collaboration_autonomy_cultural_humility",
+          "level": 3
+        },
+        {
+          "id": "structure_professionalism",
+          "level": 2
+        },
+        {
+          "id": "scenario_specific_competence",
+          "level": 2
+        }
+      ],
+      "provenance": null
+    },
+    {
+      "record_id": "h-0001",
+      "scenario_id": "routine_intake",
+      "completed_at": "2026-11-01T11:15:00Z",
+      "overall": {
+        "value": 2.0,
+        "display": "2.0"
+      },
+      "categories": [
+        {
+          "id": "empathic_engagement",
+          "level": 2
+        },
+        {
+          "id": "active_listening_responding",
+          "level": 2
+        },
+        {
+          "id": "questioning_exploration",
+          "level": 2
+        },
+        {
+          "id": "collaboration_autonomy_cultural_humility",
+          "level": 2
+        },
+        {
+          "id": "structure_professionalism",
+          "level": 2
+        },
+        {
+          "id": "scenario_specific_competence",
+          "level": 2
+        }
+      ],
+      "provenance": {
+        "rubric_spec_version": "0.9.0",
+        "scoring_policy_version": "1.0.0"
+      }
+    }
+  ]
+}

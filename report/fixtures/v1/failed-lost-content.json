@@ -1,0 +1,20 @@
+{
+  "contract": "cst.report",
+  "contract_version": "1.0.0",
+  "synthetic": true,
+  "state": "failed",
+  "scenario": {
+    "id": "crisis_risk",
+    "version": "1.0.0"
+  },
+  "modality": "voice",
+  "failure": {
+    "reason": "lost_content",
+    "conversation_available": false
+  },
+  "score_record_saved": false,
+  "actions": [
+    "new_text_session",
+    "new_practice"
+  ]
+}

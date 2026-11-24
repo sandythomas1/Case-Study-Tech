@@ -1,0 +1,12 @@
+{
+  "case": "Lost content claims the conversation is still available.",
+  "base": "failed-lost-content.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/failure/conversation_available",
+      "value": true
+    }
+  ],
+  "rejects_because": "lost_content means"
+}

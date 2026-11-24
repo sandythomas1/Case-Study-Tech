@@ -1,0 +1,12 @@
+{
+  "case": "An abstention reason the anchor spec does not define.",
+  "base": "insufficient-evidence.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/categories/2/reason",
+      "value": "low_confidence"
+    }
+  ],
+  "rejects_because": "reason must be one of"
+}

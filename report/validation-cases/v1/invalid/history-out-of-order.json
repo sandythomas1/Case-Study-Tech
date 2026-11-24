@@ -1,0 +1,12 @@
+{
+  "case": "History is not newest first.",
+  "base": "history.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/entries/0/completed_at",
+      "value": "2026-10-01T00:00:00Z"
+    }
+  ],
+  "rejects_because": "newest first"
+}

@@ -1,0 +1,12 @@
+{
+  "case": "A 2.0.0 report reaches a 1.x reader.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/contract_version",
+      "value": "2.0.0"
+    }
+  ],
+  "rejects_because": "unsupported contract version"
+}

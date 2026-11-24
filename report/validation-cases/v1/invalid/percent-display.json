@@ -1,0 +1,12 @@
+{
+  "case": "An overall shown as a percent.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/overall/display",
+      "value": "71%"
+    }
+  ],
+  "rejects_because": "one decimal"
+}

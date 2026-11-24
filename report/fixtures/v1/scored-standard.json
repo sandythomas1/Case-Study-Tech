@@ -1,0 +1,217 @@
+{
+  "contract": "cst.report",
+  "contract_version": "1.0.0",
+  "synthetic": true,
+  "state": "scored",
+  "scenario": {
+    "id": "routine_intake",
+    "version": "1.0.0"
+  },
+  "modality": "text",
+  "turn_count": 12,
+  "provenance": {
+    "rubric": {
+      "spec_id": "casestudy-tech-rubric-anchors",
+      "spec_version": "1.0.0",
+      "approval_status": "proposed"
+    },
+    "scoring_policy_version": "1.0.0",
+    "grader": {
+      "model": "synthetic-fixture",
+      "prompt_version": "synthetic-1"
+    }
+  },
+  "disclaimer": "This is developmental feedback on a practice conversation. It is not a grade, it is not a validated assessment, and it does not measure clinical competence.",
+  "strengths": [
+    {
+      "text": "Reflects the client's stress back in the client's own words.",
+      "evidence": [
+        {
+          "turn": 3,
+          "speaker": "student",
+          "quote": "It sounds like the new job has been weighing on you."
+        },
+        {
+          "turn": 7,
+          "speaker": "student",
+          "quote": "So work follows you home, and rest is hard to find."
+        }
+      ]
+    }
+  ],
+  "next_steps": [
+    {
+      "text": "Ask one more open question about sleep before moving to planning.",
+      "evidence": [
+        {
+          "turn": 5,
+          "speaker": "student",
+          "quote": "What does a typical evening look like for you right now?"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "rubric_not_approved",
+    "synthetic_example"
+  ],
+  "scale": {
+    "min": 1,
+    "max": 5,
+    "levels": [
+      {
+        "level": 1,
+        "label": "Beginning"
+      },
+      {
+        "level": 2,
+        "label": "Emerging"
+      },
+      {
+        "level": 3,
+        "label": "Developing"
+      },
+      {
+        "level": 4,
+        "label": "Consistent"
+      },
+      {
+        "level": 5,
+        "label": "Advanced"
+      }
+    ]
+  },
+  "categories": [
+    {
+      "id": "empathic_engagement",
+      "name": "Empathic engagement",
+      "weight_percent": 20,
+      "outcome": "rated",
+      "level": 4,
+      "label": "Consistent",
+      "evidence": [
+        {
+          "turn": 3,
+          "speaker": "student",
+          "quote": "It sounds like the new job has been weighing on you."
+        },
+        {
+          "turn": 7,
+          "speaker": "student",
+          "quote": "So work follows you home, and rest is hard to find."
+        }
+      ]
+    },
+    {
+      "id": "active_listening_responding",
+      "name": "Active listening and responding",
+      "weight_percent": 20,
+      "outcome": "rated",
+      "level": 4,
+      "label": "Consistent",
+      "evidence": [
+        {
+          "turn": 7,
+          "speaker": "student",
+          "quote": "So work follows you home, and rest is hard to find."
+        },
+        {
+          "turn": 9,
+          "speaker": "student",
+          "quote": "What would you like to be different by the end of our time together?"
+        }
+      ]
+    },
+    {
+      "id": "questioning_exploration",
+      "name": "Purposeful questioning and exploration",
+      "weight_percent": 15,
+      "outcome": "rated",
+      "level": 3,
+      "label": "Developing",
+      "evidence": [
+        {
+          "turn": 5,
+          "speaker": "student",
+          "quote": "What does a typical evening look like for you right now?"
+        },
+        {
+          "turn": 9,
+          "speaker": "student",
+          "quote": "What would you like to be different by the end of our time together?"
+        }
+      ]
+    },
+    {
+      "id": "collaboration_autonomy_cultural_humility",
+      "name": "Collaboration, autonomy and cultural humility",
+      "weight_percent": 15,
+      "outcome": "rated",
+      "level": 4,
+      "label": "Consistent",
+      "evidence": [
+        {
+          "turn": 9,
+          "speaker": "student",
+          "quote": "What would you like to be different by the end of our time together?"
+        },
+        {
+          "turn": 11,
+          "speaker": "student",
+          "quote": "We have about ten minutes left. Shall we pick one small step to try this week?"
+        }
+      ]
+    },
+    {
+      "id": "structure_professionalism",
+      "name": "Session structure and professionalism",
+      "weight_percent": 10,
+      "outcome": "rated",
+      "level": 3,
+      "label": "Developing",
+      "evidence": [
+        {
+          "turn": 1,
+          "speaker": "student",
+          "quote": "Hi, thanks for coming in. What brings you here today?"
+        },
+        {
+          "turn": 11,
+          "speaker": "student",
+          "quote": "We have about ten minutes left. Shall we pick one small step to try this week?"
+        }
+      ]
+    },
+    {
+      "id": "scenario_specific_competence",
+      "name": "Scenario-specific competence",
+      "weight_percent": 20,
+      "outcome": "rated",
+      "level": 3,
+      "label": "Developing",
+      "evidence": [
+        {
+          "turn": 1,
+          "speaker": "student",
+          "quote": "Hi, thanks for coming in. What brings you here today?"
+        },
+        {
+          "turn": 9,
+          "speaker": "student",
+          "quote": "What would you like to be different by the end of our time together?"
+        }
+      ]
+    }
+  ],
+  "overall": {
+    "value": 3.55,
+    "display": "3.6",
+    "role": "primary"
+  },
+  "score_record_saved": true,
+  "actions": [
+    "export",
+    "leave_with_confirmation",
+    "new_practice"
+  ]
+}

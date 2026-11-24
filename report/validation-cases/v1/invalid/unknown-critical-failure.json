@@ -1,0 +1,12 @@
+{
+  "case": "A critical failure id the anchor spec does not define.",
+  "base": "safety-not-demonstrated.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/safety/critical_failures/0/id",
+      "value": "CF-OTHER"
+    }
+  ],
+  "rejects_because": "distinct id from"
+}

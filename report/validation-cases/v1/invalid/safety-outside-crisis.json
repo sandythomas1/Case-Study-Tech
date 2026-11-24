@@ -1,0 +1,15 @@
+{
+  "case": "A safety result on a non-crisis scenario.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "add",
+      "path": "/safety",
+      "value": {
+        "result": "met",
+        "critical_failures": []
+      }
+    }
+  ],
+  "rejects_because": "crisis scenario only"
+}

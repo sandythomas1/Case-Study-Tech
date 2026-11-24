@@ -1,0 +1,12 @@
+{
+  "case": "A failed attempt carries strengths.",
+  "base": "failed-grading.json",
+  "patch": [
+    {
+      "op": "add",
+      "path": "/strengths",
+      "value": []
+    }
+  ],
+  "rejects_because": "forbidden or unknown fields"
+}

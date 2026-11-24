@@ -1,0 +1,12 @@
+{
+  "case": "A state this reader does not know.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/state",
+      "value": "review_required"
+    }
+  ],
+  "rejects_because": "unknown state"
+}

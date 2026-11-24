@@ -1,0 +1,12 @@
+{
+  "case": "A history entry carries strengths.",
+  "base": "history.json",
+  "patch": [
+    {
+      "op": "add",
+      "path": "/entries/0/strengths",
+      "value": []
+    }
+  ],
+  "rejects_because": "history holds score-record fields only"
+}

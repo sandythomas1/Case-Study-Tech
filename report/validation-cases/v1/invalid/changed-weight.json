@@ -1,0 +1,12 @@
+{
+  "case": "A category weight that differs from SCO-2.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/categories/0/weight_percent",
+      "value": 25
+    }
+  ],
+  "rejects_because": "weights are fixed"
+}
