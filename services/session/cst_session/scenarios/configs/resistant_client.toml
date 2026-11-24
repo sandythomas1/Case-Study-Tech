@@ -1,0 +1,15 @@
+# Synthetic, vetted scenario configuration (#27, RC-22). Version-controlled and
+# read-only: no API or UI path creates or edits it (AG-6). Wording from the
+# prototype behind SDD Figures 3 and 4. Persona prompts live in #67.
+id = "resistant_client"
+version = "1.0.0"
+title = "Resistant client"
+summary = "Practice collaboration"
+learning_objective = "Meet hesitation with curiosity"
+session_format = "One-to-one simulation"
+time_limit_minutes = 10
+feedback_timing = "After completion"
+content_notice = "This client may be hesitant, guarded, or unsure about participating."
+crisis = false
+requires_opt_in = false
+released = true

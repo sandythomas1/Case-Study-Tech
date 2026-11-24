@@ -1,0 +1,17 @@
+# Synthetic, vetted scenario configuration (#27, RC-22). Version-controlled and
+# read-only: no API or UI path creates or edits it (AG-6). Wording from the
+# prototype behind SDD Figures 3 and 4. Persona prompts live in #67.
+# The student must tick the opt-in statement before this scenario starts (SES-2).
+id = "crisis_risk"
+version = "1.0.0"
+title = "Crisis-risk scenario"
+summary = "Sensitive content · explicit opt-in"
+learning_objective = "Practice a safety-sensitive response"
+session_format = "One-to-one simulation"
+time_limit_minutes = 10
+feedback_timing = "After completion"
+content_notice = "Includes simulated self-harm or imminent-danger content."
+crisis = true
+requires_opt_in = true
+opt_in_statement = "I understand this scenario includes simulated self-harm or imminent-danger content and I choose to practice it."
+released = true

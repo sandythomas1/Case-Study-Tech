@@ -21,6 +21,7 @@ handoff contract from #66. The HTTP layer, signed state and persona turns come w
 | `cst_session/content_free_log.py` | The content-free logging helper. A byte-identical copy of the accounts service's canonical module; see "Logging" |
 | `tests/test_content_free_log_copies.py` | Fails when this copy drifts from `services/accounts/cst_accounts/content_free_log.py` |
 | `tests/test_logging_calls.py` | Fails on a root-logger lookup or a direct `sys.stdout`/`sys.stderr` write outside the helper |
+| `tests/test_scenario_write_paths.py` | Fails when any service declares a non-read route for scenarios, or the scenarios package writes a file |
 | `tests/speech_contract.py` | `SpeechProviderContract`, the suite every adapter must pass |
 | `tests/test_speech_import_boundary.py` | Fails when a vendor speech SDK or `websockets` is imported outside `adapters/`, or a module that handles session content imports logging or storage |
 | `tests/deepgram_fakes.py` | A scripted fake Deepgram network that records every request |
@@ -52,3 +53,15 @@ uv run pytest
 uv run ruff check .
 uv run mypy .
 ```
+
+## Scenarios
+
+The library and preparation screens read `Catalogue.library()`. Session start must call
+`Catalogue.startable(scenario_id)` and refuse on `ScenarioUnavailable`, which is raised the same way
+for an unknown id and an unreleased one, so a scenario held back under CD-3 can't be probed. `startable()`
+checks only the release flag. Session start must also refuse a scenario with `requires_opt_in`
+unless the student's explicit opt-in arrives with the request, checked on the server (SES-2). Load
+the catalogue once at startup: a malformed config raises `CatalogueError` and stops the service.
+The time limit comes from `time_limit_minutes`, which is 10 for every scenario (PA-5). The owner
+approves the release flags (POLICY §1). The ids match `rubric/anchor-spec.v1.json`, and the
+logging helper accepts only these three as `scenario_id`.
