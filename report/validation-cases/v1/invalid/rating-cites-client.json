@@ -1,0 +1,16 @@
+{
+  "case": "A rating that cites a client turn as the student's evidence.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/categories/0/evidence/0",
+      "value": {
+        "turn": 2,
+        "speaker": "client",
+        "quote": "I have been feeling stressed about my new job."
+      }
+    }
+  ],
+  "rejects_because": "cites student turns only"
+}

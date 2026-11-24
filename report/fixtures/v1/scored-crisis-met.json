@@ -1,0 +1,221 @@
+{
+  "contract": "cst.report",
+  "contract_version": "1.0.0",
+  "synthetic": true,
+  "state": "scored",
+  "scenario": {
+    "id": "crisis_risk",
+    "version": "1.0.0"
+  },
+  "modality": "text",
+  "turn_count": 10,
+  "provenance": {
+    "rubric": {
+      "spec_id": "casestudy-tech-rubric-anchors",
+      "spec_version": "1.0.0",
+      "approval_status": "proposed"
+    },
+    "scoring_policy_version": "1.0.0",
+    "grader": {
+      "model": "synthetic-fixture",
+      "prompt_version": "synthetic-1"
+    }
+  },
+  "disclaimer": "This is developmental feedback on a practice conversation. It is not a grade, it is not a validated assessment, and it does not measure clinical competence.",
+  "strengths": [
+    {
+      "text": "Asks directly about thoughts of suicide right after the disclosure.",
+      "evidence": [
+        {
+          "turn": 4,
+          "speaker": "client",
+          "quote": "Sometimes I think everyone would be better off without me."
+        },
+        {
+          "turn": 5,
+          "speaker": "student",
+          "quote": "Thank you for telling me. Are you having thoughts of ending your life?"
+        }
+      ]
+    }
+  ],
+  "next_steps": [
+    {
+      "text": "Name the crisis line number before the session ends.",
+      "evidence": [
+        {
+          "turn": 9,
+          "speaker": "student",
+          "quote": "Let's talk about who you can reach out to, and the crisis line you can call any time."
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "rubric_not_approved",
+    "synthetic_example"
+  ],
+  "scale": {
+    "min": 1,
+    "max": 5,
+    "levels": [
+      {
+        "level": 1,
+        "label": "Beginning"
+      },
+      {
+        "level": 2,
+        "label": "Emerging"
+      },
+      {
+        "level": 3,
+        "label": "Developing"
+      },
+      {
+        "level": 4,
+        "label": "Consistent"
+      },
+      {
+        "level": 5,
+        "label": "Advanced"
+      }
+    ]
+  },
+  "categories": [
+    {
+      "id": "empathic_engagement",
+      "name": "Empathic engagement",
+      "weight_percent": 20,
+      "outcome": "rated",
+      "level": 4,
+      "label": "Consistent",
+      "evidence": [
+        {
+          "turn": 3,
+          "speaker": "student",
+          "quote": "That sounds exhausting. What has been keeping you up?"
+        },
+        {
+          "turn": 5,
+          "speaker": "student",
+          "quote": "Thank you for telling me. Are you having thoughts of ending your life?"
+        }
+      ]
+    },
+    {
+      "id": "active_listening_responding",
+      "name": "Active listening and responding",
+      "weight_percent": 20,
+      "outcome": "rated",
+      "level": 4,
+      "label": "Consistent",
+      "evidence": [
+        {
+          "turn": 3,
+          "speaker": "student",
+          "quote": "That sounds exhausting. What has been keeping you up?"
+        },
+        {
+          "turn": 7,
+          "speaker": "student",
+          "quote": "I want to make sure you are safe. Do you have a plan or a way you would do it?"
+        }
+      ]
+    },
+    {
+      "id": "questioning_exploration",
+      "name": "Purposeful questioning and exploration",
+      "weight_percent": 15,
+      "outcome": "rated",
+      "level": 4,
+      "label": "Consistent",
+      "evidence": [
+        {
+          "turn": 5,
+          "speaker": "student",
+          "quote": "Thank you for telling me. Are you having thoughts of ending your life?"
+        },
+        {
+          "turn": 7,
+          "speaker": "student",
+          "quote": "I want to make sure you are safe. Do you have a plan or a way you would do it?"
+        }
+      ]
+    },
+    {
+      "id": "collaboration_autonomy_cultural_humility",
+      "name": "Collaboration, autonomy and cultural humility",
+      "weight_percent": 15,
+      "outcome": "rated",
+      "level": 3,
+      "label": "Developing",
+      "evidence": [
+        {
+          "turn": 7,
+          "speaker": "student",
+          "quote": "I want to make sure you are safe. Do you have a plan or a way you would do it?"
+        },
+        {
+          "turn": 9,
+          "speaker": "student",
+          "quote": "Let's talk about who you can reach out to, and the crisis line you can call any time."
+        }
+      ]
+    },
+    {
+      "id": "structure_professionalism",
+      "name": "Session structure and professionalism",
+      "weight_percent": 10,
+      "outcome": "rated",
+      "level": 3,
+      "label": "Developing",
+      "evidence": [
+        {
+          "turn": 1,
+          "speaker": "student",
+          "quote": "Hi, I am glad you came in. How have things been this week?"
+        },
+        {
+          "turn": 9,
+          "speaker": "student",
+          "quote": "Let's talk about who you can reach out to, and the crisis line you can call any time."
+        }
+      ]
+    },
+    {
+      "id": "scenario_specific_competence",
+      "name": "Scenario-specific competence",
+      "weight_percent": 20,
+      "outcome": "rated",
+      "level": 4,
+      "label": "Consistent",
+      "evidence": [
+        {
+          "turn": 5,
+          "speaker": "student",
+          "quote": "Thank you for telling me. Are you having thoughts of ending your life?"
+        },
+        {
+          "turn": 7,
+          "speaker": "student",
+          "quote": "I want to make sure you are safe. Do you have a plan or a way you would do it?"
+        }
+      ]
+    }
+  ],
+  "overall": {
+    "value": 3.75,
+    "display": "3.8",
+    "role": "primary"
+  },
+  "safety": {
+    "result": "met",
+    "critical_failures": []
+  },
+  "score_record_saved": true,
+  "actions": [
+    "export",
+    "leave_with_confirmation",
+    "new_practice"
+  ]
+}

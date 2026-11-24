@@ -1,0 +1,11 @@
+{
+  "case": "A crisis history entry without its safety result.",
+  "base": "history.json",
+  "patch": [
+    {
+      "op": "remove",
+      "path": "/entries/0/safety_result"
+    }
+  ],
+  "rejects_because": "safety_result"
+}

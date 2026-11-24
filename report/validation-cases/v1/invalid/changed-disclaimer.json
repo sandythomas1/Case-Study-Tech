@@ -1,0 +1,12 @@
+{
+  "case": "The disclaimer is reworded.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/disclaimer",
+      "value": "This is your grade."
+    }
+  ],
+  "rejects_because": "student_disclaimer"
+}

@@ -1,0 +1,12 @@
+{
+  "case": "An abstained category carries a level of 0.",
+  "base": "insufficient-evidence.json",
+  "patch": [
+    {
+      "op": "add",
+      "path": "/categories/2/level",
+      "value": 0
+    }
+  ],
+  "rejects_because": "carries only its reason"
+}

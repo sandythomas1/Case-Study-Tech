@@ -1,0 +1,19 @@
+{
+  "contract": "cst.report",
+  "contract_version": "1.0.0",
+  "synthetic": true,
+  "state": "failed",
+  "scenario": {
+    "id": "routine_intake",
+    "version": "1.0.0"
+  },
+  "modality": "text",
+  "failure": {
+    "reason": "conduct",
+    "conversation_available": false
+  },
+  "score_record_saved": false,
+  "actions": [
+    "new_practice"
+  ]
+}

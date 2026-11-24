@@ -1,0 +1,66 @@
+{
+  "contract": "cst.report",
+  "contract_version": "1.0.0",
+  "synthetic": true,
+  "state": "narrative_only",
+  "scenario": {
+    "id": "routine_intake",
+    "version": "1.0.0"
+  },
+  "modality": "voice",
+  "turn_count": 12,
+  "provenance": {
+    "rubric": {
+      "spec_id": "casestudy-tech-rubric-anchors",
+      "spec_version": "1.0.0",
+      "approval_status": "proposed"
+    },
+    "scoring_policy_version": "1.0.0",
+    "grader": {
+      "model": "synthetic-fixture",
+      "prompt_version": "synthetic-1"
+    }
+  },
+  "disclaimer": "This is developmental feedback on a practice conversation. It is not a grade, it is not a validated assessment, and it does not measure clinical competence.",
+  "strengths": [
+    {
+      "text": "Reflects the client's stress back in the client's own words.",
+      "evidence": [
+        {
+          "turn": 3,
+          "speaker": "student",
+          "quote": "It sounds like the new job has been weighing on you."
+        },
+        {
+          "turn": 7,
+          "speaker": "student",
+          "quote": "So work follows you home, and rest is hard to find."
+        }
+      ]
+    }
+  ],
+  "next_steps": [
+    {
+      "text": "Ask one more open question about sleep before moving to planning.",
+      "evidence": [
+        {
+          "turn": 5,
+          "speaker": "student",
+          "quote": "What does a typical evening look like for you right now?"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "numerical_results_not_enabled",
+    "no_overall_score",
+    "rubric_not_approved",
+    "synthetic_example"
+  ],
+  "score_record_saved": false,
+  "actions": [
+    "export",
+    "leave_with_confirmation",
+    "new_practice"
+  ]
+}

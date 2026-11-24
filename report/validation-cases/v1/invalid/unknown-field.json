@@ -1,0 +1,12 @@
+{
+  "case": "An undeclared top-level field.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "add",
+      "path": "/notes",
+      "value": "x"
+    }
+  ],
+  "rejects_because": "forbidden or unknown fields"
+}

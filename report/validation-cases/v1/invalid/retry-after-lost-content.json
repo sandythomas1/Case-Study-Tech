@@ -1,0 +1,12 @@
+{
+  "case": "Retry is offered although the conversation is gone.",
+  "base": "failed-lost-content.json",
+  "patch": [
+    {
+      "op": "add",
+      "path": "/actions/-",
+      "value": "retry_grading"
+    }
+  ],
+  "rejects_because": "actions must be"
+}

@@ -1,0 +1,12 @@
+{
+  "case": "A synthetic grader output marked as real.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/synthetic",
+      "value": false
+    }
+  ],
+  "rejects_because": "synthetic is true exactly when"
+}

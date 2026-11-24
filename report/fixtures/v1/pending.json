@@ -1,0 +1,11 @@
+{
+  "contract": "cst.report",
+  "contract_version": "1.0.0",
+  "synthetic": true,
+  "state": "pending",
+  "scenario": {
+    "id": "crisis_risk",
+    "version": "1.0.0"
+  },
+  "modality": "text"
+}
