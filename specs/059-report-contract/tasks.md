@@ -1,6 +1,6 @@
 # Tasks: 059-report-contract
 
-Status: in progress
+Status: done
 
 - [x] T1 @lead: Write the contract (`report/report-contract.v1.md`). It covers the states, the field
   table, invariants, the transient-versus-retained mapping, ownership, versioning, comparison and

@@ -59,3 +59,12 @@
   #40 (Recommended)".
 - The lead applied them and fixed F1–F4: 4 new invalid cases and 5 new tests. Re-run: 196 tests OK,
   the checker passes, and all 22 QA mutations are rejected. review.md has no open blocking finding.
+
+## Phase 6 — Ship
+- Commit 8302248 on `feature/59-report-contract`, pushed. Demo re-recorded with a crisis-safety scene, on pr-media daa2a48.
+- PR #133 into dev (Standard review: AiDev merges once CI is green). #59 → Agent Review; progress comment 7124487510. CI: all 8 jobs pass.
+
+## Phase 7 — Learn and close
+- Lessons appended: "An \"optional\" field in a contract can silently relax a safety invariant"; "Tool input decodes \uXXXX, so escape sequences written into source become raw characters".
+- Final roster: qa-tester (1), policy-reviewer (1). 2 dispatches total. Owner decisions: 3 (crisis safety always carried, D-5 null, D-3 no record).
+- After merge: delete docs/current_feature_plans/059-report-contract.md and set #59 Done in Dev.
