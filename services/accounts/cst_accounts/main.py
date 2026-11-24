@@ -1,6 +1,5 @@
 """Production factory and deletion-job entrypoint using workload identity."""
 
-import json
 from datetime import UTC, datetime
 
 import firebase_admin
@@ -10,7 +9,9 @@ from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .api import create_app
+from .content_free_log import log_error, log_event
 from .deletion import process_deletions
+from .domain import AccountStore, IdentityProvider
 from .firebase import FirebaseIdentity
 from .store import FirestoreAccounts
 
@@ -47,9 +48,25 @@ def app_factory() -> FastAPI:
     return create_app(auth, store, settings.allowed_origins)
 
 
+def run_sweep(auth: IdentityProvider, store: AccountStore, now: datetime) -> int:
+    """Run one deletion sweep, log its counts and return the job's exit code."""
+    try:
+        result = process_deletions(auth, store, now)
+    except Exception as exc:  # noqa: BLE001 - a traceback could carry a UID or email
+        log_error("account_deletion_sweep_crashed", exc, code="sweep_crashed")
+        return 1
+    unhealthy = bool(result["failed"] or result["overdue"])
+    # Counts only. infra/accounts/main.tf metrics filter on these keys.
+    log_event(
+        "account_deletion_sweep",
+        severity="ERROR" if unhealthy else "INFO",
+        completed=result["completed"],
+        failed=result["failed"],
+        overdue=result["overdue"],
+    )
+    return 1 if unhealthy else 0
+
+
 if __name__ == "__main__":
     auth, store = dependencies(Settings())
-    result = process_deletions(auth, store, datetime.now(UTC))
-    # Counts only. Never log UIDs, credentials or provider response payloads.
-    print(json.dumps({"event": "account_deletion_sweep", **result}))
-    raise SystemExit(1 if result["failed"] or result["overdue"] else 0)
+    raise SystemExit(run_sweep(auth, store, datetime.now(UTC)))

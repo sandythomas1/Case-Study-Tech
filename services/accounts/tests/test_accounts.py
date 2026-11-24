@@ -1,8 +1,16 @@
 """Account boundaries exercised through the real HTTP router."""
 
+import json
+import logging
+import socket
+import threading
+import time
+from contextlib import contextmanager
 from datetime import UTC, datetime
 
+import httpx
 import pytest
+import uvicorn
 from fastapi.testclient import TestClient
 
 from cst_accounts.api import create_app
@@ -404,3 +412,180 @@ def test_deletion_worker_retries_failed_storage_without_deleting_identity():
     from datetime import timedelta
 
     assert process_deletions(auth, store, now + timedelta(hours=1))["completed"] == 1
+
+
+SYNTHETIC_TURN = "SYNTHETIC-TURN: I feel hopeless"
+
+
+class TurnEchoingStore(FakeStore):
+    """A storage failure whose message echoes session content (synthetic)."""
+
+    def scores(self, uid):
+        raise ValueError(SYNTHETIC_TURN)
+
+
+def assert_content_free(*texts: str) -> None:
+    for text in texts:
+        assert "hopeless" not in text
+        assert "SYNTHETIC-TURN" not in text
+        assert "Traceback" not in text
+
+
+def test_unhandled_error_returns_the_generic_envelope_and_logs_only_its_class(
+    capsys, caplog
+):
+    caplog.set_level(logging.DEBUG)
+    # raise_server_exceptions stays on: an exception that escaped to Starlette's
+    # ServerErrorMiddleware would fail this test instead of returning a 500.
+    with TestClient(create_app(FakeAuth(), TurnEchoingStore())) as client:
+        response = client.get(
+            "/v1/scores", headers={"Authorization": "Bearer student-a"}
+        )
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Internal server error."}
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["x-content-type-options"] == "nosniff"
+    captured = capsys.readouterr()
+    assert_content_free(response.text, captured.out, captured.err, caplog.text)
+    assert [json.loads(line) for line in captured.out.splitlines()] == [
+        {
+            "severity": "ERROR",
+            "message": "unhandled_error",
+            "event": "unhandled_error",
+            "status_code": 500,
+            "error_class": "ValueError",
+            "error_code": "internal_error",
+        }
+    ]
+
+
+@contextmanager
+def served(app):
+    """Run ``app`` on a real uvicorn server, configured like the Dockerfile."""
+    sock = socket.socket()
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    # log_config=None leaves uvicorn's loggers propagating to the root logger,
+    # so caplog sees anything uvicorn would log, including tracebacks.
+    config = uvicorn.Config(
+        app, log_config=None, log_level="debug", access_log=False, lifespan="off"
+    )
+    server = uvicorn.Server(config)
+    thread = threading.Thread(target=server.run, kwargs={"sockets": [sock]})
+    thread.start()
+    try:
+        deadline = time.monotonic() + 10
+        while not server.started:
+            assert thread.is_alive() and time.monotonic() < deadline
+            time.sleep(0.01)
+        yield f"http://127.0.0.1:{port}"
+    finally:
+        server.should_exit = True
+        thread.join(10)
+        sock.close()
+
+
+def test_unhandled_error_never_reaches_the_uvicorn_traceback_logger(capsys, caplog):
+    caplog.set_level(logging.DEBUG)
+    with served(create_app(FakeAuth(), TurnEchoingStore())) as url:
+        response = httpx.get(
+            f"{url}/v1/scores", headers={"Authorization": "Bearer student-a"}
+        )
+
+    assert response.status_code == 500
+    captured = capsys.readouterr()
+    assert_content_free(response.text, captured.out, captured.err, caplog.text)
+    assert "Exception in ASGI application" not in caplog.text
+    assert '"error_class": "ValueError"' in captured.out
+
+
+class InputEchoingAuth(FakeAuth):
+    """A provider failure whose message echoes the request body (synthetic)."""
+
+    def exchange(self, credential):
+        raise ValueError(f"provider rejected credential {credential!r}")
+
+
+def test_a_failing_request_never_logs_or_echoes_its_body(capsys, caplog):
+    caplog.set_level(logging.DEBUG)
+    with served(create_app(InputEchoingAuth(), FakeStore())) as url:
+        response = httpx.post(
+            f"{url}/v1/auth/google", json={"credential": SYNTHETIC_TURN}
+        )
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Internal server error."}
+    captured = capsys.readouterr()
+    assert_content_free(response.text, captured.out, captured.err, caplog.text)
+    assert "Exception in ASGI application" not in caplog.text
+    assert [json.loads(line) for line in captured.out.splitlines()] == [
+        {
+            "severity": "ERROR",
+            "message": "unhandled_error",
+            "event": "unhandled_error",
+            "status_code": 500,
+            "error_class": "ValueError",
+            "error_code": "internal_error",
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("fail_erase", "overdue", "expected"),
+    [
+        (False, False, ({"completed": 1, "failed": 0, "overdue": 0}, "INFO", 0)),
+        (True, False, ({"completed": 0, "failed": 1, "overdue": 0}, "ERROR", 1)),
+        (False, True, ({"completed": 1, "failed": 0, "overdue": 1}, "ERROR", 1)),
+    ],
+)
+def test_deletion_sweep_logs_the_counts_the_alert_metrics_filter_on(
+    capsys, fail_erase, overdue, expected
+):
+    from datetime import timedelta
+
+    from cst_accounts.main import run_sweep
+
+    counts, severity, exit_code = expected
+    auth, store = FakeAuth(), FakeStore()
+    now = datetime.now(UTC)
+    store.request_deletion("student-a", now - timedelta(days=31 if overdue else 0))
+    store.fail_erase = fail_erase
+
+    assert run_sweep(auth, store, now) == exit_code
+
+    out = capsys.readouterr().out
+    assert "student-a" not in out
+    # infra/accounts/main.tf metrics filter on jsonPayload.event, .failed,
+    # .overdue and severity, so these must stay top-level.
+    assert [json.loads(line) for line in out.splitlines()] == [
+        {
+            "severity": severity,
+            "message": "account_deletion_sweep",
+            "event": "account_deletion_sweep",
+            **counts,
+        }
+    ]
+
+
+def test_a_crashing_deletion_sweep_logs_only_its_class_and_fails_the_job(capsys):
+    from cst_accounts.main import run_sweep
+
+    class ProviderLeakingStore(FakeStore):
+        def due_deletions(self, now):
+            raise RuntimeError("provider said: student-a@example.com")
+
+    assert run_sweep(FakeAuth(), ProviderLeakingStore(), datetime.now(UTC)) == 1
+
+    captured = capsys.readouterr()
+    assert "example.com" not in captured.out + captured.err
+    assert "Traceback" not in captured.out + captured.err
+    # A different event, so the missing-sweep alert does not count a crash as a
+    # completed sweep, and ERROR severity, which the failure metric counts.
+    assert json.loads(captured.out) == {
+        "severity": "ERROR",
+        "message": "account_deletion_sweep_crashed",
+        "event": "account_deletion_sweep_crashed",
+        "error_class": "RuntimeError",
+        "error_code": "sweep_crashed",
+    }
