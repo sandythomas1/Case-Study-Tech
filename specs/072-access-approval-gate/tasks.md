@@ -1,6 +1,6 @@
 # Tasks: Owner approval gate (#72)
 
-Status: in progress
+Status: done
 
 - [x] T1 @implementer: domain model (FR-1). `AccessState`, `Profile` (name and email hidden from repr), `ProfileUnusable`, and the `AccessNotApproved` and `AccessDenied` exceptions.
 - [x] T2 @implementer: `FirebaseIdentity.profile` (FR-3, D3). Verified email required; name NFC-normalized with controls and invisible format characters stripped; 403 `profile_unusable`.

@@ -65,3 +65,13 @@
 - Lead fixed D1: the transaction no longer reads access/{uid}. Stress run: 15 of 15 passed. D2 had already been fixed. Final: 299 passed, rules 9/9, ci 196 OK. Demo re-recorded on the final code and its frames checked.
 
 ## Phase 6 — Ship
+- Committed only #72's files (4b91dc2). Pushed feature/72-access-approval-gate. Demo published to pr-media at d06d502.
+- PR #136 opened into dev with the Demo section first. Board: Agent Review, then a progress comment on #72 quoting T4 and T5.
+- CI: all 8 jobs green. Merged into dev at 2026-11-24T22:39:40Z as 152b888, under the owner's "One-time merge exception". Board: Done in Dev.
+- The merge cleared #31's last blocker: #31 moved Backlog → Ready (Human Review Reviewed). It also cleared #73's only blocker: #73 moved Backlog → Ready (Human Review still Pending). Both got a comment.
+- Plan files for 072 and 027 removed in a docs PR.
+
+## Phase 7 — Learn and close
+- Lessons appended to the shared memory: Firestore emulator transaction deadlock; exhausted transaction retries surface as ValueError.
+- Final roster: lead, security-reviewer (threat model, audit), policy-reviewer, qa-tester. Dispatches: 5 (qa ×2 including one SendMessage continuation, security ×2, policy ×1).
+- Status: done.
