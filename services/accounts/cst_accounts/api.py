@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 
+from .content_free_log import ContentFreeErrors
 from .domain import (
     AccountStore,
     DeletionPending,
@@ -43,6 +44,9 @@ def create_app(
 ) -> FastAPI:
     """Construct the app without creating credentials or connecting to cloud."""
     app = FastAPI(title="CaseStudy Tech Accounts", docs_url=None, redoc_url=None)
+    # Added first, so it is the innermost middleware: its 500 still passes
+    # through the CORS and no-store middleware below, like every other response.
+    app.add_middleware(ContentFreeErrors)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(origins),
