@@ -1,6 +1,6 @@
 # Tasks: Content-free logging helper (#63)
 
-Status: in progress · Branch: `feature/63-content-free-logging` from origin/dev db68e91
+Status: done · Branch: `feature/63-content-free-logging` from origin/dev db68e91
 
 ## @implementer (one batch)
 - [x] T1 (FR-1, FR-2, FR-3, AC1) `services/accounts/cst_accounts/content_free_log.py`: stdlib only,

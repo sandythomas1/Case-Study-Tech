@@ -45,3 +45,12 @@
 - D1c PENDING implementer fix round 2 (final): exception groups, exact-path exemption + sys stream attribute/os.write, nested shlex. Routing: #31's websocket handler inherits the middleware and will likely use task groups.
 - Accepted without fix: hyphen-slug scenario_id (catalogue-sourced), importlib/__import__/os-level evasions (deliberate, documented residual).
 - D1c DONE implementer round 2: groups rebuilt under a fixed message (deviation: split() copies the message, so a plain re-raise leaked; caught by its test), exact-path exemption, sys stream refs + os.write, nested shlex. Lead re-ran: accounts 202/5 skip, session 199; clean; copies identical. Demo re-recorded on the final tree.
+
+## Phase 6 — Ship
+- Commit 913cfaa on `feature/63-content-free-logging`, pushed. Demo on pr-media 3df0847.
+- PR #131 into dev (Deep review: owner merges). #63 → Agent Review; progress comment 7122932279.
+
+## Phase 7 — Learn and close
+- Lessons appended: "A FastAPI exception handler does not stop uvicorn logging the traceback"; "ExceptionGroup.split() copies the group's message onto both halves"; "An independent security re-check after a fix round paid for itself".
+- Final roster: implementer (3 dispatches: build + 2 fix rounds), qa-tester (1), security-reviewer (2: audit + re-check), policy-reviewer (1). 7 dispatches total. Owner decisions: 3 (Reviewed on #63, placement, allow-list counts).
+- After merge: delete docs/current_feature_plans/063-content-free-logging.md and set #63 Done in Dev.
