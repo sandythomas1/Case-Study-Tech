@@ -1,6 +1,7 @@
 """Real Identity Platform adapter. API keys stay on this server."""
 
 import logging
+import unicodedata
 from typing import Any
 from urllib.parse import urlencode
 
@@ -9,7 +10,39 @@ from firebase_admin import App, auth
 from firebase_admin.exceptions import FirebaseError
 from pydantic import ValidationError
 
-from .domain import DeletionPending, Rejected, Student, Tokens, Unavailable
+from .domain import (
+    DeletionPending,
+    Profile,
+    ProfileUnusable,
+    Rejected,
+    Student,
+    Tokens,
+    Unavailable,
+)
+
+# RFC 5321 path limit and a generous display-name bound. Longer claims are
+# rejected rather than truncated, so a stored value is always the real one.
+MAX_EMAIL = 320
+MAX_DISPLAY_NAME = 256
+# Joiners shape Indic scripts and emoji, so they stay. Every other control or
+# format character (bidi overrides, zero-width space, BOM) is removed.
+_KEPT_FORMAT = {"\u200c", "\u200d"}
+
+
+def display_name(raw: str) -> str:
+    """NFC-normalize a name, drop invisible format characters, fold controls.
+
+    Line breaks and other controls become spaces, so "A<CR><LF>B" is "A B".
+    """
+    normalized = unicodedata.normalize("NFC", raw)
+    kept = []
+    for c in normalized:
+        category = unicodedata.category(c)
+        if category in {"Cc", "Zl", "Zp"}:
+            kept.append(" ")
+        elif category != "Cf" or c in _KEPT_FORMAT:
+            kept.append(c)
+    return " ".join("".join(kept).split())
 
 
 def _reports_disabled(response: httpx.Response) -> bool:
@@ -44,7 +77,8 @@ class FirebaseIdentity:
         logging.getLogger("httpx").setLevel(logging.WARNING)
         logging.getLogger("httpcore").setLevel(logging.WARNING)
 
-    def verify(self, token: str) -> Student:
+    def _claims(self, token: str) -> dict[str, Any]:
+        """Verified claims of a non-revoked Google ID token, or Rejected."""
         try:
             claims = auth.verify_id_token(token, app=self.app, check_revoked=True)
         except (
@@ -66,7 +100,34 @@ class FirebaseIdentity:
             or firebase_claims.get("sign_in_provider") != "google.com"
         ):
             raise Rejected()
-        return Student(uid=uid)
+        return claims
+
+    def verify(self, token: str) -> Student:
+        return Student(uid=self._claims(token)["uid"])
+
+    def profile(self, token: str) -> Profile:
+        """The verified name and Google email, never values a client supplied.
+
+        The name is free text that #73, #74 and #76 will show the owner, so it is
+        normalized and stripped of control and invisible direction characters.
+        Consumers must still escape it, and never put it in a mail header or URL.
+        """
+        claims = self._claims(token)
+        email, name = claims.get("email"), claims.get("name", "")
+        if (
+            not isinstance(email, str)
+            or not 3 <= len(email) <= MAX_EMAIL
+            or "@" not in email
+            or any(c.isspace() or not c.isprintable() for c in email)
+            or claims.get("email_verified") is not True
+        ):
+            raise ProfileUnusable()
+        if not isinstance(name, str):
+            raise ProfileUnusable()
+        name = display_name(name)
+        if len(name) > MAX_DISPLAY_NAME:
+            raise ProfileUnusable()
+        return Profile(uid=claims["uid"], display_name=name, email=email)
 
     def _tokens(self, url: str, **kwargs: Any) -> dict[str, Any]:
         try:

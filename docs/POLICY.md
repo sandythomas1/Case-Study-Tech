@@ -236,3 +236,4 @@ SSO, LMS or EHR integration, billing or payments; other disciplines and language
 | A student's own real distress goes undetected | ETH-3 | Before institutional use |
 | Name and email are kept beyond RC-04's "scores only" | DAT-2 | At the FERPA review (ETH-6) |
 | A saved transcript may record a student's own real distress (ETH-3) | DAT-1 | Before real students' transcripts are stored |
+| A denied student can delete their account, sign in again and request access again, because deletion erases the access record (owner, 2026-11-24, #72) | ACC-6, DAT-3 | Before real students are enabled |

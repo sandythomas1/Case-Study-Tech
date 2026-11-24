@@ -15,6 +15,10 @@ from fastapi.testclient import TestClient
 
 from cst_accounts.api import create_app
 
+# Synthetic accounts only (POLICY ACC-9). student-a and student-b are
+# pre-approved test accounts; student-new has never requested access.
+SYNTHETIC_ACCOUNTS = {"student-a", "student-b", "student-new"}
+
 
 class FakeAuth:
     def __init__(self):
@@ -27,9 +31,17 @@ class FakeAuth:
 
         if self.unavailable:
             raise Unavailable()
-        if token not in {"student-a", "student-b"} or token in self.disabled:
+        if token not in SYNTHETIC_ACCOUNTS or token in self.disabled:
             raise Rejected()
         return Student(uid=token)
+
+    def profile(self, token):
+        from cst_accounts.domain import Profile
+
+        uid = self.verify(token).uid
+        return Profile(
+            uid=uid, display_name=f"Synthetic {uid}", email=f"{uid}@test.invalid"
+        )
 
     def exchange(self, credential):
         from cst_accounts.domain import DeletionPending, Tokens
@@ -72,6 +84,8 @@ class FakeStore:
                 {"scenario_id": "resistant", "overall": 4.0, "categories": [4] * 6}
             ],
         }
+        self.access = {"student-a": "approved", "student-b": "approved"}
+        self.access_unavailable = False
         self.requests = {}
         self.erased = []
         self.fail_erase = False
@@ -79,6 +93,24 @@ class FakeStore:
 
     def pending(self, uid):
         return uid in self.requests
+
+    def access_state(self, uid):
+        from cst_accounts.domain import AccessState, Unavailable
+
+        if self.access_unavailable:
+            raise Unavailable()
+        return AccessState(self.access.get(uid, "missing"))
+
+    def request_access(self, profile, now):
+        from cst_accounts.domain import AccessDenied, AccessState, DeletionPending
+
+        # Mirrors the Firestore transaction: the marker is re-read at create time.
+        if self.pending(profile.uid):
+            raise DeletionPending()
+        state = self.access.setdefault(profile.uid, "pending")
+        if state == "denied":
+            raise AccessDenied()
+        return AccessState(state)
 
     def scores(self, uid):
         return self.records.get(uid, [])
@@ -102,12 +134,13 @@ class FakeStore:
 
         self.retry_after[uid] = now + timedelta(hours=1)
 
-    def erase_scores(self, uid):
+    def erase_student_data(self, uid):
         from cst_accounts.domain import Unavailable
 
         if self.fail_erase:
             raise Unavailable()
         self.records.pop(uid, None)
+        self.access.pop(uid, None)
         self.erased.append(uid)
 
     def complete_deletion(self, uid, now):

@@ -92,7 +92,7 @@ def main() -> None:
     print(
         "PASS: deleted account/scores, retained denial marker, met deadline, preserved other owner."
     )
-    store.erase_scores(fixture["keep"])
+    store.erase_student_data(fixture["keep"])
     auth.delete_user(fixture["keep"], app=app)
     marker.reference.delete()
     args.fixture.unlink()

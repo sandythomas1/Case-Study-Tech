@@ -5,12 +5,26 @@ service cloud.firestore {
       return request.auth != null
         && request.auth.uid == uid
         && request.auth.token.firebase.sign_in_provider == 'google.com'
-        && !exists(/databases/$(database)/documents/account_deletions/$(uid));
+        && !exists(/databases/$(database)/documents/account_deletions/$(uid))
+        && approved(uid);
+    }
+    // Owner approval (#72, ACC-7). A missing, malformed, pending or denied
+    // record reads nothing. exists() first, so a missing record fails closed
+    // explicitly rather than through an evaluation error.
+    function approved(uid) {
+      return exists(/databases/$(database)/documents/access/$(uid))
+        && get(/databases/$(database)/documents/access/$(uid)).data.get('state', '') == 'approved';
     }
     match /students/{studentId}/scores/{scoreId} {
       allow read: if activeOwner(studentId);
       // Only the trusted grading service can write approved scores.
       allow write: if false;
+    }
+    // Server-only: holds the requester's name and email (DAT-2). The accounts
+    // service reads and writes it with Admin credentials. Rules OR together, so
+    // never add an allow here: an owner read would expose name and email.
+    match /access/{uid} {
+      allow read, write: if false;
     }
     match /{document=**} { allow read, write: if false; }
   }

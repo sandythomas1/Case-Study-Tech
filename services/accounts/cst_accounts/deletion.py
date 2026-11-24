@@ -15,7 +15,7 @@ def process_deletions(
         overdue += int(now >= request.deadline)
         try:
             auth.disable(request.uid)
-            store.erase_scores(request.uid)
+            store.erase_student_data(request.uid)
             auth.delete(request.uid)
             store.complete_deletion(request.uid, now)
             completed += 1
