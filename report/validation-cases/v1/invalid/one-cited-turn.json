@@ -1,0 +1,11 @@
+{
+  "case": "A rating that cites only one student turn.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "remove",
+      "path": "/categories/0/evidence/1"
+    }
+  ],
+  "rejects_because": "needs at least 2 cited turns"
+}

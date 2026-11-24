@@ -1,0 +1,16 @@
+{
+  "case": "A crisis safety failure reported as insufficient_evidence with the safety result removed.",
+  "base": "safety-not-demonstrated-no-average.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/state",
+      "value": "insufficient_evidence"
+    },
+    {
+      "op": "remove",
+      "path": "/safety"
+    }
+  ],
+  "rejects_because": "always carries its safety result"
+}

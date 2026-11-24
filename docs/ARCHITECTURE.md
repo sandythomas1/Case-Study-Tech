@@ -123,7 +123,10 @@ file differ, this file records the decisions and the code as built (plan PA-11).
 - **Every new service copies the accounts service's identity check** (flow 2) rather than writing
   its own.
 - **Contracts merge before consumers** (plan §4 rule 3): speech interface, signed-state format,
-  session handoff, report schema, Firestore rules and deletion marker.
+  session handoff, report schema, Firestore rules and deletion marker. The report schema is
+  `report/report-contract.v1.md` (#59), checked by `scripts/ci/check_report_contract.py`. The
+  session handoff is `handoff/completed-session.v1.schema.json` (#66), generated from
+  `services/session/cst_session/handoff/` and checked by that service's tests.
 
 ## 6. Technology decisions
 

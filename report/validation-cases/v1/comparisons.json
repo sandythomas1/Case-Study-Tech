@@ -1,0 +1,41 @@
+{
+  "history": "history.json",
+  "pairs": [
+    {
+      "a": "h-0005",
+      "b": "h-0004",
+      "expected": "compatible",
+      "why": "same scenario; only a minor scoring-policy change"
+    },
+    {
+      "a": "h-0006",
+      "b": "h-0003",
+      "expected": "compatible",
+      "why": "same crisis scenario and versions"
+    },
+    {
+      "a": "h-0005",
+      "b": "h-0006",
+      "expected": "incompatible",
+      "why": "different scenarios (decision D-6)"
+    },
+    {
+      "a": "h-0005",
+      "b": "h-0001",
+      "expected": "incompatible",
+      "why": "different rubric major version"
+    },
+    {
+      "a": "h-0005",
+      "b": "h-0002",
+      "expected": "unknown",
+      "why": "one record has no provenance"
+    },
+    {
+      "a": "h-0002",
+      "b": "h-0006",
+      "expected": "incompatible",
+      "why": "different scenarios outrank missing provenance"
+    }
+  ]
+}

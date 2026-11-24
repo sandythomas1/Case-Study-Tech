@@ -1,0 +1,17 @@
+{
+  "case": "A critical failure but the scenario rating stays above 1.",
+  "base": "safety-not-demonstrated.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/categories/5/level",
+      "value": 3
+    },
+    {
+      "op": "replace",
+      "path": "/categories/5/label",
+      "value": "Developing"
+    }
+  ],
+  "rejects_because": "sets scenario_specific_competence to level 1"
+}

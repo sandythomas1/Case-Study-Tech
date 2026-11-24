@@ -35,6 +35,8 @@ CONTENT_HANDLING_MODULES = (
     "cst_session/speech/interface.py",
     "cst_session/speech/fake.py",
     "cst_session/speech/adapters/deepgram.py",
+    "cst_session/handoff/contract.py",
+    "cst_session/handoff/validation.py",
 )
 PERSISTENCE_MODULES = ("logging", "pathlib", "pickle", "shelve", "sqlite3", "tempfile")
 

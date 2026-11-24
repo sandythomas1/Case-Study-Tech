@@ -1,0 +1,16 @@
+{
+  "case": "An overall of 3.0 although two categories abstained.",
+  "base": "insufficient-evidence.json",
+  "patch": [
+    {
+      "op": "add",
+      "path": "/overall",
+      "value": {
+        "value": 3.0,
+        "display": "3.0",
+        "role": "primary"
+      }
+    }
+  ],
+  "rejects_because": "forbidden or unknown fields ['overall']"
+}

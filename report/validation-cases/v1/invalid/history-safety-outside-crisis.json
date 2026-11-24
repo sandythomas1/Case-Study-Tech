@@ -1,0 +1,12 @@
+{
+  "case": "A non-crisis history entry carries a safety result.",
+  "base": "history.json",
+  "patch": [
+    {
+      "op": "add",
+      "path": "/entries/1/safety_result",
+      "value": "met"
+    }
+  ],
+  "rejects_because": "safety_result"
+}

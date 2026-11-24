@@ -1,0 +1,16 @@
+{
+  "case": "A failed attempt carries an overall.",
+  "base": "failed-grading.json",
+  "patch": [
+    {
+      "op": "add",
+      "path": "/overall",
+      "value": {
+        "value": 3.0,
+        "display": "3.0",
+        "role": "primary"
+      }
+    }
+  ],
+  "rejects_because": "forbidden or unknown fields"
+}

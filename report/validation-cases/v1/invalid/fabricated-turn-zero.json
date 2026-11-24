@@ -1,0 +1,12 @@
+{
+  "case": "A strength cites turn 0.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/strengths/0/evidence/0/turn",
+      "value": 0
+    }
+  ],
+  "rejects_because": "a fabricated turn"
+}

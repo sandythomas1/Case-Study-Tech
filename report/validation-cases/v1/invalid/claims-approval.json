@@ -1,0 +1,12 @@
+{
+  "case": "Provenance claims an approved rubric.",
+  "base": "scored-standard.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/provenance/rubric/approval_status",
+      "value": "approved"
+    }
+  ],
+  "rejects_because": "never claim approval"
+}

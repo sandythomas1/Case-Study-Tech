@@ -1,0 +1,20 @@
+{
+  "contract": "cst.report",
+  "contract_version": "1.0.0",
+  "synthetic": true,
+  "state": "failed",
+  "scenario": {
+    "id": "resistant_client",
+    "version": "1.0.0"
+  },
+  "modality": "text",
+  "failure": {
+    "reason": "evidence_check",
+    "conversation_available": true
+  },
+  "score_record_saved": false,
+  "actions": [
+    "retry_grading",
+    "new_practice"
+  ]
+}

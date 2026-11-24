@@ -1,0 +1,12 @@
+{
+  "case": "An insufficient-evidence report claims a saved score record.",
+  "base": "insufficient-evidence.json",
+  "patch": [
+    {
+      "op": "replace",
+      "path": "/score_record_saved",
+      "value": true
+    }
+  ],
+  "rejects_because": "score_record_saved must be false"
+}
