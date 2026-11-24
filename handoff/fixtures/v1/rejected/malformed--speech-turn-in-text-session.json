@@ -1,0 +1,60 @@
+{
+  "contract": "cst.completed_session",
+  "contract_version": "1.0.0",
+  "session_id": "00000000-0000-4000-8000-000000000101",
+  "owner_uid": "synthStudent0001",
+  "scenario": {
+    "id": "routine_intake",
+    "version": "1.0.0"
+  },
+  "modality": "text",
+  "status": "completed",
+  "ended_by": "student",
+  "duration_ms": 77000,
+  "turns": [
+    {
+      "index": 1,
+      "speaker": "student",
+      "text": "Hi, I'm the counselor you'll be meeting with today. What brings you in?",
+      "at_ms": 0,
+      "input": "speech",
+      "uncertain_recognition": false,
+      "conduct_warning": false
+    },
+    {
+      "index": 2,
+      "speaker": "client",
+      "text": "Synthetic client line: I've been sleeping badly since I started the new job.",
+      "at_ms": 9000
+    },
+    {
+      "index": 3,
+      "speaker": "student",
+      "text": "That sounds tiring. Tell me more about what the nights are like.",
+      "at_ms": 21000,
+      "input": "text",
+      "uncertain_recognition": false,
+      "conduct_warning": false
+    },
+    {
+      "index": 4,
+      "speaker": "client",
+      "text": "Synthetic client line: I lie awake making lists for the next day.",
+      "at_ms": 33000
+    },
+    {
+      "index": 5,
+      "speaker": "student",
+      "text": "So your mind keeps working after the day is over. Did I get that right?",
+      "at_ms": 47000,
+      "input": "text",
+      "uncertain_recognition": false,
+      "conduct_warning": false
+    }
+  ],
+  "conduct": {
+    "warnings": 0
+  },
+  "crisis": null,
+  "save_transcript": true
+}

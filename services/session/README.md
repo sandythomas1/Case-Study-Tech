@@ -1,8 +1,8 @@
 # Session service
 
 Holds the practice-session logic (ARCHITECTURE §3). So far it contains the replaceable speech
-provider interface from #64 and the Deepgram bake-off adapter from #101. The HTTP layer, signed
-state and persona turns come with #31.
+provider interface from #64, the Deepgram bake-off adapter from #101 and the completed-session
+handoff contract from #66. The HTTP layer, signed state and persona turns come with #31.
 
 ## Layout
 
@@ -14,6 +14,10 @@ state and persona turns come with #31.
 | `cst_session/speech/adapters/` | Vendor adapters. The only place a vendor speech SDK or `websockets` may be imported (`tests/test_speech_import_boundary.py`) |
 | `cst_session/speech/adapters/deepgram.py` | `DeepgramSpeechProvider`: Flux speech-to-text and Aura-2 text-to-speech, a #20 bake-off candidate (#101). Synthetic data only, see `docs/decisions/speech-deepgram.md` |
 | `cst_session/speech/adapters/deepgram_transport.py` | The adapter's network transport, over `websockets` and `httpx` |
+| `cst_session/handoff/contract.py` | The completed-session handoff models, version 1.0.0. The payload the grader accepts (#66, `handoff/README.md`) |
+| `cst_session/handoff/validation.py` | `parse_handoff` and `validate_handoff`: accept a completed session or raise `HandoffRejected` with one fixed reason, logging content-free. `encode_handoff` writes the body the session service sends |
+| `cst_session/handoff/export.py` | Writes `handoff/completed-session.v1.schema.json`. Run `uv run python -m cst_session.handoff.export` after changing the models |
+| `tests/test_handoff_contract.py`, `tests/test_handoff_logging.py`, `tests/test_handoff_schema.py` | Run every fixture in `handoff/fixtures/v1/`, prove validation logs no turn text or UID, and fail when the committed schema is stale |
 | `cst_session/content_free_log.py` | The content-free logging helper. A byte-identical copy of the accounts service's canonical module; see "Logging" |
 | `tests/test_content_free_log_copies.py` | Fails when this copy drifts from `services/accounts/cst_accounts/content_free_log.py` |
 | `tests/test_logging_calls.py` | Fails on a root-logger lookup or a direct `sys.stdout`/`sys.stderr` write outside the helper |
