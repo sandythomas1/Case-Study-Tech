@@ -75,7 +75,7 @@ real transcripts once Phase 3 lands (§4).
 | Phase | Goal / Increment | Primary SDD Sources | Key Deliverables | Depends On | Candidate Issues |
 |---|---|---|---|---|---|
 | 1 | Foundation & access — an approved student signs in, browses the three scenarios, reviews preparation info and can delete their account | US-01, US-02, RC-01, RC-02, RC-04, RC-06, RC-13, RC-14, RC-22, DD-05, DD-06, DD-09, PA-12 | RN shell (web/iOS/Android), accounts service with Google sign-in, owner approval gate with admin queue, Terraform GCP baseline, Gateway + Cloud Run, Firestore owner rules, account deletion, Secret Manager, content-free logging, scenario config incl. per-scenario time limit | None | 10 — §3.1 |
-| 2 | Provider & compliance spike — speech vendor chosen and zero-retention confirmed in writing | OQ-01, OQ-02, RC-05, RC-16, RISK-02, DD-04 | Provider comparison + decision record, Vertex zero-retention settings, replaceable speech interface | None (parallel to 1) | 5 — §3.2 |
+| 2 | Provider & compliance spike — speech vendor chosen and zero-retention confirmed in writing | OQ-01, OQ-02, RC-05, RC-16, RISK-02, DD-04 | Provider comparison + decision record, Agent Platform zero-retention settings, replaceable speech interface | None (parallel to 1) | 5 — §3.2 |
 | 3 | Practice session — timed voice-first session with text, persona replies, End session, offline check | US-03, US-04, RC-03, RC-07, RC-10, RC-12, DD-01, DD-08 | Session service, persona prompts, voice + text UI, timer, transient state | 1; 2 for voice | 6 — §3.3 |
 | 4 | Safety & recovery — conduct safeguards, recovery paths, crisis disclosures that do not end the session | US-05, US-06, RC-08, RC-19, RC-20, RISK-04 | Conduct safeguard, recovery flows, labeled safeguard test set | 3 | 6 — §3.4 |
 | 5 | Grading & report — evidence-linked report with crisis override, passing the calibration gate | US-07, US-08, RC-09, RC-10, RC-17, RC-18, RC-19, OQ-05, RISK-01 | Anchor spec, separate grader, citation validation, calibration set, report UI, on-device export | 1 (synthetic); 3 for integration | 7 — §3.5 |
@@ -195,7 +195,7 @@ replaceable interface.
 #### Source Requirements / Design References
 
 OQ-01, OQ-02 · RC-05, RC-06, RC-16 · DD-01, DD-04, DD-08, DD-09 · RISK-02 · PA-2, PA-3 ·
-Architecture: speech APIs and Vertex AI persona and scoring inference (Fig. 1).
+Architecture: speech APIs and Agent Platform persona and scoring inference (Fig. 1).
 
 #### Deliverables
 
@@ -206,7 +206,7 @@ Architecture: speech APIs and Vertex AI persona and scoring inference (Fig. 1).
   quality ratings and cost per 10-minute session.
 - A provider decision record (ADR) covering latency p50/p95, quality, cost, availability and
   data-use terms, with the decision and the rejected option.
-- A Vertex AI data-governance record listing models, region, zero-retention settings and
+- An Agent Platform data-governance record listing models, region, zero-retention settings and
   abuse-monitoring logging status. The record points to where the written confirmations are kept.
   Signed vendor documents stay out of the repo.
 
@@ -215,7 +215,7 @@ Architecture: speech APIs and Vertex AI persona and scoring inference (Fig. 1).
 - The chosen provider meets p50 ≤ 2.0 s and p95 ≤ 3.5 s round-trip latency, measured over at least
   30 scripted synthetic turns (PA-2, RISK-02).
 - Written zero-retention and no-training terms are on file for the chosen speech provider and each
-  Vertex AI model. For any that are missing, the record marks real-student use as blocked (RC-05,
+  Agent Platform model. For any that are missing, the record marks real-student use as blocked (RC-05,
   PA-3).
 - A contract test passes against both the fake and the chosen adapter. Swapping providers changes
   only adapter code (RC-16).
@@ -230,14 +230,14 @@ work in Phase 3 cannot start until the decision record merges.
 
 #### Relevant UI/UX Artifacts
 
-Fig. 1: speech API and Vertex AI boxes and the zero-retention note. This phase has no screens.
+Fig. 1: speech API and Agent Platform boxes and the zero-retention note. This phase has no screens.
 
 #### Candidate GitHub Issues
 
 - Define the replaceable speech provider interface and its fake
 - Benchmark OpenAI and Google speech for latency, quality and cost
-- Obtain written zero-retention and no-training terms for speech and Vertex AI
-- Configure Vertex AI for zero data retention and record the settings
+- Obtain written zero-retention and no-training terms for speech and Agent Platform
+- Configure Agent Platform for zero data retention and record the settings
 - Record the speech provider decision as an ADR
 
 ### 3.3 Phase 3 — Practice session
@@ -251,14 +251,14 @@ scores appear, and no session content persists.
 #### Source Requirements / Design References
 
 US-03, US-04 · RC-03, RC-07, RC-10, RC-12, RC-13 · DD-01, DD-02, DD-08 · PA-3, PA-5 ·
-Architecture: session service, Vertex AI persona inference, speech APIs, temporary conversation
+Architecture: session service, Agent Platform persona inference, speech APIs, temporary conversation
 state (dashed path, Fig. 1).
 
 #### Deliverables
 
 - Session endpoints for start, turn and end. The server enforces the time limit from scenario config,
   and session state lives only in memory, discarded on end or abandon.
-- A persona prompt harness with three vetted persona prompts on Vertex AI. In the crisis persona, a
+- A persona prompt harness with three vetted persona prompts on Agent Platform. In the crisis persona, a
   disclosure is a turn and never a session end.
 - A text session screen with a remaining-time display and an End session control.
 - A voice check for connection and microphone readiness, and a voice session screen with text
@@ -292,7 +292,7 @@ voice session). Prototype states: offline, microphone denied.
 #### Candidate GitHub Issues
 
 - Run sessions with a server-enforced time limit and transient state
-- Drive the three vetted personas through a prompt harness on Vertex AI
+- Drive the three vetted personas through a prompt harness on Agent Platform
 - Build the text session screen with timer and End session
 - Build the voice check and voice session with text fallback
 - Hand completed transcripts to the grading service
@@ -376,14 +376,14 @@ immediately and can export it to the device. The grader passes the calibration g
 
 US-07, US-08 · RC-03, RC-09, RC-10, RC-17, RC-18, RC-19, RC-21 · DD-02, DD-03, DD-07 · RISK-01,
 RISK-03, RISK-05 · PA-4, PA-6, PA-10(a) · `docs/lab3/rubric-survey.md` · Architecture: grading
-and report service, Vertex AI rubric scoring (Fig. 1).
+and report service, Agent Platform rubric scoring (Fig. 1).
 
 #### Deliverables
 
 - A rubric anchor spec. It gives behavioral anchors for each category at each 1-to-5 level, plus
   the developmental labels students see, the MI principles for the resistant-client scenario and the
   crisis critical-failure criteria. It cites free instruments only (PA-4).
-- A grading service: a separate Cloud Run FastAPI service with its own Vertex AI rubric prompt. It
+- A grading service: a separate Cloud Run FastAPI service with its own Agent Platform rubric prompt. It
   accepts only complete transcripts. Code computes the overall score from the RC-17 weights; the
   model does not.
 - Evidence validation. Every cited turn must exist in the transcript and support its claim. A failed
@@ -589,9 +589,9 @@ Inside lane 2, these Issues are independent of each other and can be taken in an
 | Speech interface + fake | Service skeleton | Adapters and voice code target the interface (RC-16) | Phase 1 screens |
 | Provider benchmark → ADR | Speech interface | Latency gate decides the provider (PA-2) | Text session; persona harness |
 | Vendor zero-retention confirmations | Nothing — request day one | External and slow; release gate (PA-3) | Everything |
-| Vertex AI zero-retention config | GCP project | Persona and grader inference run on the configured project | Phase 1 work |
+| Agent Platform zero-retention config | GCP project | Persona and grader inference run on the configured project | Phase 1 work |
 | Session endpoints (timer, transient state) | Logging helper; scenario config; auth; OD-1 (resolved: ARCHITECTURE AD-1) | Server-enforced limit and no persistence (US-04, RC-03) | Calibration set |
-| Persona prompt harness | Session endpoints; Vertex config | Personas run inside the session service | Text session screen |
+| Persona prompt harness | Session endpoints; Agent Platform config | Personas run inside the session service | Text session screen |
 | Text session screen | Session endpoints; prep screens | Text is the baseline and the fallback (DD-08) | Persona harness; provider ADR |
 | Voice check + voice session | Provider ADR; text session screen | Voice needs the chosen provider and a working text fallback | Handoff contract |
 | Completed-session handoff contract | Session endpoints | Phase 5 integration builds against it | Persona harness; voice session |
@@ -612,7 +612,7 @@ Inside lane 2, these Issues are independent of each other and can be taken in an
 | Score history screen | Score record | Reads only the student's own scores | PDF export |
 | Accessibility audit | All Phase 3–6 UI | Final check across the core flow (RC-11, RC-12) | Parity check prep |
 | Parity check + release builds | Accessibility audit; all features | Same core flow on all three builds (RC-14, RC-15) | Release gate checklist drafting |
-| Production GCP project (#77) | Terraform baseline; Vertex zero-retention config | Real student data never shares a project or credentials with test data (AD-5) | Phases 3–6 work |
+| Production GCP project (#77) | Terraform baseline; Agent Platform zero-retention config | Real student data never shares a project or credentials with test data (AD-5) | Phases 3–6 work |
 | Release gate review | Everything above, incl. vendor confirmations and the production project | Last step before real student use (PA-3, PA-10) | Nothing |
 
 ## 5 GitHub Issue Decomposition Guidance
@@ -706,10 +706,10 @@ board fields for each change, and the NEW-n IDs used while it was proposed, are 
 | #19 | Verify zero-retention and no-training terms for AI and speech providers | 2 | RC-05, OQ-02, DD-04 | — (day one) | keep | Waits on vendors and blocks only the release. Feeds CD-1 and CD-2 |
 | #64 | Define the replaceable speech provider interface and its fake | 2 | RC-16, DD-09 | #18 | new | Contract for #20 and #43; includes the contract test |
 | #20 | Benchmark OpenAI and Google speech and record the provider ADR | 2 | OQ-01, RISK-02, PA-2 | #64; #19 only at the release gate (no link) | rewrite | The latency target is already set (PA-2). Measures from a device and web client (IR-3). Interface work moves to #64 |
-| #65 | Configure Vertex AI for zero data retention and record the governance settings | 2 | RC-05, DD-04, OD-2 | #18; #19 for terms status only (no link) | new | Settles OD-2 (which models). Signed vendor documents stay out of the repo |
+| #65 | Configure Agent Platform for zero data retention and record the governance settings | 2 | RC-05, DD-04, OD-2 | #18; #19 for terms status only (no link) | new | Settles OD-2 (which models). Signed vendor documents stay out of the repo |
 | #66 | Define the completed-session handoff contract | 3 | RC-09, RC-10, DD-02 | #63 | new | Phase 5 builds against it (§4 rule 3) |
 | #31 | Session service for lifecycle, persona turns, and time limits | 3 | US-04, RC-03, RC-09, RC-10 | #63, #66, #26, #27, **OD-1** | keep | Went back to Backlog for OD-1. OD-1 was resolved on 2026-10-31 (ARCHITECTURE AD-1: signed, client-held state), so only its Issue blockers remain |
-| #67 | Drive the three vetted personas through a prompt harness on Vertex AI | 3 | US-04, RC-19, DD-07 | #31, #65 | new | Split from #27. A crisis disclosure is a turn, never a session end |
+| #67 | Drive the three vetted personas through a prompt harness on Agent Platform | 3 | US-04, RC-19, DD-07 | #31, #65 | new | Split from #27. A crisis disclosure is a turn, never a session end |
 | #32 | Text conversation screen with timer and End session | 3 | US-03, US-04, RC-10, RC-12 | #29, #31 | keep | Holds the memory-only client turn store. Fig. 5 |
 | #43 | Voice mode with voice check and visible text fallback | 3 | US-03, DD-08 | #20 (ADR), #32 | keep | Stays in Backlog until the ADR merges (§4 rule 4). Fig. 5, 10; state: microphone denied |
 | #39 | Enforce session-data minimization across storage, logs, analytics, and crash reports | 3 | RC-03, DD-03 | #32, #43 | re-phase | End-to-end no-persistence proof. Adds no crash-reporting SDK (AG-3) |
@@ -765,7 +765,7 @@ expand the guardrails into the full agent policy.
 | ID | Trigger | Rule |
 |---|---|---|
 | CD-1 | Written speech-vendor terms are missing at the release gate | Swap to the alternate provider through the RC-16 interface, if its written terms are on file and it meets the PA-2 latency target. If it fails either check, hold the release. Only the owner may then accept a latency miss, as a recorded exception. A terms gap is never accepted (RC-05). |
-| CD-2 | Written Vertex AI terms are missing at the release gate | Hold the release. Personas and grading both run on Vertex AI, so there is nothing to swap (OQ-02). |
+| CD-2 | Written Agent Platform terms are missing at the release gate | Hold the release. Personas and grading both run on Agent Platform, so there is nothing to swap (OQ-02). |
 | CD-3 | The grader still fails the PA-10(a) gate after tuning | Spend one week tuning the anchor wording and the grader prompt. Labels never change. Then release only the scenarios that pass, with the failing ones flagged off in config. The 100% crisis-override rule is never relaxed. RC-22 allows a subset; this is a recorded exception to DD-07's "exactly three". |
 | CD-4 | Session time limit (PA-5, OQ-04) | 10 minutes for all three scenarios, set in config. |
 | CD-5 | Who labels the calibration set (PA-10) | A model family different from the grader's drafts each transcript to a target label from the anchor spec. The owner approves every label before grader work starts. |
@@ -779,7 +779,7 @@ No agent may guess these. The Issues that depend on them stay blocked until the 
 | ID | Decision | Decide by | Blocks |
 |---|---|---|---|
 | OD-1 | **Resolved 2026-10-31 (`docs/ARCHITECTURE.md` AD-1, AD-2).** The app holds the conversation and the session service signs it, so the services stay stateless. Rewind of a signed state is an accepted MVP risk. | Decided in the ARCHITECTURE.md interview | Nothing (it blocked the Phase 3 session endpoints) |
-| OD-2 | Which Vertex AI models run the personas and the grader, and so which family drafts the calibration set | Phase 2 data-governance record | Persona harness, grader, calibration set drafting |
+| OD-2 | Which Agent Platform models run the personas and the grader, and so which family drafts the calibration set | Phase 2 data-governance record | Persona harness, grader, calibration set drafting |
 | OD-3 | Which email provider sends the owner's access-request emails, with its data-use record (it receives only the requester's name and Google email; AG-3) | Before #74 starts | #74 owner notification email |
 
 ### 6.4 Agent guardrails

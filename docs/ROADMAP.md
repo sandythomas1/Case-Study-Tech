@@ -34,7 +34,7 @@ order, and its **Plan Phase** field puts each Issue in a phase.
 | # | Phase | Outcome when done | Needs first |
 |---|---|---|---|
 | 1 | Foundation & access | An approved student signs in on any platform, browses the three scenarios, reads the preparation screen and can delete their account. The services, infrastructure, security rules and content-free logging are in place. | Owner setup: GCP, OAuth clients, Apple account |
-| 2 | Provider & compliance spike | A speech provider is chosen on measured latency, quality and cost. Speech sits behind a replaceable interface. Vertex AI is set for zero retention, and written vendor terms have been requested. | Runs alongside Phase 1 |
+| 2 | Provider & compliance spike | A speech provider is chosen on measured latency, quality and cost. Speech sits behind a replaceable interface. Agent Platform is set for zero retention, and written vendor terms have been requested. | Runs alongside Phase 1 |
 | 3 | Practice session | A timed session with a vetted persona works by text and by voice. Nothing from it persists, and the complete transcript is handed to grading. | Phase 1; Phase 2's provider decision for voice only |
 | 4 | Safety & recovery | Conduct rules, voice-to-text recovery and lost-content handling work, and crisis disclosures never end the crisis scenario. The safeguards pass every labeled test case. | Phase 3 |
 | 5 | Grading & report | The grader produces a validated, evidence-linked report with the crisis override and passes the calibration gate. The report shows on screen and exports as a PDF on the device. | Phase 1 for the grader; Phase 3 to grade live sessions |
@@ -80,7 +80,7 @@ and stop.
 
 | ID | Decision | Holds up |
 |---|---|---|
-| OD-2 | Which Vertex AI models run the personas and the grader | Persona harness, grader, calibration drafting |
+| OD-2 | Which Agent Platform models run the personas and the grader | Persona harness, grader, calibration drafting |
 | OD-3 | Which email provider sends access-request emails | Owner notification email (#74) |
 
 Plan §6.3 tracks these. When one is decided, it is removed here.

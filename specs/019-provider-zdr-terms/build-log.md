@@ -13,7 +13,7 @@
 
 ## Dispatches
 - 10:50 SENT · general-purpose (research) → specs/019-provider-zdr-terms/research.md
-- DONE (by 10:55) · research: Vertex needs abuse-monitoring exemption or MA (ToS §4.3, 90-day flagged logs); Google STT/TTS can meet
+- DONE (by 10:55) · research: Agent Platform needs abuse-monitoring exemption or MA (ToS §4.3, 90-day flagged logs); Google STT/TTS can meet
   with settings; OpenAI file STT can meet by default, Realtime/TTS need ZDR approval. 8 UNVERIFIED items listed.
 - Lead wrote docs/decisions/provider-zero-retention.md (Draft, nothing confirmed or applied).
 - (research routing, 10:50: "Reduces the uncertainty about what each vendor's current published terms actually say (retention,
@@ -32,11 +32,11 @@
   - (4) Drop OpenAI.
   - (2) C, split the ACs.
   - (3) Chirp 3 runs in the `us` multi-region; recorded in ARCHITECTURE §6.
-  - (1) Published terms plus settings evidence for Google speech. One support case for the Vertex
+  - (1) Published terms plus settings evidence for Google speech. One support case for the Agent Platform
     exemption.
 - Lead edits:
   - Record: OpenAI rows collapsed to Dropped; setting 12 added; the written-terms rule added; the
-    request narrowed to one Vertex case; "Owner decisions" section added.
+    request narrowed to one Agent Platform case; "Owner decisions" section added.
   - ARCHITECTURE §6 Cloud row now has the Chirp 3 exception.
   - spec.md: ACs and the open question updated.
 - Created #115, "Confirm provider terms and apply zero-retention settings". It covers the confirmations,

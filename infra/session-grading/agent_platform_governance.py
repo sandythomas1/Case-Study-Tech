@@ -1,14 +1,14 @@
-"""Apply and verify the Vertex AI zero-retention settings that Terraform can't express (#65).
+"""Apply and verify the Agent Platform zero-retention settings that Terraform can't express (#65).
 
 The owner runs this script: changing the live project is owner work, like a deploy (AG-9).
 Authentication uses the current gcloud principal, so no service-account key is involved. The owner's account needs roles/aiplatform.admin
 for `disable-cache`; the read-only commands need only read access.
 
-    python vertex_governance.py disable-cache   # setting 1: PATCH cacheConfig, then verify it
-    python vertex_governance.py check           # settings 1, 2 and 3: read-only evidence
-    python vertex_governance.py probe           # location pin: one synthetic call per pinned model
+    python agent_platform_governance.py disable-cache   # setting 1: PATCH cacheConfig, then verify it
+    python agent_platform_governance.py check           # settings 1, 2 and 3: read-only evidence
+    python agent_platform_governance.py probe           # location pin: one synthetic call per pinned model
 
-It prints PASS/FAIL lines and a UTC timestamp to paste into docs/decisions/vertex-ai-governance.md.
+It prints PASS/FAIL lines and a UTC timestamp to paste into docs/decisions/agent-platform-governance.md.
 It never prints a model response, a request header or a token. The probe prompt is a fixed
 synthetic string with no session content (RC-03, PA-3).
 """
@@ -29,9 +29,9 @@ from pathlib import Path
 from typing import Any
 
 PROJECT = "casestudy-tech-dev-2e03d0"
-# Must match `local.vertex` in main.tf; test_vertex_governance.py fails if they drift.
+# Must match `local.agent_platform` in main.tf; test_agent_platform_governance.py fails if they drift.
 LOCATION = "us"
-# The `us` multi-region needs its `.rep.` host (Google's Vertex AI locations page). us-central1
+# The `us` multi-region needs its `.rep.` host (Google's Agent Platform locations page). us-central1
 # returned 404 for both models on 2026-11-23, so the owner's fallback applies (ARCHITECTURE §6).
 ENDPOINTS = {"us": "https://aiplatform.us.rep.googleapis.com"}
 ALLOWED_LOCATIONS = frozenset(ENDPOINTS)

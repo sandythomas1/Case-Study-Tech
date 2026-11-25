@@ -81,11 +81,11 @@ Derived without a question:
 
 Derived without a question:
 
-- A Vertex AI terms gap holds the release (CD-2), since there is no alternate.
+- An Agent Platform terms gap holds the release (CD-2), since there is no alternate.
 - Releasing a subset of scenarios fits RC-22 ("limited to") and is recorded as an exception to
   DD-07 ("exactly three"). The Phase 1 acceptance criterion now honors a per-scenario release flag.
 - Two decisions stay open. OD-1 (Cloud Run session state) goes to the ARCHITECTURE.md interview and
-  blocks Phase 3 session endpoints. OD-2 (Vertex AI models) is settled by the Phase 2 governance
+  blocks Phase 3 session endpoints. OD-2 (Agent Platform models) is settled by the Phase 2 governance
   record.
 
 ## Challenge 1 · Feature 2 — §5 / §5.1 Issue Decomposition and Backlog — 2026-10-30
@@ -157,7 +157,7 @@ Derived without a question:
 - The end-session route needs a gateway deadline and Cloud Run timeouts above the grading time
   (gateway default 15 s).
 - No Issue moved to Ready. #31 still waits on #27, #63 and #66, which are neither merged nor in a PR.
-- OD-2 (Vertex models) and the speech vendor and turn transport stay open. Phase 2 settles them.
+- OD-2 (Agent Platform models) and the speech vendor and turn transport stay open. Phase 2 settles them.
 - The production project has no Issue yet. That was flagged to the owner.
 
 ## Challenge 2 · Feature 2 — `docs/POLICY.md` — 2026-10-31

@@ -5,8 +5,9 @@ feedback. This file holds what every session needs. It points to the details and
 
 - **Stage:** Planning docs are on `dev`. No application code is merged yet. `services/accounts` and
   `apps/student` exist only in draft PRs #62 and #71.
-- **Stack:** Expo client; Python 3.12 + FastAPI on Cloud Run; Firestore; Vertex AI; GCP `us-central1`, except
-  Vertex AI Gemini (and Chirp 3, if used), which runs in the `us` multi-region, never `global`
+- **Stack:** Expo client; Python 3.12 + FastAPI on Cloud Run; Firestore; Gemini Enterprise Agent
+  Platform (formerly Vertex AI); GCP `us-central1`, except Agent Platform Gemini (and Chirp 3, if
+  used), which runs in the `us` multi-region, never `global`
   (ARCHITECTURE §6).
 - **Repo:** https://github.com/sandythomas1/Case-Study-Tech
 - **Board:** https://github.com/users/sandythomas1/projects/1 (Project #1)

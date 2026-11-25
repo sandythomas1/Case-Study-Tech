@@ -25,7 +25,7 @@ in the table below.
 | `cst-session` | `roles/secretmanager.secretAccessor` | `session-state-signing-key` secret only |
 | `cst-session` | `cstSessionIdentity`: `firebaseauth.users.get`, `datastore.databases.get`, `datastore.entities.get` | Project |
 | `cst-grading` | `cstGrading`: `datastore.databases.get`, `datastore.entities.get`, `datastore.entities.create` | Project |
-| `cst-session`, `cst-grading` | `cstVertexInvoke`: `aiplatform.endpoints.predict` | Project |
+| `cst-session`, `cst-grading` | `cstAgentPlatformInvoke`: `aiplatform.endpoints.predict` | Project |
 | `cst-build` (from `infra/accounts`) | `roles/artifactregistry.writer` | `practice` repository only |
 
 No primitive role, no `allUsers` invoker, no downloaded key. The session's read-only identity role
@@ -42,28 +42,28 @@ session) are enforced in service code and tests, not IAM. Server SDK calls bypas
 `infra/firestore.rules`. Grading must use `create()`, which also keeps a retried write from
 overwriting a score.
 
-`cstVertexInvoke` replaces `roles/aiplatform.user`, which also manages datasets, models, endpoints
+`cstAgentPlatformInvoke` replaces `roles/aiplatform.user`, which also manages datasets, models, endpoints
 and training jobs. It is also a zero-retention control: without `cachedContents.create` or
 `batchPredictionJobs.create`, neither service can create a context cache or a batch job. Adding any
-permission needs an owner decision and an update to `docs/decisions/vertex-ai-governance.md`.
+permission needs an owner decision and an update to `docs/decisions/agent-platform-governance.md`.
 
-## Vertex AI models and region (#65)
+## Gemini Enterprise Agent Platform models and region (#65)
 
-`local.vertex` in `main.tf` pins the region and the models (OD-2). Each service gets only its own
+`local.agent_platform` in `main.tf` pins the region and the models (OD-2). Each service gets only its own
 model:
 
 | Service | Env var | Value |
 |---|---|---|
-| `session`, `grading` | `CST_VERTEX_LOCATION` | `us`, the multi-region (never `global`) |
+| `session`, `grading` | `CST_AGENT_PLATFORM_LOCATION` | `us`, the multi-region (never `global`) |
 | `session` | `CST_PERSONA_MODEL` | `gemini-3.8-flash` |
 | `grading` | `CST_GRADER_MODEL` | `gemini-4-argon` |
 
 They are locals, so no tfvars or `-var` flag can change them. Neither model is served on
-`us-central1` (HTTP 404), so a Vertex client must call the `us` multi-region host
-`https://aiplatform.us.rep.googleapis.com` (ARCHITECTURE §6 exception). The project-wide Vertex
-settings that Terraform can't express are applied and checked by the owner with `vertex_governance.py`:
+`us-central1` (HTTP 404), so an Agent Platform client must call the `us` multi-region host
+`https://aiplatform.us.rep.googleapis.com` (ARCHITECTURE §6 exception). The project-wide Agent Platform
+settings that Terraform can't express are applied and checked by the owner with `agent_platform_governance.py`:
 `disable-cache` sets setting 1, `check` reads settings 1–3 (setting 2 counts a 404 only after a control read of the same model succeeds) and `probe` checks the location. It uses the owner's gcloud session and prints only PASS/FAIL lines.
-`docs/decisions/vertex-ai-governance.md` lists the steps and holds the evidence.
+`docs/decisions/agent-platform-governance.md` lists the steps and holds the evidence.
 
 Checks, offline:
 

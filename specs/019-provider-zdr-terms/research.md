@@ -10,21 +10,21 @@
   PA-3 and DAT-4 require (spec open question: whether published terms alone count is an owner call).
 - **Assumption:** the project's Google Cloud use is governed by the **online Google Cloud Platform
   Terms of Service** (self-serve billing), not a negotiated Google Cloud Master Agreement. If that is
-  wrong, the Vertex abuse-monitoring finding below changes in our favour.
+  wrong, the Agent Platform abuse-monitoring finding below changes in our favour.
 
 ## Summary
 
 | Provider / product | Training on our data | Retention by default | What breaks zero retention | Depends on | Provisional verdict |
 |---|---|---|---|---|---|
-| **Vertex AI (Gemini on Agent Platform)**: persona + grading | No, without our permission (SST §18) | Prompts not stored beyond what is needed to generate output (SST §20(h)). **But:** implicit cache ≤24 h (on by default, durable tier at rest); **abuse-monitoring logging of classifier-flagged prompts up to 90 days with possible human review** for online-terms customers | Durable/implicit cache unless disabled; explicit context caches; abuse-monitoring logging (online terms); Grounding with Google Search (3 days) / Maps (30 days); request-response logging; Interactions API `store` default `true`; Live API session resumption; Frontier models (Gemini 4 Carbon) log prompts+responses ≤30 days | Online ToS vs. Master Agreement (MA customers exempt by default) | **NEEDS AGREEMENT OR WRITTEN EXCEPTION** for abuse-monitoring logging; everything else **CAN MEET with settings** |
+| **Agent Platform (Gemini on Agent Platform)**: persona + grading | No, without our permission (SST §18) | Prompts not stored beyond what is needed to generate output (SST §20(h)). **But:** implicit cache ≤24 h (on by default, durable tier at rest); **abuse-monitoring logging of classifier-flagged prompts up to 90 days with possible human review** for online-terms customers | Durable/implicit cache unless disabled; explicit context caches; abuse-monitoring logging (online terms); Grounding with Google Search (3 days) / Maps (30 days); request-response logging; Interactions API `store` default `true`; Live API session resumption; Frontier models (Gemini 4 Carbon) log prompts+responses ≤30 days | Online ToS vs. Master Agreement (MA customers exempt by default) | **NEEDS AGREEMENT OR WRITTEN EXCEPTION** for abuse-monitoring logging; everything else **CAN MEET with settings** |
 | **Cloud Speech-to-Text v2 (Chirp 3)** | No, unless we opt in to data logging | Streaming/sync audio "in memory only", no customer data stored; batch transcripts ~5 days | Opting in to data logging; batch recognition | Default for any project (data logging is an opt-in) | **CAN MEET RC-05 WITH SETTINGS** (data logging off + streaming/sync only); written confirmation still needed for PA-3 |
 | **Cloud Text-to-Speech** (standard / Chirp 3 HD) | Not stated explicitly; nothing is logged | "Google does not log any customer Cloud TTS text or audio data"; service is stateless | Unclear for **Gemini-TTS** voices (may fall under Gemini abuse monitoring, UNVERIFIED) | Default | **CAN MEET RC-05 WITH SETTINGS** for non-Gemini voices; Gemini-TTS **UNVERIFIED** |
-| **Gemini Live / native audio on Vertex** (`gemini-3.8-live`, `gemini-live-2.5-flash-native-audio`) | Same as Vertex | Same as Vertex, plus session resumption (off by default) caches ≤24 h | Session resumption; abuse monitoring | Same as Vertex | Same as Vertex: **NEEDS AGREEMENT OR WRITTEN EXCEPTION** |
+| **Gemini Live / native audio on Agent Platform** (`gemini-3.8-live`, `gemini-live-2.5-flash-native-audio`) | Same as Agent Platform | Same as Agent Platform, plus session resumption (off by default) caches ≤24 h | Session resumption; abuse monitoring | Same as Agent Platform | Same as Agent Platform: **NEEDS AGREEMENT OR WRITTEN EXCEPTION** |
 | **OpenAI API speech** (`gpt-transcribe`, `gpt-live-transcribe`, TTS via `gpt-realtime-2.1-mini`) | No by default (Services Agreement §4.2) | `/v1/audio/transcriptions`: **no** abuse-monitoring retention. `/v1/realtime`, `/v1/audio/speech`, `/v1/live/sessions`: **30 days** abuse monitoring | 30-day abuse logs on Realtime (needed for live STT and for the only non-deprecated TTS); file uploads (CSAM scan retention even under ZDR); Files, Batches, Audio voices not ZDR-eligible | **ZDR / Modified Abuse Monitoring needs OpenAI's prior approval via sales** | File STT (`gpt-transcribe` on `/v1/audio/transcriptions`) **CAN MEET by default**; live STT and TTS **NEED APPROVAL (ZDR)**. No plain-TTS successor exists |
 
-## 1. Vertex AI: Gemini on Agent Platform (persona inference and grading)
+## 1. Agent Platform: Gemini on Agent Platform (persona inference and grading)
 
-Vertex AI is now "Gemini Enterprise Agent Platform" (rename confirmed in PR #100). The docs keep
+Agent Platform is now "Gemini Enterprise Agent Platform" (rename confirmed in PR #100). The docs keep
 the `vertex-ai/generative-ai/docs/...` URLs.
 
 ### Published terms
@@ -132,7 +132,7 @@ Flash, 3.5 Flash-Lite, 2.5 Pro/Flash/Flash-Lite, 2.5 Flash Live (native audio). 
 **Verdict: NEEDS AGREEMENT OR WRITTEN EXCEPTION.** Training and caching are solvable by settings,
 but on online terms Google reserves the right to log classifier-flagged prompts for up to 90 days
 with human review, and our crisis role-play content is likely to be flagged. Under CD-2 a missing
-Vertex confirmation holds the release (no swap).
+Agent Platform confirmation holds the release (no swap).
 
 ## 2. Google Cloud Speech-to-Text (Chirp 3) and Cloud Text-to-Speech
 
@@ -164,7 +164,7 @@ Vertex confirmation holds the release (no swap).
 - "Google does not log any customer Cloud TTS text or audio data"; "Cloud Text-to-Speech is both
   stateless and resourceless." https://docs.cloud.google.com/text-to-speech/docs/data-logging
 - No explicit no-training sentence on that page; SST §18 applies. Nothing to set.
-- **Gemini-TTS** voices in Cloud TTS and Gemini 3.8 Flash TTS on Vertex: whether they follow the
+- **Gemini-TTS** voices in Cloud TTS and Gemini 3.8 Flash TTS on Agent Platform: whether they follow the
   stateless statement or Gemini abuse monitoring is **UNVERIFIED**. Prefer Chirp 3 HD / standard
   voices until confirmed.
 
@@ -179,7 +179,7 @@ multi-region; TTS non-Gemini voices), pending written confirmation for PA-3.
 `gemini-3.8-live` and `gemini-live-2.5-flash-native-audio` are GA; `gemini-3.5-transcribe-live-preview`
 is Preview STT-only. https://docs.cloud.google.com/vertex-ai/generative-ai/docs/live-api . Same terms
 as §1 plus: do not enable session resumption (caches text/audio/output ≤24 h; ZDR page). Regions not
-listed on the page (**UNVERIFIED**). Same verdict as Vertex.
+listed on the page (**UNVERIFIED**). Same verdict as Agent Platform.
 
 ## 3. OpenAI API speech
 
@@ -257,10 +257,10 @@ read; **UNVERIFIED**).
 
 ## Requests to send each vendor
 
-### Google Cloud (Vertex AI / Agent Platform, Speech-to-Text, Text-to-Speech)
+### Google Cloud (Agent Platform / Agent Platform, Speech-to-Text, Text-to-Speech)
 Send via Google Cloud Support case (Billing/Account or Technical) or the account team.
 
-> We use Gemini on Agent Platform (Vertex AI) in the `us` multi-region for real-time role-play and grading,
+> We use Gemini on Agent Platform (Agent Platform) in the `us` multi-region for real-time role-play and grading,
 > and Cloud Speech-to-Text V2 (Chirp 3, `us` multi-region, streaming) and Cloud Text-to-Speech
 > (non-Gemini voices) for speech. Our content is sensitive educational session content. Please
 > confirm in writing, for project number [PROJECT_NUMBER]:
@@ -297,10 +297,10 @@ Send to OpenAI sales / via the API platform contact form.
 
 ## Open / unverified
 
-1. **Vertex abuse-monitoring exception path for online-terms customers**: the "request an exception"
+1. **Agent Platform abuse-monitoring exception path for online-terms customers**: the "request an exception"
    sentence seen in a search snippet is not on the live pages. Decisive for CD-2.
 2. Whether our account has a Google Cloud Master Agreement (owner knows; assumed no).
-3. Terraform/API toggle for Vertex `cacheConfig` and for STT data logging: none found.
+3. Terraform/API toggle for Agent Platform `cacheConfig` and for STT data logging: none found.
 4. Whether STT data logging (v1-era console page) governs Speech-to-Text **V2 / Chirp 3**.
 5. Whether STT/Chirp and Gemini-TTS are "Generative AI Services" subject to ToS §4.3 abuse logging.
 6. Regional (`us-central1`) availability of current GA Gemini models and Live models (table did not

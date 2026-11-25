@@ -12,7 +12,7 @@ Review Depth: **Owner decision**. AiDev never merges this. Diff: docs only, unco
 | 4 | TTS row said "Yes" when the training part is only inferred | Non-blocking | Fixed: retention and training stated separately |
 | 5 | OpenAI file STT row left out the general abuse logging, §11.3 and CSAM-scan caveats | Non-blocking | Fixed: caveats and open item 8 |
 | 6 | The Frontier rejection missed Argon Cyber Permissive and Model Garden partner models | Non-blocking | Fixed: both rows are rejected |
-| 7 | The Vertex cell left out implicit caching as a second barrier | Non-blocking | Fixed |
+| 7 | The Agent Platform cell left out implicit caching as a second barrier | Non-blocking | Fixed |
 | 8 | Three research open items were missing | Non-blocking | Fixed: open items 5, 8 and 9 |
 | 9 | research.md cited ETH-7 for crisis role-play | Non-blocking | Fixed: SES-2, SES-8, RC-19 |
 | 10 | Setting 1 had two owners and prescribed #65's design | Non-blocking | Fixed: #65 decides how |
