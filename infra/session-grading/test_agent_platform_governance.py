@@ -1,4 +1,4 @@
-"""Unit tests for vertex_governance.py. No network: every API call goes to a fake sender.
+"""Unit tests for agent_platform_governance.py. No network: every API call goes to a fake sender.
 
 Run: python -m unittest discover -s infra/session-grading -p "test_*.py" -v
 """
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 from unittest import mock
 
-import vertex_governance as vg
+import agent_platform_governance as vg
 
 MAIN_TF = Path(__file__).with_name("main.tf")
 NOW = datetime(2026, 11, 22, 12, 0, tzinfo=UTC)
@@ -56,8 +56,8 @@ US_HOST = "https://aiplatform.us.rep.googleapis.com/"
 class PinsMatchTerraform(unittest.TestCase):
     def test_location_and_models_match_main_tf(self) -> None:
         source = MAIN_TF.read_text(encoding="utf-8")
-        block = re.search(r"vertex = \{(.*?)\}", source, re.DOTALL)
-        assert block is not None, "local.vertex not found in main.tf"
+        block = re.search(r"agent_platform = \{(.*?)\}", source, re.DOTALL)
+        assert block is not None, "local.agent_platform not found in main.tf"
         pins = dict(re.findall(r'(\w+)\s*=\s*"([^"]+)"', block.group(1)))
         self.assertEqual(pins["location"], vg.LOCATION)
         self.assertEqual(pins["persona_model"], vg.MODELS["persona"])

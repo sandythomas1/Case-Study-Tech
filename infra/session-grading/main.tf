@@ -36,13 +36,13 @@ variable "allowed_origins" {
 }
 
 locals {
-  # Pinned by owner decision OD-2 (2026-11-22, #65). docs/decisions/vertex-ai-governance.md records why.
+  # Pinned by owner decision OD-2 (2026-11-22, #65). docs/decisions/agent-platform-governance.md records why.
   # These are locals, not variables, so no tfvars file or -var flag can swap a model or region at
   # apply time. A change needs a reviewed diff, a new owner decision and an updated record.
   # Location is the `us` multi-region: us-central1 returned 404 for both models in the #65 probe, so
   # the owner's fallback applies (ARCHITECTURE §6 exception). Never "global": it may route a request
   # outside the US.
-  vertex = {
+  agent_platform = {
     location      = "us"
     persona_model = "gemini-3.8-flash"
     grader_model  = "gemini-4-argon"
@@ -81,15 +81,25 @@ resource "google_service_account" "identity" {
   depends_on   = [google_project_service.required]
 }
 
-# Vertex AI: inference only. roles/aiplatform.user also grants dataset, model,
+# Agent Platform: inference only. roles/aiplatform.user also grants dataset, model,
 # training-job and endpoint management, which neither service needs. This role is
 # also part of the zero-retention controls (#65): without cachedContents.create or
 # batchPredictionJobs.create, neither service can create an explicit context cache
 # or a batch job (record settings 3 and 8). Adding either permission needs an owner decision.
-resource "google_project_iam_custom_role" "vertex_invoke" {
-  role_id     = "cstVertexInvoke"
-  title       = "CaseStudy Vertex AI inference"
-  description = "Call hosted Vertex AI models (generateContent / predict) only."
+# Renamed from Vertex AI on 2026-11-25 (docs/decisions/agent-platform-governance.md,
+# "Rename, 2026-11-25"). The new role_id still forces a replacement.
+moved {
+  from = google_project_iam_custom_role.vertex_invoke
+  to   = google_project_iam_custom_role.agent_platform_invoke
+}
+moved {
+  from = google_project_iam_member.vertex
+  to   = google_project_iam_member.agent_platform
+}
+resource "google_project_iam_custom_role" "agent_platform_invoke" {
+  role_id     = "cstAgentPlatformInvoke"
+  title       = "CaseStudy Agent Platform inference"
+  description = "Call hosted Agent Platform models (generateContent / predict) only."
   permissions = ["aiplatform.endpoints.predict"]
 }
 # Session repeats the accounts identity check (ARCHITECTURE flow 2): revocation
@@ -113,10 +123,10 @@ resource "google_project_iam_custom_role" "grading" {
   description = "Create new score records and read the deletion marker; nothing else in Firestore."
   permissions = ["datastore.databases.get", "datastore.entities.get", "datastore.entities.create"]
 }
-resource "google_project_iam_member" "vertex" {
+resource "google_project_iam_member" "agent_platform" {
   for_each = google_service_account.identity
   project  = var.project_id
-  role     = google_project_iam_custom_role.vertex_invoke.name
+  role     = google_project_iam_custom_role.agent_platform_invoke.name
   member   = "serviceAccount:${each.value.email}"
 }
 resource "google_project_iam_member" "runtime" {
@@ -181,12 +191,12 @@ resource "google_cloud_run_v2_service" "grading" {
         value = var.project_id
       }
       env {
-        name  = "CST_VERTEX_LOCATION"
-        value = local.vertex.location
+        name  = "CST_AGENT_PLATFORM_LOCATION"
+        value = local.agent_platform.location
       }
       env {
         name  = "CST_GRADER_MODEL"
-        value = local.vertex.grader_model
+        value = local.agent_platform.grader_model
       }
       startup_probe {
         http_get { path = "/health" }
@@ -202,7 +212,7 @@ resource "google_cloud_run_v2_service" "grading" {
   }
   # The deploy workflow sets the image after bootstrap (#105); gcloud stamps the client fields.
   lifecycle { ignore_changes = [template[0].containers[0].image, client, client_version] }
-  depends_on = [google_project_iam_member.runtime, google_project_iam_member.vertex]
+  depends_on = [google_project_iam_member.runtime, google_project_iam_member.agent_platform]
 }
 # Authoritative: only the session identity may invoke the grader (AD-3).
 # The gateway has no binding and no route here.
@@ -234,12 +244,12 @@ resource "google_cloud_run_v2_service" "session" {
         value = var.project_id
       }
       env {
-        name  = "CST_VERTEX_LOCATION"
-        value = local.vertex.location
+        name  = "CST_AGENT_PLATFORM_LOCATION"
+        value = local.agent_platform.location
       }
       env {
         name  = "CST_PERSONA_MODEL"
-        value = local.vertex.persona_model
+        value = local.agent_platform.persona_model
       }
       env {
         name  = "CST_ALLOWED_ORIGINS"
@@ -281,7 +291,7 @@ resource "google_cloud_run_v2_service" "session" {
   lifecycle { ignore_changes = [template[0].containers[0].image, client, client_version] }
   depends_on = [
     google_project_iam_member.runtime,
-    google_project_iam_member.vertex,
+    google_project_iam_member.agent_platform,
     google_secret_manager_secret_iam_binding.session,
   ]
 }

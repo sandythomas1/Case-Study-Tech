@@ -65,14 +65,14 @@ Every escalation went to the owner. Their answers are verbatim in build-log.md (
 | P13 | CONCERN | `cstAccounts` holds project-wide create/update (= S1) | **Deferred → #104**, before the release gate. |
 | P14 | CONCERN | DAT-2 does not name the deletion marker | **Owner:** DAT-2 amended (PR #118). |
 | P15 | CONCERN | Owner's other project names in docs/accounts-setup.md (public repo) | **Fixed** in the file. They remain in this branch's commit history; a squash merge keeps them out of dev. |
-| P16 | CONCERN | Vertex invoke granted before OD-2/#65 | Same as S13. |
+| P16 | CONCERN | Agent Platform invoke granted before OD-2/#65 | Same as S13. |
 | P17 | CONCERN | No recorded actor for the 2026-10-22 deploys | **Open for the owner.** Not re-established in this run. |
 | P18 | CONCERN | #18 AC1 proven on the placeholder image | **Accepted:** runbook requires all 11 checks again after #31. |
 | S12 | MEDIUM | `cstGrading` has project-wide `datastore.entities.create`, so a grading bug could write `account_deletions/{uid}` and the worker would delete that student | **Deferred → #104** (comment added); runbook step 3 says to resolve it before a real grading image. Dormant on the placeholder. |
 | S13 | MEDIUM | Session routes accept any Google account until #72; a real #31 image would break ACC-4/ACC-7 | **Owner:** block #31 on #72. Native blocker added; runbook step 3 hard precondition. |
 | S14 | MEDIUM | `cstAccounts` create/update (known S1) | **Deferred → #104.** |
-| S15 | LOW | The `hello` placeholder runs as the real identities, so it could read the signing key and call Vertex through the metadata server | **Accepted for development:** Google's image, pinned by digest, until #31. |
-| S16 | LOW | `cstVertexInvoke` allows any Vertex model, including ones with no zero-retention record | **Deferred → OD-2/#65.** |
+| S15 | LOW | The `hello` placeholder runs as the real identities, so it could read the signing key and call Agent Platform through the metadata server | **Accepted for development:** Google's image, pinned by digest, until #31. |
+| S16 | LOW | `cstAgentPlatformInvoke` allows any Agent Platform model, including ones with no zero-retention record | **Deferred → OD-2/#65.** |
 | S17 | LOW | Firebase Hosting sends no Content-Security-Policy; web tokens live in JS memory | **Deferred → #104** (comment added). |
 | S18 | LOW | `/v1/auth/google` and `/v1/auth/refresh` have no abuse control | **Known launch gate** (infra/accounts README). Before real students. |
 | S19 | LOW | `erase_scores` would leave the #72 access record and any later subcollection | **Deferred → #72** (comment added): #72 extends the erase and tests it. |

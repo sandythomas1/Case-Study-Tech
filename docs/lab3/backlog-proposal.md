@@ -25,9 +25,9 @@ existing numbering, with decimals to slot new work between existing Issues.
 |---|---|---|---|---|---|---|---|---|---|
 | NEW-1 | Keep session content out of logs with a content-free logging helper | 1 | #11 | Ready | Implementation | Critical | Backend | 7.5 | Deep review |
 | NEW-2 | Define the replaceable speech provider interface and its fake | 2 | #6 | Ready | Design | High | Backend | 3.5 | Deep review |
-| NEW-3 | Configure Vertex AI for zero data retention and record the governance settings | 2 | #11 | Ready | Implementation | Critical | AI/ML | 4.5 | Owner decision |
+| NEW-3 | Configure Agent Platform for zero data retention and record the governance settings | 2 | #11 | Ready | Implementation | Critical | AI/ML | 4.5 | Owner decision |
 | NEW-4 | Define the completed-session handoff contract | 3 | #6 | Ready | Design | Critical | Backend | 14.5 | Deep review |
-| NEW-5 | Drive the three vetted personas through a prompt harness on Vertex AI | 3 | #6 | Backlog (until #31 is unblocked) | Implementation | Critical | AI/ML | 15.5 | Deep review |
+| NEW-5 | Drive the three vetted personas through a prompt harness on Agent Platform | 3 | #6 | Backlog (until #31 is unblocked) | Implementation | Critical | AI/ML | 15.5 | Deep review |
 | NEW-6 | Send completed live sessions to the validated grader | 5 | #13 | Backlog | Implementation | Critical | Backend | 21.5 | Deep review |
 | NEW-7 | Verify cross-platform parity and produce the web and Android release builds | 6 | #16 | Backlog | Testing | High | Frontend | 33.5 | Standard review |
 | NEW-8 | Review the release gates before real-student use | 6 | #16 | Backlog | Deployment | Critical | Documentation | 35 | Owner decision |

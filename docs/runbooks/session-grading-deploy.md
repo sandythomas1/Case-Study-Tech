@@ -53,8 +53,8 @@ Terraform stops at an `Enter a value:` prompt and holds the state lock until tha
 $hello = "us-docker.pkg.dev/cloudrun/container/hello@" + (gcloud.cmd artifacts docker images describe us-docker.pkg.dev/cloudrun/container/hello:latest --format="value(image_summary.digest)")
 terraform -chdir=infra/session-grading plan "-out=bootstrap.tfplan" "-var=session_image=$hello" "-var=grading_image=$hello" `
   "-target=google_project_service.required" "-target=google_service_account.identity" `
-  "-target=google_project_iam_custom_role.vertex_invoke" "-target=google_project_iam_custom_role.session" `
-  "-target=google_project_iam_custom_role.grading" "-target=google_project_iam_member.vertex" `
+  "-target=google_project_iam_custom_role.agent_platform_invoke" "-target=google_project_iam_custom_role.session" `
+  "-target=google_project_iam_custom_role.grading" "-target=google_project_iam_member.agent_platform" `
   "-target=google_project_iam_member.runtime" "-target=google_artifact_registry_repository.practice" `
   "-target=google_artifact_registry_repository_iam_member.build" `
   "-target=google_secret_manager_secret.state_signing" "-target=google_secret_manager_secret_iam_binding.session"
@@ -125,7 +125,7 @@ function Get-Status($uri, $method = "GET", $headers = @()) {
 | 7 | Session's only invoker is the gateway identity | `gcloud.cmd run services get-iam-policy session --region=us-central1 --project=casestudy-tech-dev-2e03d0` | one `roles/run.invoker` binding, member `cst-gateway@...` only |
 | 8 | The gateway holds no project role that could invoke grading | `gcloud.cmd projects get-iam-policy casestudy-tech-dev-2e03d0 --flatten="bindings[].members" --filter="bindings.members:cst-gateway@" --format="value(bindings.role)"` | empty |
 | 9 | Grading is healthy | `$t = gcloud.cmd auth print-identity-token; Get-Status "$gradingUrl/health" "GET" @("-H","Authorization: Bearer $t"); Remove-Variable t` | 200 (project Owner includes `run.routes.invoke`) |
-| 10 | Runtime roles are the custom ones | `gcloud.cmd projects get-iam-policy casestudy-tech-dev-2e03d0 --flatten="bindings[].members" --filter="bindings.members:(cst-session@ OR cst-grading@)" --format="table(bindings.role,bindings.members)"` | only `cstSessionIdentity`, `cstGrading` and `cstVertexInvoke`; no Owner, Editor or Viewer |
+| 10 | Runtime roles are the custom ones | `gcloud.cmd projects get-iam-policy casestudy-tech-dev-2e03d0 --flatten="bindings[].members" --filter="bindings.members:(cst-session@ OR cst-grading@)" --format="table(bindings.role,bindings.members)"` | only `cstSessionIdentity`, `cstGrading` and `cstAgentPlatformInvoke`; no Owner, Editor or Viewer |
 | 11 | Only the session identity reads the signing key | `gcloud.cmd secrets get-iam-policy session-state-signing-key --project=casestudy-tech-dev-2e03d0` | `secretAccessor` for `cst-session@...` only |
 
 Checks 6 to 8 together prove that the session identity can reach grading and the gateway cannot.

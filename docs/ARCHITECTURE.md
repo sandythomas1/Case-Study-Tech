@@ -30,7 +30,7 @@ API Gateway (one config, per-route backends; validates JWT)
               ▼
          grading service  : rubric scoring, evidence validation, score write, report
 
-Vertex AI (persona, grader) · speech provider (behind an interface) · Firestore (scores + access records)
+Agent Platform (persona, grader) · speech provider (behind an interface) · Firestore (scores + access records)
 Secret Manager (credentials, state-signing key) · Cloud Logging (no session content) · email provider (owner only, OD-3)
 ```
 
@@ -57,7 +57,7 @@ file differ, this file records the decisions and the code as built (plan PA-11).
 | Accounts service | Server-side Google token exchange and refresh, current student, own scores read, account deletion; access requests, the approval check and admin decisions (POLICY ACC-4 to ACC-9) | `services/accounts` | Built in PR #62; access approval is #72, #73 |
 | Session service | Verifies and signs conversation state, persona turns, speech calls, time limit, conduct safeguard, end of session, grader call | `services/session` | Speech interface (#64) and the three read-only scenario configs (#27); the rest is Phase 3–4 |
 | Grading service | Private. Accepts only complete transcripts from the session service, scores against the anchor spec, validates evidence, writes scores, returns the report | not yet | Phase 5 |
-| Vertex AI | Persona inference and grader inference, as separate calls with separate prompts | — | `gemini-3.8-flash` for personas, `gemini-4-argon` for the grader (OD-2, settled 2026-11-22 in `docs/decisions/vertex-ai-governance.md`) |
+| Gemini Enterprise Agent Platform (formerly Vertex AI) | Persona inference and grader inference, as separate calls with separate prompts | — | `gemini-3.8-flash` for personas, `gemini-4-argon` for the grader (OD-2, settled 2026-11-22 in `docs/decisions/agent-platform-governance.md`) |
 | Speech provider | Speech-to-text and text-to-speech behind a replaceable interface | `services/session/cst_session/speech` | Interface and fake built (#64); vendor and adapter open (Phase 2 ADR, #20) |
 | Firestore | `students/{uid}/scores/{scoreId}`, `account_deletions/{uid}` and one server-only access record per account (`access/{uid}`) | `infra/firestore.rules` | Built in PR #62; access record and gate built in #72 |
 | Email provider | Sends the owner one email per access request (name and Google email only) | not yet | Vendor open (OD-3, #74) |
@@ -83,7 +83,7 @@ file differ, this file records the decisions and the code as built (plan PA-11).
    signed state from the previous reply. Before doing anything else, the session service checks the
    signature, that the state belongs to the verified UID, and that the time limit has not passed.
    It then transcribes speech if needed, applies the conduct safeguard and gets the persona reply
-   from Vertex AI. It synthesizes speech if needed and returns the reply with a new signed state.
+   from Agent Platform. It synthesizes speech if needed and returns the reply with a new signed state.
    The state covers the owner UID, scenario, start time, every turn and the conduct-warning count.
    Text mode makes no speech calls. Any instance can serve any turn.
 4. **End and grade (AD-3).** Manual end or the time limit closes the session. The session service
@@ -108,7 +108,7 @@ file differ, this file records the decisions and the code as built (plan PA-11).
 ## 5. Boundaries and dependency rules
 
 - **Client → gateway only.** The app calls nothing but the gateway and Google sign-in. It never
-  calls Vertex AI, the speech provider, the grader or Firestore, and it holds no API keys (RC-06).
+  calls Agent Platform, the speech provider, the grader or Firestore, and it holds no API keys (RC-06).
 - **Session and grading are separate services with separate prompts** (RC-10, DD-02). The session
   service never computes or shows a score. The grader never runs during a session.
 - **The grader has no gateway route.** Only the session service's service account may invoke it
@@ -117,7 +117,7 @@ file differ, this file records the decisions and the code as built (plan PA-11).
   service reads and deletes but never creates scores.
 - **Speech goes through the provider interface** (#64). No session code imports a vendor SDK
   directly, so the vendor can be swapped (RC-16, plan §6 CD-1).
-- **Inside each service:** HTTP layer → application logic → adapters (Firestore, Vertex AI,
+- **Inside each service:** HTTP layer → application logic → adapters (Firestore, Agent Platform,
   speech, Identity Platform, Secret Manager). Domain logic such as score weights, safeguard rules
   and state verification has no framework or vendor imports and is unit-tested without the network.
 - **Every new service copies the accounts service's identity check** (flow 2) rather than writing
@@ -137,10 +137,10 @@ Do not replace these without an owner decision and a new decision record.
 | Client | Expo (React Native + react-native-web), one codebase, Expo Router, custom dev builds (Expo Go cannot do native Google sign-in) | DD-06, RC-14, PA-7, ADR 0001 |
 | Backend | Python 3.12, FastAPI, one private Cloud Run service per responsibility | PA-7, DD-09 |
 | Session state | Client-held, server-signed; no server-side session store | AD-1, AD-2 |
-| Cloud | GCP, `us-central1`, managed services only; development and production projects. Two exceptions run in the `us` multi-region, because Google doesn't serve them in `us-central1`: Google Speech-to-Text Chirp 3, if used (Google serves it only in `us` and `eu`), and Vertex AI, only for models that Google's data-residency table lists under "US multi-region" (both pinned models returned HTTP 404 on `us-central1` in the #65 probe). Data stays in the US; for Vertex AI that rests on Google's documented ML-processing boundary for those models, not on a contract. Vertex AI never uses `global`, which may process a request anywhere. | DD-09, AD-5, owner decisions 2026-11-22 (`docs/decisions/provider-zero-retention.md`, `docs/decisions/vertex-ai-governance.md`) |
+| Cloud | GCP, `us-central1`, managed services only; development and production projects. Two exceptions run in the `us` multi-region, because Google doesn't serve them in `us-central1`: Google Speech-to-Text Chirp 3, if used (Google serves it only in `us` and `eu`), and Agent Platform, only for models that Google's data-residency table lists under "US multi-region" (both pinned models returned HTTP 404 on `us-central1` in the #65 probe). Data stays in the US; for Agent Platform that rests on Google's documented ML-processing boundary for those models, not on a contract. Agent Platform never uses `global`, which may process a request anywhere. | DD-09, AD-5, owner decisions 2026-11-22 (`docs/decisions/provider-zero-retention.md`, `docs/decisions/agent-platform-governance.md`) |
 | Edge | One API Gateway config, per-route backends | AD-4 |
 | Identity | Identity Platform with Google sign-in only; server-side token exchange | RC-01, DD-05, ADR 0001 |
-| Models | Hosted Vertex AI with a prompt harness; no fine-tuning or self-hosting | DD-01, SDD §2.3 |
+| Models | Hosted models on Agent Platform with a prompt harness; no fine-tuning or self-hosting | DD-01, SDD §2.3 |
 | Speech | Replaceable interface; vendor chosen by the Phase 2 ADR | RC-16, PA-2 |
 | Data | Firestore: score records, saved transcripts encrypted at the application layer with a Cloud KMS key, and one access record per account (POLICY DAT-1 and DAT-2 exceptions) | DD-03, RC-04, PA-12, owner decision 2026-11-18 (`docs/decisions/transcript-storage.md`) |
 | Infrastructure | Terraform under `infra/`; gateway config generated from a template. After bootstrap, the deploy workflow rolls images and gateway configs with gcloud (owner decision 2026-11-22, #105; `docs/runbooks/ci-deploy.md` "Who owns what") | PA-11 |
@@ -152,7 +152,7 @@ Do not replace these without an owner decision and a new decision record.
 
 | Data | May exist in | Must never reach |
 |---|---|---|
-| Audio, transcript, excerpts, narrative feedback | App memory during the session and report view, including the signed state; request bodies in transit; service memory while processing; the speech provider and Vertex AI under written zero-retention terms | Firestore (except the saved transcript in the next row), any database or cache, logs, analytics, crash reports, test fixtures, an external session store, device storage |
+| Audio, transcript, excerpts, narrative feedback | App memory during the session and report view, including the signed state; request bodies in transit; service memory while processing; the speech provider and Agent Platform under written zero-retention terms | Firestore (except the saved transcript in the next row), any database or cache, logs, analytics, crash reports, test fixtures, an external session store, device storage |
 | Saved transcript of a completed session (POLICY DAT-1) | Firestore under the owner's UID, encrypted by the grading service with a Cloud KMS key; decrypted only by the accounts service for its owner; the app while the student reviews it; a file the student chooses to export | Any other student, the admin or any human principal, any model or vendor, an eval or calibration set, logs, the development project (as real data) |
 | Score record: overall and category scores, completion time, crisis safety result | Firestore under the owner's UID; the app | Any other student; the admin |
 | Access record: display name, Google email, state, times | Firestore (server-only); the admin queue; the owner's email (name and email only) | Logs; any account other than its owner and the admin |

@@ -1,4 +1,4 @@
-# Offline configuration check for the Vertex AI governance pins (#65).
+# Offline configuration check for the Agent Platform governance pins (#65).
 # The provider is mocked, so this needs no credentials, state or network beyond
 # `terraform init -backend=false`. Run: terraform test (from infra/session-grading).
 
@@ -18,25 +18,25 @@ variables {
   grading_image = "us-docker.pkg.dev/cloudrun/container/hello@sha256:1111111111111111111111111111111111111111111111111111111111111111"
 }
 
-run "vertex_pins_match_the_governance_record" {
+run "agent_platform_pins_match_the_governance_record" {
   command = plan
 
   assert {
-    condition     = local.vertex.location == "us"
-    error_message = "Vertex location must be the us multi-region recorded in docs/decisions/vertex-ai-governance.md."
+    condition     = local.agent_platform.location == "us"
+    error_message = "Agent Platform location must be the us multi-region recorded in docs/decisions/agent-platform-governance.md."
   }
   assert {
-    condition     = local.vertex.location != "global"
+    condition     = local.agent_platform.location != "global"
     error_message = "The global endpoint may route outside the US and is never allowed (ARCHITECTURE §6)."
   }
   assert {
-    condition     = local.vertex.persona_model == "gemini-3.8-flash" && local.vertex.grader_model == "gemini-4-argon"
-    error_message = "Model IDs must match OD-2 in docs/decisions/vertex-ai-governance.md."
+    condition     = local.agent_platform.persona_model == "gemini-3.8-flash" && local.agent_platform.grader_model == "gemini-4-argon"
+    error_message = "Model IDs must match OD-2 in docs/decisions/agent-platform-governance.md."
   }
   assert {
     # SST §34 Frontier models and the cyber variants log prompts for up to 30 days.
     condition = alltrue([
-      for model in [local.vertex.persona_model, local.vertex.grader_model] :
+      for model in [local.agent_platform.persona_model, local.agent_platform.grader_model] :
       !can(regex("carbon|cyber|permissive", model))
     ])
     error_message = "A Frontier or cyber model logs prompts and is rejected for session content."
@@ -61,9 +61,9 @@ run "each_service_gets_only_its_own_model" {
   assert {
     condition = alltrue([
       for service in [google_cloud_run_v2_service.session, google_cloud_run_v2_service.grading] :
-      contains([for e in service.template[0].containers[0].env : e.value if e.name == "CST_VERTEX_LOCATION"], "us")
+      contains([for e in service.template[0].containers[0].env : e.value if e.name == "CST_AGENT_PLATFORM_LOCATION"], "us")
     ])
-    error_message = "Both services must receive the pinned Vertex location."
+    error_message = "Both services must receive the pinned Agent Platform location."
   }
   assert {
     condition = (
@@ -74,12 +74,12 @@ run "each_service_gets_only_its_own_model" {
   }
 }
 
-run "vertex_role_is_inference_only" {
+run "agent_platform_role_is_inference_only" {
   command = plan
 
   assert {
     # Record settings 3 and 8: no explicit context caches and no batch jobs.
-    condition     = toset(google_project_iam_custom_role.vertex_invoke.permissions) == toset(["aiplatform.endpoints.predict"])
-    error_message = "cstVertexInvoke must hold only aiplatform.endpoints.predict (no cachedContents.create or batchPredictionJobs.create)."
+    condition     = toset(google_project_iam_custom_role.agent_platform_invoke.permissions) == toset(["aiplatform.endpoints.predict"])
+    error_message = "cstAgentPlatformInvoke must hold only aiplatform.endpoints.predict (no cachedContents.create or batchPredictionJobs.create)."
   }
 }

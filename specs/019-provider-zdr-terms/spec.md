@@ -23,7 +23,7 @@ gate (#70) can't be checked, and #65 has no terms status to record.
 - Committing signed vendor documents. They stay outside the repo (#65).
 
 ## Functional Requirements
-1. The record MUST list every candidate in scope: Vertex AI (Gemini models for persona inference and
+1. The record MUST list every candidate in scope: Agent Platform (Gemini models for persona inference and
    grading, region `us-central1`), Google Cloud Speech-to-Text and Text-to-Speech, and OpenAI speech
    (current transcription and speech models, given the 2026–27 deprecations). The owner dropped OpenAI
    on 2026-11-22, and the record now marks it Dropped.
@@ -45,5 +45,5 @@ Getting the confirmations, applying the settings and giving each row its final v
 
 ## Open Questions
 None. Owner answer, 2026-11-22: for Google Speech-to-Text and Text-to-Speech, published terms plus dated
-settings evidence count as "in writing". Vertex AI needs written confirmation, from one support case or a
+settings evidence count as "in writing". Agent Platform needs written confirmation, from one support case or a
 Master Agreement.
