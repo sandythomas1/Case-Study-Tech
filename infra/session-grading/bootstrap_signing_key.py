@@ -5,6 +5,12 @@ secret. The key exists in this process's memory and the HTTPS request body only:
 never in a file, an environment variable, Terraform state, a log or git.
 Authentication is the current gcloud principal; no service-account key is used.
 
+The secret holds the key as text: 32 random bytes in unpadded base64url, 43
+characters. Cloud Run injects it as an environment variable, which cannot carry
+arbitrary bytes, and the session service decodes it strictly back to exactly 32
+bytes (L2-2, owner decided 2026-11-25). A version stored as raw bytes by an
+earlier run fails that check, so re-run this before turning key injection on.
+
 Each run adds a new version and the session service reads `latest`, so rotating
 invalidates every signed state in flight (those sessions take the lost-content
 path, ARCHITECTURE flow 8). Run it for initialization or intentional rotation.
@@ -22,12 +28,22 @@ SECRET = "session-state-signing-key"
 KEY_BYTES = 32  # 256-bit HMAC key
 
 
+def new_key_text() -> bytes:
+    """A fresh 256-bit key as 43 ASCII characters of unpadded base64url."""
+    return base64.urlsafe_b64encode(secrets.token_bytes(KEY_BYTES)).rstrip(b"=")
+
+
+def add_version_body(key_text: bytes) -> dict[str, dict[str, str]]:
+    """The addVersion request body. The API wants the secret value base64-encoded."""
+    return {"payload": {"data": base64.b64encode(key_text).decode("ascii")}}
+
+
 def main() -> None:
     token = subprocess.check_output(
         ["gcloud.cmd", "auth", "print-access-token", "--project=" + PROJECT, "--quiet"],
         text=True,
     ).strip()
-    body = {"payload": {"data": base64.b64encode(secrets.token_bytes(KEY_BYTES)).decode()}}
+    body = add_version_body(new_key_text())
     request = urllib.request.Request(
         f"https://secretmanager.googleapis.com/v1/projects/{PROJECT}/secrets/{SECRET}:addVersion",
         data=json.dumps(body).encode(),

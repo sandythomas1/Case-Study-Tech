@@ -64,6 +64,15 @@ python infra/session-grading/bootstrap_signing_key.py
 
 The script generates a 256-bit key in memory and adds it as a secret version. It prints only the
 version number. Run it again only to rotate the key (see Rollback).
+It stores the key as base64url text, the only form the #31 session service accepts, so re-run it
+once before you first set `inject_state_signing_key=true`; a raw-bytes version from an earlier run stops startup.
+
+Before the session service gets real traffic, set a billing alert (owner decision L2-3 for #31,
+"Caps + billing alert (Recommended)"). The instance and concurrency caps bound throughput, and the
+alert catches model spend that a scripted client could still run up. In the Cloud console, go to
+Billing → Budgets & alerts → Create budget. Scope it to the dev project, set a monthly amount you
+accept, and add email alerts at 50%, 90% and 100%. Agents don't create it, because it needs billing
+account access.
 
 ## 3. Deploy both services
 

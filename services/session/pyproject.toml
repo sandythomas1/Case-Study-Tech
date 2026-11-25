@@ -3,8 +3,13 @@ name = "session"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.158.2",
+    "firebase-admin>=7.7.0",
+    "google-auth[requests]>=2.62.0",
     "httpx>=0.28.1",
     "pydantic>=2.12",
+    "pydantic-settings>=2.16.1",
+    "uvicorn[standard]>=0.54.0",
     "websockets>=17.4",
 ]
 

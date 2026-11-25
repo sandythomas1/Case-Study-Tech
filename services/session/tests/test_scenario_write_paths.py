@@ -7,7 +7,8 @@ session and grading HTTP apps are covered as soon as they exist:
 - A route whose path mentions a scenario may only be a read (``GET``/``HEAD``).
   That covers ``@app.post(...)``-style decorators, ``api_route``/``add_api_route``
   with ``methods=``, ``add_route``, Starlette ``Route(...)`` and websockets.
-- The scenarios package never writes a file.
+- The scenarios package, which holds the catalogue and the interim persona
+  prompt loader (#31), never writes a file.
 
 It cannot see a path built at run time; code review covers that.
 """
@@ -130,6 +131,15 @@ def test_no_service_declares_a_route_that_writes_a_scenario() -> None:
     ]
 
     assert offenders == []
+
+
+def test_the_write_check_covers_the_catalogue_and_the_prompt_loader() -> None:
+    scanned = {
+        path.relative_to(SCENARIOS_PACKAGE).as_posix()
+        for path in SCENARIOS_PACKAGE.rglob("*.py")
+    }
+
+    assert {"catalogue.py", "prompts.py"} <= scanned
 
 
 def test_the_scenarios_package_never_writes_a_file() -> None:

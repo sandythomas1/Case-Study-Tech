@@ -12,9 +12,12 @@ ruff cannot see, in every ``cst_*`` package of the service:
   ``sys.__stderr__`` (or importing them with ``from sys import ...``) anywhere
   except the helper, which is exempt only at its exact path
   ``cst_<service>/content_free_log.py``;
-- any ``os.write`` call, in any file.
+- any ``os.write`` call, in any file;
+- in the modules that handle session content and log (per service, below),
+  any logging other than ``log_event``/``log_error`` imported from the
+  service's own helper, and any logger-style method call.
 
-The same file runs in every service and picks its allow-list by service
+The same file runs in every service and picks its lists by service
 directory name. It parses source, so it cannot see a module or logger name
 built at run time; review covers that.
 """
@@ -43,6 +46,10 @@ LOGGING_IMPORT_ALLOW_LIST: dict[str, dict[str, str]] = {
         ),
     },
     "session": {
+        "cst_session/main.py": (
+            "Raises the httpx and httpcore log level so persona request URLs are"
+            " never logged."
+        ),
         "cst_session/speech/adapters/deepgram_transport.py": (
             "Builds an unregistered logger with a NullHandler so the websockets"
             " client logs nothing."
@@ -50,6 +57,28 @@ LOGGING_IMPORT_ALLOW_LIST: dict[str, dict[str, str]] = {
     },
 }
 ALLOWED = LOGGING_IMPORT_ALLOW_LIST.get(SERVICE_ROOT.name, {})
+
+# Modules that hold session content and log, per service. They log only
+# through the helper and may never join the allow-list above.
+CONTENT_LOGGING_MODULES: dict[str, tuple[str, ...]] = {
+    "session": (
+        "cst_session/lifecycle.py",
+        "cst_session/handoff/validation.py",
+    ),
+}
+CONTENT_LOGGERS = CONTENT_LOGGING_MODULES.get(SERVICE_ROOT.name, ())
+HELPER_FUNCTIONS = {"log_event", "log_error"}
+LOGGER_METHODS = {
+    "debug",
+    "info",
+    "warning",
+    "warn",
+    "error",
+    "exception",
+    "critical",
+    "fatal",
+    "log",
+}
 
 
 def _is_logging_module(name: str) -> bool:
@@ -157,6 +186,68 @@ def find_logging_bypasses(root: Path, allowed: Mapping[str, str]) -> list[str]:
 def test_service_packages_log_only_through_the_helper() -> None:
     assert sorted(SERVICE_ROOT.glob("cst_*/__init__.py"))
     assert find_logging_bypasses(SERVICE_ROOT, ALLOWED) == []
+
+
+def helper_only_violations(source: str, package: str) -> list[str]:
+    """How a content module logs other than through ``package``'s helper."""
+    helper_module = f"{package}.content_free_log"
+    found: list[str] = []
+    imported_helpers: set[str] = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.ImportFrom) and node.module == helper_module:
+            names = {alias.name for alias in node.names}
+            found += [
+                f"imports {name} from the helper" for name in names - HELPER_FUNCTIONS
+            ]
+            imported_helpers |= names & HELPER_FUNCTIONS
+        elif isinstance(node, ast.ImportFrom | ast.Import):
+            modules = (
+                [node.module or ""]
+                if isinstance(node, ast.ImportFrom)
+                else [alias.name for alias in node.names]
+            )
+            if any(name.endswith("content_free_log") for name in modules):
+                found.append("imports the helper module, not its functions")
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr in LOGGER_METHODS
+        ):
+            found.append(f"calls .{node.func.attr}()")
+    if not imported_helpers:
+        found.append("does not log through the helper")
+    return found
+
+
+@pytest.mark.parametrize("relative_path", CONTENT_LOGGERS)
+def test_content_modules_log_only_through_the_helper(relative_path: str) -> None:
+    source = (SERVICE_ROOT / relative_path).read_text(encoding="utf-8")
+    package = relative_path.split("/")[0]
+
+    assert relative_path not in ALLOWED
+    assert helper_only_violations(source, package) == []
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "from cst_demo.content_free_log import log_event, _write",
+        "import cst_demo.content_free_log as helper",
+        "from cst_demo import content_free_log",
+        "from cst_demo.content_free_log import log_event\nlogger.info('x')",
+        "from cst_demo.content_free_log import log_event\nlog.warning('x')",
+        "from cst_other.content_free_log import log_event",
+        "import json",
+    ],
+)
+def test_the_helper_only_check_fails_on_other_logging(source: str) -> None:
+    assert helper_only_violations(source, "cst_demo") != []
+
+
+def test_the_helper_only_check_allows_the_helper_functions() -> None:
+    source = "from cst_demo.content_free_log import log_error, log_event"
+
+    assert helper_only_violations(source, "cst_demo") == []
 
 
 def test_every_allow_list_entry_exists_and_has_a_reason() -> None:

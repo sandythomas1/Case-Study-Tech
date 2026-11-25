@@ -232,7 +232,7 @@ SSO, LMS or EHR integration, billing or payments; other disciplines and language
 
 | Risk | Rule | Revisit |
 |---|---|---|
-| A student may resend an older signed state and undo a turn or reset the conduct warning | `docs/ARCHITECTURE.md` AD-2 | Before any instructor or cohort feature |
+| A student may resend an older signed state and undo a turn or reset the conduct warning. After End session or a persona-model failure, a kept earlier state may still send turns until the scenario time limit; the ended attempt is graded at most once per session id (#68). Owner, 2026-11-25: "Accept as AD-2 risk (Recommended)" | `docs/ARCHITECTURE.md` AD-2 | Before any instructor or cohort feature |
 | A student's own real distress goes undetected | ETH-3 | Before institutional use |
 | Name and email are kept beyond RC-04's "scores only" | DAT-2 | At the FERPA review (ETH-6) |
 | A saved transcript may record a student's own real distress (ETH-3) | DAT-1 | Before real students' transcripts are stored |
