@@ -37,6 +37,12 @@ CONTENT_HANDLING_MODULES = (
     "cst_session/speech/adapters/deepgram.py",
     "cst_session/handoff/contract.py",
     "cst_session/handoff/validation.py",
+    "cst_session/state.py",
+    "cst_session/lifecycle.py",
+    "cst_session/grading.py",
+    "cst_session/persona/port.py",
+    "cst_session/persona/agent_platform.py",
+    "cst_session/api.py",
 )
 PERSISTENCE_MODULES = ("logging", "pathlib", "pickle", "shelve", "sqlite3", "tempfile")
 
