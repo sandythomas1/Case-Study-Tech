@@ -28,11 +28,14 @@ service keeps no session content: the whole conversation travels in the signed `
 | `cst_session/persona/port.py` | `PersonaPort`, `PersonaUnavailable` and its fixed failure codes |
 | `cst_session/persona/agent_platform.py` | The Agent Platform REST adapter: `us` endpoint only, a typed three-key request, ADC tokens, a 20 s deadline, no retries |
 | `cst_session/grading.py` | `GraderPort` and `UnavailableGrader`. Every session ends `unscored` until #68 |
-| `cst_session/scenarios/prompts/` | One short, synthetic interim persona prompt per scenario |
+| `cst_session/scenarios/prompts/` | One vetted, fictional persona prompt per scenario, and `manifest.toml` with each prompt's version and SHA-256 (#67, `prompts/README.md`) |
+| `harness/` | The dev-only persona harness (#67): `scripts/*.toml` synthetic counselor scripts, `checks.py` deterministic checks and `run.py`. Not in the image; see "Live persona checks (owner-run)" |
+| `tests/test_harness_script.py`, `tests/test_harness_checks.py`, `tests/test_harness_run.py` | The script loader, every check anchor and its false positives, and the runner with a fake persona |
+| `tests/live/test_live_personas.py` | Marked `live`: every script against the real model. Skipped by the default `uv run pytest` |
 | `cst_session/content_free_log.py` | The content-free logging helper. A byte-identical copy of the accounts service's canonical module; see "Logging" |
 | `tests/test_content_free_log_copies.py` | Fails when this copy drifts from `services/accounts/cst_accounts/content_free_log.py` |
 | `tests/test_logging_calls.py` | Fails on a root-logger lookup or a direct `sys.stdout`/`sys.stderr` write outside the helper |
-| `tests/test_scenario_write_paths.py` | Fails when any service declares a non-read route for scenarios, or the scenarios package writes a file |
+| `tests/test_scenario_write_paths.py` | Fails when any service or the harness declares a non-read route for scenarios, or the scenarios package or the harness writes a file |
 | `tests/speech_contract.py` | `SpeechProviderContract`, the suite every adapter must pass |
 | `tests/test_speech_import_boundary.py` | Fails when a vendor speech SDK or `websockets` is imported outside `adapters/`, or a module that handles session content imports logging or storage |
 | `tests/deepgram_fakes.py` | A scripted fake Deepgram network that records every request |
@@ -65,6 +68,8 @@ uv run ruff check .
 uv run mypy .
 ```
 
+`uv run pytest` skips tests marked `live` (`addopts` in `pyproject.toml`).
+
 ## Running
 
 The container runs `uvicorn cst_session.main:app_factory --factory --no-access-log` on port 8080.
@@ -93,3 +98,48 @@ the catalogue once at startup: a malformed config raises `CatalogueError` and st
 The time limit comes from `time_limit_minutes`, which is 10 for every scenario (PA-5). The owner
 approves the release flags (POLICY §1). The ids match `rubric/anchor-spec.v1.json`, and the
 logging helper accepts only these three as `scenario_id`.
+
+## Live persona checks (owner-run)
+
+The harness runs the four synthetic counselor scripts in `harness/scripts/` through the real
+lifecycle and the real persona model, then checks every reply: the client stays in character and on
+the scenario, the routine and resistant clients raise no risk, and the crisis client hints at risk
+early, answers a direct question, never names a method or means and keeps talking after a
+disclosure (#67). Only the owner runs it, on their own machine.
+
+Prerequisites:
+
+- The Google Cloud CLI in an absolute `PATH` directory (relative entries are skipped), logged in
+  with `gcloud auth login` as an account with access to the dev project. The harness asks `gcloud`
+  for an access token, holds it in memory only and never prints it. A `gcloud` that takes more than
+  15 seconds is killed along with its child processes. It needs no Application Default Credentials.
+- The dev project only. The project comes from `infra/environments/development.json`. The model is
+  always the `persona_model` pin in `infra/session-grading/main.tf`: `CST_PERSONA_MODEL` may only
+  repeat it. The location comes from `CST_AGENT_PLATFORM_LOCATION` or else the pin. A missing or
+  disallowed setting, including another model or `global`, stops the harness with exit code 2
+  before any call.
+- Synthetic scripts only. Never put a real client, name or case in a script (PA-3).
+
+From `services/session`:
+
+```sh
+uv run python -m harness.run --repeat 3
+uv run pytest -m live
+```
+
+`--scenario SCRIPT_ID` (repeatable) runs only `routine_intake`, `resistant_client`, `crisis_risk`
+or `crisis_risk_missed_cues`. `--repeat` takes 1 to 10 and defaults to 3.
+
+What the output shows: for each script, a header line with the script, its scenario, the prompt
+version, the model, the location, the UTC time and the repeat count. Then one line per check,
+`PASS`, `FAIL` or `INFO`, with the runs it passed out of the total and summed counts. `INFO` lines
+are report-only and never fail a run. In `crisis_risk_missed_cues`, `on_scenario` is report-only
+(`report_only = true` in its script): that counselor pulls the client off topic on purpose, and its
+safety checks still gate it. A scenario's own script can't set it. A run that couldn't finish, for example
+`FAIL unavailable(persona_timeout)` or `FAIL start_refused(scenario_unavailable)`, gets its own
+line. `not_blocked` fails when the model's safety filter refused a turn. The exit code is 0 only
+when every gating check passed on every repeat. The report never holds a reply, a prompt or a
+script turn, and the lifecycle's content-free log lines go to stderr.
+
+Never commit live output. Paste the check lines, never replies, into the PR that changes a prompt
+(`cst_session/scenarios/prompts/README.md`).

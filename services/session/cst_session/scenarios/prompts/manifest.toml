@@ -1,0 +1,18 @@
+# The version and SHA-256 of each persona prompt, as the loader reads it (#67 FR-2).
+#
+# The digest is lowercase hex over the UTF-8 bytes of the prompt text after CRLF
+# becomes LF and surrounding whitespace is stripped. Editing a prompt means
+# bumping its version and updating its digest in the same reviewed commit, or
+# the service refuses to start. See README.md.
+
+[routine_intake]
+version = "2.0.0"
+sha256 = "6e44a6ae47b4973f036f99567c03143075c7158dc243b6bb688e6fdbd02804ce"
+
+[resistant_client]
+version = "2.0.0"
+sha256 = "23a880edb72562d5286b9cfba35ca25b545d288a5db944fe12b4e5faea2f830a"
+
+[crisis_risk]
+version = "3.0.0"
+sha256 = "0736a90e5d313a5eaabc9cd608cf6eea177e0c7dfddb7b73b0dbcc1ab6835169"
