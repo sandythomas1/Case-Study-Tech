@@ -7,8 +7,10 @@ session and grading HTTP apps are covered as soon as they exist:
 - A route whose path mentions a scenario may only be a read (``GET``/``HEAD``).
   That covers ``@app.post(...)``-style decorators, ``api_route``/``add_api_route``
   with ``methods=``, ``add_route``, Starlette ``Route(...)`` and websockets.
-- The scenarios package, which holds the catalogue and the interim persona
-  prompt loader (#31), never writes a file.
+- The scenarios package, which holds the catalogue, the persona prompt loader
+  and the prompt manifest (#31, #67), never writes a file.
+- The dev-only persona harness (``services/session/harness``, #67) declares no
+  scenario write route and never writes a file either.
 
 It cannot see a path built at run time; code review covers that.
 """
@@ -19,6 +21,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SCENARIOS_PACKAGE = REPO_ROOT / "services" / "session" / "cst_session" / "scenarios"
+HARNESS_PACKAGE = REPO_ROOT / "services" / "session" / "harness"
 SKIPPED_DIRS = {".venv", "__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache"}
 
 READ_METHODS = {"GET", "HEAD"}
@@ -42,11 +45,16 @@ WRITE_CALLS = {
 }
 
 
+def python_files(package: Path) -> Iterator[Path]:
+    for path in sorted(package.rglob("*.py")):
+        if not SKIPPED_DIRS.intersection(path.parts):
+            yield path
+
+
 def service_files() -> Iterator[Path]:
     for package in sorted((REPO_ROOT / "services").glob("*/cst_*")):
-        for path in sorted(package.rglob("*.py")):
-            if not SKIPPED_DIRS.intersection(path.parts):
-                yield path
+        yield from python_files(package)
+    yield from python_files(HARNESS_PACKAGE)
 
 
 def mentions_scenario(node: ast.Call) -> bool:
@@ -133,22 +141,55 @@ def test_no_service_declares_a_route_that_writes_a_scenario() -> None:
     assert offenders == []
 
 
+def test_the_route_check_covers_the_harness() -> None:
+    scanned = {
+        path.relative_to(HARNESS_PACKAGE).as_posix()
+        for path in service_files()
+        if HARNESS_PACKAGE in path.parents
+    }
+
+    assert {"run.py", "script.py", "checks.py"} <= scanned
+
+
 def test_the_write_check_covers_the_catalogue_and_the_prompt_loader() -> None:
     scanned = {
         path.relative_to(SCENARIOS_PACKAGE).as_posix()
-        for path in SCENARIOS_PACKAGE.rglob("*.py")
+        for path in python_files(SCENARIOS_PACKAGE)
     }
 
     assert {"catalogue.py", "prompts.py"} <= scanned
 
 
+def test_the_manifest_is_read_only_by_the_scanned_prompt_loader() -> None:
+    readers = [
+        path.relative_to(SCENARIOS_PACKAGE).as_posix()
+        for path in python_files(SCENARIOS_PACKAGE)
+        if "manifest.toml" in path.read_text(encoding="utf-8")
+    ]
+
+    assert readers == ["prompts.py"]
+    assert (SCENARIOS_PACKAGE / "prompts" / "manifest.toml").is_file()
+
+
 def test_the_scenarios_package_never_writes_a_file() -> None:
     offenders = [
         f"{path.relative_to(REPO_ROOT)}:{line}"
-        for path in sorted(SCENARIOS_PACKAGE.rglob("*.py"))
+        for path in python_files(SCENARIOS_PACKAGE)
         for line in file_writes(ast.parse(path.read_text(encoding="utf-8")))
     ]
 
+    assert offenders == []
+
+
+def test_the_harness_never_writes_a_file() -> None:
+    files = list(python_files(HARNESS_PACKAGE))
+    offenders = [
+        f"{path.relative_to(REPO_ROOT)}:{line}"
+        for path in files
+        for line in file_writes(ast.parse(path.read_text(encoding="utf-8")))
+    ]
+
+    assert {path.name for path in files} >= {"run.py", "script.py", "checks.py"}
     assert offenders == []
 
 

@@ -1,0 +1,40 @@
+# Resistant client: a student sent by an advisor (domain-design.md).
+# Synthetic counselor turns only. Tags are metadata and are never sent to the model.
+
+scenario_id = "resistant_client"
+
+[on_scenario]
+min_hit_percent = 60
+min_groups = 3
+pushback_group = "pushback"
+
+[on_scenario.groups]
+pushback = '''advisor|sent\b|made me|had to|pointless|waste|don't need|no big deal|overreact|fine|\b(my idea|told me|only here|whatever|not really)\b'''
+school = 'class|morning|miss|skip|school|degree|semester|behind'
+work_and_sleep = 'work|job|shift|restaurant|rent|sleep|tired|late'
+stakes = 'scholarship|money|drop|fail|finish|\b(pass(ing|ed)?|gpa|grades?)\b'
+goals = '\b(graduat\w*|future|plans?|figure (\w+ ){0,2}out|on track|balance|manage|handle|keep (going|up)|get through|care about|want(ed)? to (finish|graduate|pass|keep|stay|get)|schedule|priorit\w*)\b'
+
+[[turns]]
+text = "Hi, I'm Taylor, a counselor in training. We have about ten minutes. I understand your advisor suggested you come. How are you feeling about being here?"
+
+[[turns]]
+text = "So coming here wasn't really your idea."
+
+[[turns]]
+text = "That's fair. What we talk about is up to you. What do you make of your advisor's concern?"
+
+[[turns]]
+text = "You don't see the missed classes as the big deal your advisor does."
+
+[[turns]]
+text = "What's a typical week like for you right now?"
+
+[[turns]]
+text = "That sounds like a lot to juggle. What matters most to you about how this semester goes?"
+
+[[turns]]
+text = "It sounds like part of you wants to stay on track, and part of you isn't sure school is working right now."
+
+[[turns]]
+text = "We're almost out of time. What, if anything, would you want to take from today?"
